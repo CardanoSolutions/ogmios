@@ -9,9 +9,6 @@ import Ogmios.Prelude
 import Cardano.Ledger.BaseTypes
     ( Mismatch (..)
     )
-import qualified Data.Map.NonEmpty as NEMap
-import qualified Data.Set.NonEmpty as NESet
-
 import Cardano.Ledger.Keys
     ( HasKeyRole (coerceKeyRole)
     )
@@ -34,13 +31,18 @@ import Ogmios.Data.Ledger.PredicateFailure.Shelley
     ( encodePoolFailure
     )
 
-import Cardano.Ledger.Address ()
+import Cardano.Ledger.Address
+    ()
+
 import qualified Cardano.Ledger.Api as Ledger
 import qualified Cardano.Ledger.Conway.Rules as Cn
 import qualified Cardano.Ledger.Dijkstra.Rules as Dn
+
 import qualified Data.List.NonEmpty as NE
 import qualified Data.Map as Map
+import qualified Data.Map.NonEmpty as NEMap
 import qualified Data.Set as Set
+import qualified Data.Set.NonEmpty as NESet
 
 ----------
 -- MEMPOOL

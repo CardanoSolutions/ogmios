@@ -9,11 +9,6 @@ import Ogmios.Data.Json.Prelude
 import Cardano.Ledger.Allegra.Scripts
     ( Timelock
     )
-import Cardano.Ledger.Compactible
-    ( CompactForm
-    , Compactible (..)
-    )
-import Cardano.Ledger.HKD ()
 import Cardano.Ledger.Alonzo.Plutus.TxInfo
     ( TxOutSource (..)
     )
@@ -23,6 +18,12 @@ import Cardano.Ledger.Api
 import Cardano.Ledger.Binary
     ( sizedValue
     )
+import Cardano.Ledger.Compactible
+    ( CompactForm
+    , Compactible (..)
+    )
+import Cardano.Ledger.HKD
+    ()
 import Ouroboros.Consensus.Shelley.Ledger.Block
     ( ShelleyBlock (..)
     )
@@ -43,9 +44,9 @@ import qualified Cardano.Ledger.Shelley.PParams as Sh
 
 import qualified Cardano.Ledger.Mary.Value as Ma
 
+import qualified Cardano.Ledger.Alonzo.BlockBody as Al
 import qualified Cardano.Ledger.Alonzo.PParams as Al
 import qualified Cardano.Ledger.Alonzo.Scripts as Al
-import qualified Cardano.Ledger.Alonzo.BlockBody as Al
 
 import qualified Cardano.Ledger.Babbage.Core as Ba
 import qualified Cardano.Ledger.Babbage.PParams as Ba
@@ -276,7 +277,7 @@ encodeTx (fmt, opts) x =
        <>
         "metadata" .=? OmitWhenNothing fst auxiliary
        <>
-        Alonzo.encodeWitnessSet opts (snd <$> auxiliary) Alonzo.encodeScriptPurposeIndex (x ^. Ledger.witsTxL)
+        Alonzo.encodeWitnessSet (snd <$> auxiliary) Alonzo.encodeScriptPurposeIndex (Alonzo.encodeScript opts) (x ^. Ledger.witsTxL)
        <>
         if includeTransactionCbor opts then
            "cbor" .= encodeByteStringBase16 (encodeCbor @BabbageEra x)
@@ -303,11 +304,11 @@ encodeTxBody opts x scripts =
     "references" .=? OmitWhen null
         (encodeFoldable (encodeObject . Shelley.encodeTxIn)) (Ba.btbReferenceInputs x) <>
     "outputs" .=
-        encodeFoldable (encodeObject . encodeTxOut opts . sizedValue) (Ba.btbOutputs x) <>
+        encodeFoldable (encodeObject . encodeTxOut encodeScript . sizedValue) (Ba.btbOutputs x) <>
     "collaterals" .=? OmitWhen null
         (encodeFoldable (encodeObject . Shelley.encodeTxIn)) (Ba.btbCollateral x) <>
     "collateralReturn" .=? OmitWhenNothing
-        (encodeObject . encodeTxOut opts . sizedValue) (Ba.btbCollateralReturn x) <>
+        (encodeObject . encodeTxOut encodeScript . sizedValue) (Ba.btbCollateralReturn x) <>
     "totalCollateral" .=? OmitWhenNothing
         encodeCoin (Ba.btbTotalCollateral x) <>
     "certificates" .=? OmitWhen null
@@ -333,6 +334,9 @@ encodeTxBody opts x scripts =
     "votes" .=? OmitWhen null
         (encodeList Shelley.encodeGenesisVote) votes
   where
+    encodeScript =
+        Alonzo.encodeScript opts
+
     (certs, mirs) =
         Shelley.encodeTxCerts (Ba.btbCerts x)
 
@@ -341,15 +345,13 @@ encodeTxBody opts x scripts =
 
 encodeTxOut
     :: forall era.
-        ( Ba.Script era ~ Al.AlonzoScript era
-        , Ba.Value era ~ Ma.MaryValue
-        , Ba.AlonzoEraScript era
-        , Ledger.NativeScript era ~ Timelock era
+        ( Ledger.Value era ~ Ma.MaryValue
+        , Ledger.EraScript era
         )
-    =>IncludeCbor
+    => (Ledger.Script era -> Json)
     -> Ba.BabbageTxOut era
     -> Series
-encodeTxOut opts (Ba.BabbageTxOut addr value datum script) =
+encodeTxOut encodeScript (Ba.BabbageTxOut addr value datum script) =
     "address" .=
         Shelley.encodeAddress addr <>
     "value" .=
@@ -363,7 +365,7 @@ encodeTxOut opts (Ba.BabbageTxOut addr value datum script) =
             "datum" .= Alonzo.encodeBinaryData bin
     ) <>
     "script" .=? OmitWhenNothing
-        (Alonzo.encodeScript opts) script
+        encodeScript script
 
 encodeUtxo
     :: forall era.
@@ -380,4 +382,5 @@ encodeUtxo =
     . Map.foldrWithKey (\i o -> (:) (encodeIO i o)) []
     . Sh.unUTxO
   where
-    encodeIO i o = encodeObject (Shelley.encodeTxIn i <> encodeTxOut includeAllCbor o)
+    encodeIO i o =
+        encodeObject (Shelley.encodeTxIn i <> encodeTxOut (Alonzo.encodeScript includeAllCbor) o)

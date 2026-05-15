@@ -11,20 +11,9 @@ module Ogmios.Data.Json.Dijkstra where
 import Ogmios.Data.Json.Prelude
 
 import Cardano.Ledger.Api
-    ( AsItem (..)
+    ( AlonzoEraScript (..)
+    , AsItem (..)
     , AsIx (..)
-    )
-import Cardano.Ledger.BaseTypes
-    ( BoundedRational (..)
-    , NonNegativeInterval
-    , PositiveInterval
-    , ProtVer
-    )
-import Cardano.Ledger.Compactible
-    ( fromCompact
-    )
-import Cardano.Ledger.Conway.PParams
-    ( THKD (..)
     )
 import Cardano.Ledger.HKD
     ( HKDFunctor (..)
@@ -32,42 +21,41 @@ import Cardano.Ledger.HKD
 import Cardano.Ledger.MemoBytes
     ( getMemoRawType
     )
-import Cardano.Ledger.Plutus
-    ( TxOutSource (..)
-    )
 import Ouroboros.Consensus.Shelley.Ledger.Block
     ( ShelleyBlock (..)
     )
+
+import Cardano.Ledger.Babbage.Tx
+    ()
+import Cardano.Ledger.Conway.Core
+    ()
+import Cardano.Ledger.Conway.Tx
+    ()
+import Cardano.Ledger.Dijkstra.Governance
+    ()
+import Cardano.Ledger.Dijkstra.Tx
+    ()
 import Ouroboros.Consensus.Shelley.Protocol.Praos
     ()
 
 import qualified Cardano.Ledger.Api as Ledger
-import qualified Cardano.Ledger.Binary as Binary
 import qualified Cardano.Ledger.Block as Ledger
-import qualified Cardano.Ledger.Core as Ledger.Core
+import qualified Cardano.Ledger.Core as Ledger
 import qualified Cardano.Ledger.HKD as Ledger
 
-import qualified Cardano.Ledger.Alonzo.PParams as Al
-import qualified Cardano.Ledger.Alonzo.Plutus.TxInfo as Al
 import qualified Cardano.Ledger.Alonzo.Scripts as Al
-
-import qualified Cardano.Ledger.Babbage.Core as Ba
-import qualified Cardano.Ledger.Babbage.TxBody as Ba
-import qualified Cardano.Ledger.Babbage.TxInfo as Ba
-
-import qualified Cardano.Ledger.Conway.Governance as Cn
-import qualified Cardano.Ledger.Conway.TxInfo as Cn
-
-import qualified Cardano.Ledger.Dijkstra.Governance ()
+import qualified Cardano.Ledger.Alonzo.TxWits as Al
+import qualified Cardano.Ledger.Conway.Scripts as Cn
 import qualified Cardano.Ledger.Dijkstra.PParams as Di
 import qualified Cardano.Ledger.Dijkstra.Scripts as Di
 import qualified Cardano.Ledger.Dijkstra.TxCert as Di
 import qualified Cardano.Ledger.Dijkstra.TxInfo as Di
-
 import qualified Cardano.Ledger.Shelley.UTxO as Sh
-import qualified Data.Map.Strict as Map
-import qualified Data.OMap.Strict as OMap
 
+import qualified Data.Map.Strict as Map
+
+import qualified Cardano.Ledger.Conway.TxCert as Cn
+import qualified Ogmios.Data.Json.Allegra as Allegra
 import qualified Ogmios.Data.Json.Alonzo as Alonzo
 import qualified Ogmios.Data.Json.Babbage as Babbage
 import qualified Ogmios.Data.Json.Conway as Conway
@@ -88,30 +76,30 @@ encodeBlock opts (ShelleyBlock (Ledger.Block blkHeader txs) headerHash) =
         <>
           Babbage.encodeHeader blkHeader
         <>
-          "transactions" .= encodeFoldable (encodeTx opts) (txs ^. Ledger.Core.txSeqBlockBodyL)
+          "transactions" .= encodeFoldable (encodeTx opts) (txs ^. Ledger.txSeqBlockBodyL)
         )
 
--- | Encode a Dijkstra transaction by converting to Conway via CBOR roundtrip.
--- Dijkstra and Conway share the same CBOR wire format, so this is safe.
-encodeTx
-    :: (MetadataFormat, IncludeCbor)
-    -> Ledger.Core.Tx Ledger.Core.TopTx DijkstraEra
+encodeContextError
+    :: Di.DijkstraContextError DijkstraEra
     -> Json
-encodeTx opts x =
-    case dijkstraToConwayTx x of
-        Left err -> error $ "encodeTx/Dijkstra: CBOR roundtrip failed: " <> show err
-        Right conwayTx -> Conway.encodeTx opts conwayTx
+encodeContextError = \case
+    Di.ConwayContextError err ->
+        Conway.encodeContextError humanReadablePurpose err
+    Di.PointerPresentInOutput{} ->
+        encodeText "Found outputs with pointer addresses. Those are no longer supported."
 
-dijkstraToConwayTx
-    :: Ledger.Core.Tx Ledger.Core.TopTx DijkstraEra
-    -> Either Binary.DecoderError (Ledger.Core.Tx Ledger.Core.TopTx ConwayEra)
-dijkstraToConwayTx tx =
-    let bytes = Binary.serialize (Ledger.Core.eraProtVerHigh @DijkstraEra) tx
-     in Binary.decodeFullAnnotator
-            (Ledger.Core.eraProtVerHigh @ConwayEra)
-            "Tx"
-            Binary.decCBOR
-            bytes
+encodeDelegCert
+    :: Di.DijkstraDelegCert
+    -> NonEmpty Series
+encodeDelegCert = Conway.encodeDelegCert . \case
+    Di.DijkstraRegCert credential deposit ->
+        Cn.ConwayRegCert credential (SJust deposit)
+    Di.DijkstraUnRegCert credential deposit ->
+        Cn.ConwayRegCert credential (SJust deposit)
+    Di.DijkstraDelegCert credential delegatee ->
+        Cn.ConwayDelegCert credential delegatee
+    Di.DijkstraRegDelegCert credential delegatee deposit ->
+        Cn.ConwayRegDelegCert credential delegatee deposit
 
 encodeNativeScript
     :: Di.DijkstraNativeScript DijkstraEra
@@ -142,6 +130,33 @@ encodeNativeScript ns = encodeObject (go (getMemoRawType ns))
             "clause" .= encodeText "guard" <>
             "from" .= Shelley.encodeCredentialRaw cred
 
+encodePParams :: Ledger.PParams DijkstraEra -> Json
+encodePParams (Ledger.PParams x) =
+    encodePParamsHKD (\k enc v -> k .= enc v) identity x
+
+encodePParamsHKD
+    :: forall f. (HKDFunctor f)
+    => (forall a. Text -> (a -> Json) -> Ledger.HKD f a -> Series)
+    -> (forall a. a -> Ledger.HKD f a)
+    -> Di.DijkstraPParams f DijkstraEra
+    -> Json
+encodePParamsHKD encode pure_ x =
+    Conway.encodePParamsHKD @f encode pure_ (Ledger.downgradePParamsHKD () x)
+    -- FIXME:
+    -- - override minFeeReferenceScripts now that parameters are available in
+    --   Dijkstra and no longer hard-coded.
+    --
+    -- - override maxReferenceScriptsSize -> maxRefScriptSizePerTx
+    --
+    -- - add maxRefScriptSizePerBlock
+    & encodeObject
+
+encodePParamsUpdate
+    :: Ledger.PParamsUpdate DijkstraEra
+    -> Json
+encodePParamsUpdate (Ledger.PParamsUpdate x) =
+    encodePParamsHKD (\k enc v -> k .=? OmitWhenNothing enc v) (const SNothing) x
+
 encodeScript
     :: IncludeCbor
     -> Al.AlonzoScript DijkstraEra
@@ -154,82 +169,14 @@ encodeScript opts = encodeObject . \case
             encodeNativeScript nativeScript <>
         if includeScriptCbor opts then
             "cbor" .=
-                encodeByteStringBase16 (Ledger.Core.originalBytes nativeScript)
+                encodeByteStringBase16 (Ledger.originalBytes nativeScript)
         else
             mempty
     Al.PlutusScript script ->
         "language" .=
             encodeText (Alonzo.stringifyLanguage (Al.plutusScriptLanguage script)) <>
         "cbor" .=
-            encodeByteStringBase16 (Ledger.Core.originalBytes (Al.plutusScriptBinary script))
-
-encodeTxOut
-    :: IncludeCbor
-    -> Ba.BabbageTxOut DijkstraEra
-    -> Series
-encodeTxOut opts (Ba.BabbageTxOut addr value datum script) =
-    "address" .=
-        Shelley.encodeAddress addr <>
-    "value" .=
-        Mary.encodeValue value <>
-    ( case datum of
-        Ledger.NoDatum ->
-            mempty
-        Ledger.DatumHash h ->
-            "datumHash" .= Alonzo.encodeDataHash h
-        Ledger.Datum bin ->
-            "datum" .= Alonzo.encodeBinaryData bin
-    ) <>
-    "script" .=? OmitWhenNothing
-        (encodeScript opts) script
-
-encodeDelegCert
-    :: Di.DijkstraDelegCert
-    -> NonEmpty Series
-encodeDelegCert = \case
-    Di.DijkstraRegCert credential deposit ->
-        ( "type" .=
-            encodeText "stakeCredentialRegistration"
-       <> "credential" `Shelley.encodeCredential` credential
-       <> "deposit" .=
-            encodeCoin deposit
-        ) :| []
-    Di.DijkstraUnRegCert credential deposit ->
-        ( "type" .=
-            encodeText "stakeCredentialDeregistration"
-        <> "credential" `Shelley.encodeCredential` credential
-        <> "deposit" .=
-            encodeCoin deposit
-        ) :| []
-    Di.DijkstraDelegCert credential delegatee ->
-        ( "type" .=
-            encodeText "stakeDelegation"
-        <> "credential" `Shelley.encodeCredential` credential
-        <> Conway.encodeDelegatee delegatee
-        ) :| []
-    Di.DijkstraRegDelegCert credential delegatee deposit ->
-        ( "type" .=
-            encodeText "stakeCredentialRegistration"
-       <> "credential" `Shelley.encodeCredential` credential
-       <> "deposit" .=
-            encodeCoin deposit
-        ) :|
-        [ "type" .=
-            encodeText "stakeDelegation"
-       <> "credential" `Shelley.encodeCredential` credential
-       <> Conway.encodeDelegatee delegatee
-        ]
-
-encodeTxCert
-    :: Di.DijkstraTxCert DijkstraEra
-    -> NonEmpty Series
-encodeTxCert = \case
-    Di.DijkstraTxCertDeleg dCert ->
-        encodeDelegCert dCert
-    Di.DijkstraTxCertPool pCert ->
-        Shelley.encodePoolCert pCert :| []
-    Di.DijkstraTxCertGov cCert ->
-        Conway.encodeConwayGovCert cCert :| []
+            encodeByteStringBase16 (Ledger.originalBytes (Al.plutusScriptBinary script))
 
 encodeScriptPurposeIndex
     :: Di.DijkstraPlutusPurpose AsIx DijkstraEra
@@ -271,292 +218,143 @@ encodeScriptPurposeItem
     :: Di.DijkstraPlutusPurpose AsItem DijkstraEra
     -> Json
 encodeScriptPurposeItem = encodeObject . \case
-    Di.DijkstraSpending (AsItem txIn) ->
-        "purpose" .= encodeText "spend" <>
-        "outputReference" .= encodeObject (Shelley.encodeTxIn txIn)
-    Di.DijkstraMinting (AsItem policyId) ->
-        "purpose" .= encodeText "mint" <>
-        "policy" .= Mary.encodePolicyId policyId
-    Di.DijkstraRewarding (AsItem acct) ->
-        "purpose" .= encodeText "withdraw" <>
-        "rewardAccount" .= Shelley.encodeRewardAcnt acct
-    Di.DijkstraVoting (AsItem voter) ->
-        "purpose" .= encodeText "vote" <>
-        "issuer" .= Conway.encodeVoter voter
-    Di.DijkstraProposing (AsItem proposal) ->
-        "purpose" .= encodeText "propose" <>
-        "proposal" .= encodeObject (encodeProposalProcedure proposal)
-    Di.DijkstraCertifying (AsItem cert) ->
-        case encodeTxCert cert of
-            c :| [] ->
-                "purpose" .= encodeText "publish" <>
-                "certificate" .= encodeObject c
-            _ :| (c : _) ->
-                "purpose" .= encodeText "publish" <>
-                "certificate" .= encodeObject c
+    Di.DijkstraSpending (Cn.ConwaySpending -> item) -> asPreviousEra item
+    Di.DijkstraMinting (Cn.ConwayMinting -> item) -> asPreviousEra item
+    Di.DijkstraRewarding (Cn.ConwayRewarding -> item) -> asPreviousEra item
+    Di.DijkstraVoting (Cn.ConwayVoting -> item) -> asPreviousEra item
+    Di.DijkstraProposing (Cn.ConwayProposing -> item) -> asPreviousEra item
+    Di.DijkstraCertifying (Cn.ConwayCertifying -> item) -> asPreviousEra item
     Di.DijkstraGuarding (AsItem scriptHash) ->
         "purpose" .= encodeText "guard" <>
         "script" .= Shelley.encodeScriptHash scriptHash
+  where
+    asPreviousEra = Conway.encodeScriptPurposeItem encodeTxCert encodePParamsUpdate
 
-encodeProposalProcedure
-    :: Cn.ProposalProcedure DijkstraEra
+encodeTx
+    :: (MetadataFormat, IncludeCbor)
+    -> Ledger.Tx Ledger.TopTx DijkstraEra
+    -> Json
+encodeTx (fmt, opts) x =
+    encodeObject
+        ( Shelley.encodeTxId (Ledger.txIdTxBody @DijkstraEra (x ^. Ledger.bodyTxL))
+       <>
+        "spends" .= Alonzo.encodeIsValid (x ^. Ledger.isValidTxL)
+       <>
+        encodeTxBody opts (x ^. Ledger.bodyTxL) (strictMaybe mempty (Map.keys . snd) auxiliary)
+       <>
+        "metadata" .=? OmitWhenNothing fst auxiliary
+       <>
+        Alonzo.encodeWitnessSet (snd <$> auxiliary) encodeScriptPurposeIndex (encodeScript opts) (x ^. Ledger.witsTxL)
+       <>
+        if includeTransactionCbor opts then
+           "cbor" .= encodeByteStringBase16 (encodeCbor @ConwayEra x)
+        else
+           mempty
+        )
+  where
+    auxiliary = do
+        hash <- Shelley.encodeAuxiliaryDataHash . Ledger.hashTxAuxData <$> (x ^. Ledger.auxDataTxL)
+        (labels, scripts) <- Alonzo.encodeAuxiliaryData (fmt, opts) <$> x ^. Ledger.auxDataTxL
+        pure
+            ( encodeObject ("hash" .= hash <> "labels" .= labels)
+            , scripts
+            )
+
+encodeTxBody
+    :: IncludeCbor
+    -> Ledger.TxBody Ledger.TopTx DijkstraEra
+    -> [Ledger.ScriptHash]
     -> Series
-encodeProposalProcedure x =
-      "deposit" .=
-        encodeCoin (Cn.pProcDeposit x)
-   <> "returnAccount" .=
-        Shelley.encodeRewardAcnt (Cn.pProcReturnAddr x)
-   <> "metadata" .=
-        Conway.encodeAnchor (Cn.pProcAnchor x)
-   <> "action" .=
-        encodeGovAction (Cn.pProcGovAction x)
-
-encodeGovAction
-    :: Cn.GovAction DijkstraEra
-    -> Json
-encodeGovAction = \case
-    Cn.ParameterChange ancestor pparamsUpdate guardrails ->
-        encodeObject
-            ( "type" .=
-                encodeText "protocolParametersUpdate"
-           <> "ancestor" .=? OmitWhenNothing
-                (Conway.encodeGovActionId . Cn.unGovPurposeId) ancestor
-           <> "parameters" .=
-                encodePParamsUpdate pparamsUpdate
-           <> "guardrails" .=
-                encodeStrictMaybe (\s -> encodeObject ("hash" .= Shelley.encodeScriptHash s)) guardrails
-            )
-    Cn.HardForkInitiation ancestor version ->
-        encodeObject
-            ( "type" .=
-                encodeText "hardForkInitiation"
-           <> "ancestor" .=? OmitWhenNothing
-               (Conway.encodeGovActionId . Cn.unGovPurposeId) ancestor
-           <> "version" .=
-                Shelley.encodeProtVer version
-            )
-    Cn.TreasuryWithdrawals withdrawals guardrails ->
-        encodeObject
-            ( "type" .=
-                encodeText "treasuryWithdrawals"
-           <> "withdrawals" .=
-                encodeMap Shelley.stringifyRewardAcnt encodeCoin withdrawals
-           <> "guardrails" .=
-                encodeStrictMaybe (\s -> encodeObject ("hash" .= Shelley.encodeScriptHash s)) guardrails
-            )
-    Cn.UpdateCommittee ancestor removed added quorum ->
-        encodeObject
-            ( "type" .=
-                encodeText "constitutionalCommittee"
-           <> "ancestor" .=? OmitWhenNothing
-                (Conway.encodeGovActionId . Cn.unGovPurposeId) ancestor
-           <> "members" .= encodeObject
-                ( "added" .=
-                    encodeMapAsList (\k -> Conway.encodeConstitutionalCommitteeMember k . SJust) added
-               <> "removed" .=
-                    encodeFoldable (`Conway.encodeConstitutionalCommitteeMember` SNothing) removed
-                )
-           <> "quorum" .=
-                encodeUnitInterval quorum
-            )
-    Cn.NewConstitution ancestor constitution ->
-        encodeObject
-            ( "type" .=
-                encodeText "constitution"
-           <> "ancestor" .=? OmitWhenNothing
-               (Conway.encodeGovActionId . Cn.unGovPurposeId) ancestor
-           <> Conway.encodeConstitution constitution
-            )
-    Cn.NoConfidence ancestor ->
-        encodeObject
-            ( "type" .=
-                encodeText "noConfidence"
-           <> "ancestor" .=? OmitWhenNothing
-                (Conway.encodeGovActionId . Cn.unGovPurposeId) ancestor
-            )
-    Cn.InfoAction ->
-        encodeObject
-            ( "type" .=
-                encodeText "information"
-            )
-
-encodePParamsUpdate
-    :: Ledger.Core.PParamsUpdate DijkstraEra
-    -> Json
-encodePParamsUpdate (Ledger.Core.PParamsUpdate x) =
-    encodePParamsHKD (\k enc v -> k .=? OmitWhenNothing enc v) (const SNothing) x
-
-encodePParamsHKD
-    :: forall f era. (HKDFunctor f)
-    => (forall a. Text -> (a -> Json) -> Ledger.HKD f a -> Series)
-    -> (forall a. a -> Ledger.HKD f a)
-    -> Di.DijkstraPParams f era
-    -> Json
-encodePParamsHKD encode pure_ x =
-    encode "minFeeCoefficient"
-        (encodeInteger . unCoin . fromCompact . Ba.unCoinPerByte) (unTHKD (Di.dppTxFeePerByte x)) <>
-    encode "minFeeConstant"
-        (encodeCoin . fromCompact) (unTHKD (Di.dppTxFeeFixed x)) <>
-    encode "minFeeReferenceScripts"
-        (\(base :: NonNegativeInterval) -> encodeObject
-            ( "base" .= encodeDouble (fromRational (unboundRational base))
+encodeTxBody opts x scripts =
+    "inputs" .=
+        encodeFoldable (encodeObject . Shelley.encodeTxIn) (x ^. Ledger.inputsTxBodyL) <>
+    "references" .=? OmitWhen null
+        (encodeFoldable (encodeObject . Shelley.encodeTxIn)) (x ^. Ledger.referenceInputsTxBodyL) <>
+    "outputs" .=
+        encodeFoldable (encodeObject . Babbage.encodeTxOut (encodeScript opts)) (x ^. Ledger.outputsTxBodyL) <>
+    "collaterals" .=? OmitWhen null
+        (encodeFoldable (encodeObject . Shelley.encodeTxIn)) (x ^. Ledger.collateralInputsTxBodyL) <>
+    "collateralReturn" .=? OmitWhenNothing
+        (encodeObject . Babbage.encodeTxOut (encodeScript opts)) (x ^. Ledger.collateralReturnTxBodyL) <>
+    "totalCollateral" .=? OmitWhenNothing
+        encodeCoin (x ^. Ledger.totalCollateralTxBodyL) <>
+    "certificates" .=? OmitWhen null
+        (encodeConcatNonEmptyFoldable (fmap encodeObject . encodeTxCert)) (x ^. Ledger.certsTxBodyL) <>
+    "withdrawals" .=? OmitWhen (null . Ledger.unWithdrawals)
+        Shelley.encodeWdrl (x ^. Ledger.withdrawalsTxBodyL) <>
+    "mint" .=? OmitWhen (== mempty)
+        (encodeObject . Mary.encodeMultiAsset) (x ^. Ledger.mintTxBodyL) <>
+-- FIXME: guards vs required signers
+--
+-- Seems like the notion of required signers is replaced in Dijkstra with
+-- that of 'guards'. See how we can possibly map that concept to
+-- requiredExtraSignatories to not break the API.
+--    "requiredExtraSignatories" .=? OmitWhen null
+--        (encodeFoldable Shelley.encodeKeyHash) (x ^. Ledger.reqSignerHashesTxBodyL) <>
+    "requiredExtraScripts" .=? OmitWhen null
+        (encodeFoldable Shelley.encodeScriptHash) scripts <>
+    "network" .=? OmitWhenNothing
+        Shelley.encodeNetwork (x ^. Ledger.networkIdTxBodyL) <>
+    "scriptIntegrityHash" .=? OmitWhenNothing
+        Alonzo.encodeScriptIntegrityHash (x ^. Ledger.scriptIntegrityHashTxBodyL) <>
+    "fee" .=
+        encodeCoin (x ^. Ledger.feeTxBodyL) <>
+    "validityInterval" .=
+        Allegra.encodeValidityInterval (x ^. Ledger.vldtTxBodyL) <>
+    "proposals" .=? OmitWhen null
+        (encodeFoldable (encodeObject . Conway.encodeProposalProcedure encodePParamsUpdate))
+        (x ^. Ledger.proposalProceduresTxBodyL) <>
+    "votes" .=? OmitWhen (null . Ledger.unVotingProcedures)
+        Conway.encodeVotingProcedures
+        (x ^. Ledger.votingProceduresTxBodyL) <>
+    "treasury" .=? OmitWhen (\_ -> isSNothing treasuryValue && treasuryDonation == mempty)
+        identity
+        (encodeObject
+            ( "value" .=? OmitWhenNothing
+                encodeCoin treasuryValue
+           <> "donation" .=? OmitWhen (== mempty)
+                encodeCoin treasuryDonation
             )
         )
-        (unTHKD (Di.dppMinFeeRefScriptCostPerByte x)) <>
-    encode "refScriptCostStride"
-        (encodeNonZero encodeWord32)
-        (unTHKD (Di.dppRefScriptCostStride x)) <>
-    encode "refScriptCostMultiplier"
-        (\(v :: PositiveInterval) -> encodeRational (unboundRational v))
-        (unTHKD (Di.dppRefScriptCostMultiplier x)) <>
-    encode "maxBlockBodySize"
-        (encodeSingleton "bytes" . encodeWord32) (unTHKD (Di.dppMaxBBSize x)) <>
-    encode "maxBlockHeaderSize"
-        (encodeSingleton "bytes" . encodeWord16) (unTHKD (Di.dppMaxBHSize x)) <>
-    encode "maxTransactionSize"
-        (encodeSingleton "bytes" . encodeWord32) (unTHKD (Di.dppMaxTxSize x)) <>
-    encode "maxReferenceScriptSizePerBlock"
-        (encodeSingleton "bytes" . encodeWord32) (unTHKD (Di.dppMaxRefScriptSizePerBlock x)) <>
-    encode "maxReferenceScriptSizePerTx"
-        (encodeSingleton "bytes" . encodeWord32) (unTHKD (Di.dppMaxRefScriptSizePerTx x)) <>
-    encode "stakeCredentialDeposit"
-        (encodeCoin . fromCompact) (unTHKD (Di.dppKeyDeposit x)) <>
-    encode "stakePoolDeposit"
-        (encodeCoin . fromCompact) (unTHKD (Di.dppPoolDeposit x)) <>
-    encode "stakePoolRetirementEpochBound"
-        encodeEpochInterval (unTHKD (Di.dppEMax x)) <>
-    encode "desiredNumberOfStakePools"
-        encodeWord16 (unTHKD (Di.dppNOpt x)) <>
-    encode "stakePoolPledgeInfluence"
-        encodeNonNegativeInterval (unTHKD (Di.dppA0 x)) <>
-    encode "monetaryExpansion"
-        encodeUnitInterval (unTHKD (Di.dppRho x)) <>
-    encode "treasuryExpansion"
-        encodeUnitInterval (unTHKD (Di.dppTau x)) <>
-    encode "minStakePoolCost"
-        (encodeCoin . fromCompact) (unTHKD (Di.dppMinPoolCost x)) <>
-    encode "minUtxoDepositConstant"
-        encodeCoin (pure_ (Coin 0)) <>
-    encode "minUtxoDepositCoefficient"
-        (encodeInteger . unCoin . fromCompact . Ba.unCoinPerByte) (unTHKD (Di.dppCoinsPerUTxOByte x)) <>
-    encode "plutusCostModels"
-        Alonzo.encodeCostModels (unTHKD (Di.dppCostModels x)) <>
-    encode "scriptExecutionPrices"
-        Alonzo.encodePrices (unTHKD (Di.dppPrices x)) <>
-    encode "maxExecutionUnitsPerTransaction"
-        (Alonzo.encodeExUnits . Al.unOrdExUnits) (unTHKD (Di.dppMaxTxExUnits x)) <>
-    encode "maxExecutionUnitsPerBlock"
-        (Alonzo.encodeExUnits . Al.unOrdExUnits) (unTHKD (Di.dppMaxBlockExUnits x)) <>
-    encode "maxValueSize"
-        (encodeSingleton "bytes" . encodeWord32) (unTHKD (Di.dppMaxValSize x)) <>
-    encode "collateralPercentage"
-        encodeWord16 (unTHKD (Di.dppCollateralPercentage x)) <>
-    encode "maxCollateralInputs"
-        encodeWord16 (unTHKD (Di.dppMaxCollateralInputs x)) <>
-    encode "version"
-        Shelley.encodeProtVer (fromNoUpdate @f @ProtVer (Di.dppProtocolVersion x)) <>
-    encode "stakePoolVotingThresholds"
-        Conway.encodePoolVotingThresholds (unTHKD (Di.dppPoolVotingThresholds x)) <>
-    encode "delegateRepresentativeVotingThresholds"
-        Conway.encodeDRepVotingThresholds (unTHKD (Di.dppDRepVotingThresholds x)) <>
-    encode "constitutionalCommitteeMinSize"
-        encodeWord16 (unTHKD (Di.dppCommitteeMinSize x)) <>
-    encode "constitutionalCommitteeMaxTermLength"
-        encodeEpochInterval (unTHKD (Di.dppCommitteeMaxTermLength x)) <>
-    encode "governanceActionLifetime"
-        encodeEpochInterval (unTHKD (Di.dppGovActionLifetime x)) <>
-    encode "governanceActionDeposit"
-        (encodeCoin . fromCompact) (unTHKD (Di.dppGovActionDeposit x)) <>
-    encode "delegateRepresentativeDeposit"
-        (encodeCoin . fromCompact) (unTHKD (Di.dppDRepDeposit x)) <>
-    encode "delegateRepresentativeMaxIdleTime"
-        encodeEpochInterval (unTHKD (Di.dppDRepActivity x))
-    & encodeObject
+  -- FIXME: additional Dijkstra fields
+  --
+  -- - RequiredTopLevelGuards
+  -- - DirectDeposits
+  -- - AccountBalanceIntervals
+  where
+    treasuryValue =
+        x ^. Ledger.currentTreasuryValueTxBodyL
 
-encodeConwayContextError
-    :: Cn.ConwayContextError DijkstraEra
-    -> Json
-encodeConwayContextError err = encodeText $ case err of
-    Cn.CertificateNotSupported{} ->
-        "A certificate in the transaction isn't supported in neither plutus:v1 nor plutus:v2. Use plutus:v3 or higher."
-    Cn.PlutusPurposeNotSupported{} ->
-        "A script purpose in the transaction isn't supported in neither plutus:v1 nor plutus:v2. Use plutus:v3 or higher."
-    Cn.CurrentTreasuryFieldNotSupported{} ->
-        "Unsupported field in transaction: 'treasury'. Use plutus:v3 or higher, or remove this field."
-    Cn.VotingProceduresFieldNotSupported{} ->
-        "Unsupported field in transaction: 'votes'. Use plutus:v3 or higher, or remove this field."
-    Cn.ProposalProceduresFieldNotSupported{} ->
-        "Unsupported field in transaction: 'proposals'. Use plutus:v3 or higher, or remove this field."
-    Cn.TreasuryDonationFieldNotSupported{} ->
-        "Unsupported field in transaction: 'donation'. Use plutus:v3 or higher, or remove this field."
-    Cn.BabbageContextError (Ba.ByronTxOutInContext TxOutFromInput{}) ->
-        "Found inputs locked by a (legacy) Byron/Bootstrap address. Don't use those."
-    Cn.BabbageContextError (Ba.ByronTxOutInContext TxOutFromOutput{}) ->
-        "Found outputs to a (legacy) Byron/Bootstrap address. Don't use those."
-    Cn.BabbageContextError (Ba.InlineDatumsNotSupported{}) ->
-       "Inline datums not supported in plutus:v1. Use plutus:v2 or higher."
-    Cn.BabbageContextError (Ba.ReferenceScriptsNotSupported{}) ->
-       "Reference scripts not supported in plutus:v1. Use plutus:v2 or higher."
-    Cn.BabbageContextError (Ba.ReferenceInputsNotSupported{}) ->
-       "Reference inputs not supported in plutus:v1. Use plutus:v2 or higher."
-    Cn.BabbageContextError (Ba.RedeemerPointerPointsToNothing purpose) ->
-        let (title, ptr) =
-                case purpose of
-                    Di.DijkstraSpending (AsIx ix) -> ("spending input", ix)
-                    Di.DijkstraMinting (AsIx ix) -> ("minting policy", ix)
-                    Di.DijkstraCertifying (AsIx ix) -> ("publishing certificate", ix)
-                    Di.DijkstraRewarding (AsIx ix) -> ("withdrawing from account", ix)
-                    Di.DijkstraVoting (AsIx ix) -> ("voting as voter", ix)
-                    Di.DijkstraProposing (AsIx ix) -> ("proposing governance proposal", ix)
-                    Di.DijkstraGuarding (AsIx ix) -> ("guarding script", ix)
-          in "Couldn't find corresponding redeemer for " <> title <> " #" <> show ptr <> ". Verify your transaction's construction."
-    Cn.BabbageContextError (Ba.AlonzoContextError (Al.TimeTranslationPastHorizon e)) ->
-        "Uncomputable slot arithmetic; transaction's validity bounds go beyond the foreseeable end of the current era: " <> e
-    Cn.BabbageContextError (Ba.AlonzoContextError (Al.TranslationLogicMissingInput i)) ->
-        "Unknown transaction input (missing from UTxO set): " <> Shelley.stringifyTxIn i
-    Cn.ReferenceInputsNotDisjointFromInputs{} ->
-        "Reference inputs overlap with regular inputs. They must be disjoint."
+    treasuryDonation =
+        x ^. Ledger.treasuryDonationTxBodyL
 
-encodeContextError
-    :: Di.DijkstraContextError DijkstraEra
-    -> Json
-encodeContextError = \case
-    Di.ConwayContextError err ->
-        encodeConwayContextError err
-    Di.PointerPresentInOutput{} ->
-        encodeText "Found outputs with pointer addresses. Those are no longer supported."
-
-encodePParams :: Ledger.Core.PParams DijkstraEra -> Json
-encodePParams (Ledger.Core.PParams x) =
-    encodePParamsHKD (\k enc v -> k .= enc v) identity x
+encodeTxCert
+    :: Di.DijkstraTxCert DijkstraEra
+    -> NonEmpty Series
+encodeTxCert = \case
+    Di.DijkstraTxCertDeleg dCert ->
+        encodeDelegCert dCert
+    Di.DijkstraTxCertPool pCert ->
+        Shelley.encodePoolCert pCert :| []
+    Di.DijkstraTxCertGov cCert ->
+        Conway.encodeConwayGovCert cCert :| []
 
 encodeUtxo :: Sh.UTxO DijkstraEra -> Json
 encodeUtxo =
     encodeList id
-    . Map.foldrWithKey (\i o -> (:) (encodeObject (Shelley.encodeTxIn i <> encodeTxOut includeAllCbor o))) []
+    . Map.foldrWithKey (\i o -> (:) (encodeObject (Shelley.encodeTxIn i <> encodeTxOut o))) []
     . Sh.unUTxO
+  where
+    encodeTxOut = Babbage.encodeTxOut (encodeScript includeAllCbor)
 
-encodeGovActionState :: Cn.GovActionState DijkstraEra -> Json
-encodeGovActionState st =
-      "proposal" .= Conway.encodeGovActionId (Cn.gasId st)
-   <> encodeProposalProcedure (Cn.gasProposalProcedure st)
-   <> "since" .= (encodeSingleton "epoch" . encodeEpochNo) (Cn.gasProposedIn st)
-   <> "until" .= (encodeSingleton "epoch" . encodeEpochNo) (Cn.gasExpiresAfter st)
-   <> "votes" .= encodeMapAsList
-        (\issuer vote -> encodeObject
-            ( "issuer" .= Conway.encodeVoter issuer
-           <> "vote" .= Conway.encodeVote vote
-            )
-        )
-        (mconcat
-            [ Map.mapKeys Cn.CommitteeVoter (Cn.gasCommitteeVotes st)
-            , Map.mapKeys Cn.DRepVoter (Cn.gasDRepVotes st)
-            , Map.mapKeys Cn.StakePoolVoter (Cn.gasStakePoolVotes st)
-            ]
-        )
-    & encodeObject
-
-govProposals
-    :: Ledger.GovState DijkstraEra
-    -> OMap.OMap Cn.GovActionId (Cn.GovActionState DijkstraEra)
-govProposals = view Cn.pPropsL . Cn.cgsProposals
+humanReadablePurpose
+    :: PlutusPurpose AsIx DijkstraEra
+    -> (Text, Word32)
+humanReadablePurpose = \case
+    Di.DijkstraSpending ix -> Conway.humanReadablePurpose (Cn.ConwaySpending ix)
+    Di.DijkstraMinting ix -> Conway.humanReadablePurpose (Cn.ConwayMinting ix)
+    Di.DijkstraCertifying (AsIx ix) -> Conway.humanReadablePurpose (Cn.ConwayCertifying (AsIx ix))
+    Di.DijkstraRewarding ix -> Conway.humanReadablePurpose (Cn.ConwayRewarding ix)
+    Di.DijkstraVoting ix -> Conway.humanReadablePurpose (Cn.ConwayVoting ix)
+    Di.DijkstraProposing (AsIx ix) -> Conway.humanReadablePurpose (Cn.ConwayProposing (AsIx ix))
+    Di.DijkstraGuarding (AsIx ix) -> ("guarding script", ix)

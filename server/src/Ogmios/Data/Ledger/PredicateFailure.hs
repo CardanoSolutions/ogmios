@@ -41,6 +41,9 @@ module Ogmios.Data.Ledger.PredicateFailure
 
 import Ogmios.Prelude
 
+import Cardano.Crypto.Hash
+    ( Hash
+    )
 import Cardano.Ledger.Address
     ( AccountAddress
     , Addr (..)
@@ -83,9 +86,6 @@ import Cardano.Ledger.Hashes
     ( DataHash
     , ScriptHash (..)
     , TxAuxDataHash
-    )
-import Cardano.Crypto.Hash
-    ( Hash
     )
 import Cardano.Ledger.Keys
     ( KeyHash (..)

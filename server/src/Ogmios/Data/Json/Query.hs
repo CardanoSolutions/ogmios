@@ -107,7 +107,9 @@ module Ogmios.Data.Json.Query
 
 import Ogmios.Data.Json.Prelude
 
-import Cardano.Ledger.Compactible (fromCompact)
+import Cardano.Ledger.Compactible
+    ( fromCompact
+    )
 
 import Cardano.Crypto.Hash
     ( hashFromBytes
@@ -156,7 +158,8 @@ import Cardano.Ledger.Keys
 import Cardano.Ledger.Shelley.Genesis
     ( ShelleyGenesis
     )
-import Cardano.Ledger.Shelley.LedgerState ()
+import Cardano.Ledger.Shelley.LedgerState
+    ()
 import Cardano.Ledger.Shelley.Rewards
     ( StakeShare (..)
     )
@@ -301,6 +304,8 @@ import qualified PlutusLedgerApi.Common as Plutus
 import qualified Cardano.Ledger.Address as Ledger
 import qualified Cardano.Ledger.Allegra.Scripts as Ledger.Allegra
 import qualified Cardano.Ledger.Alonzo.Scripts as Ledger.Alonzo
+import Cardano.Ledger.Api
+    ()
 import qualified Cardano.Ledger.Babbage.TxBody as Ledger.Babbage
 import qualified Cardano.Ledger.BaseTypes as Ledger
 import qualified Cardano.Ledger.Coin as Ledger
@@ -312,7 +317,6 @@ import qualified Cardano.Ledger.Hashes as Ledger
 import qualified Cardano.Ledger.Mary.Value as Ledger.Mary
 import qualified Cardano.Ledger.Plutus.Data as Ledger.Plutus
 import qualified Cardano.Ledger.Plutus.Language as Ledger.Plutus
-import Cardano.Ledger.Api ()
 import qualified Cardano.Ledger.Shelley.Scripts as Ledger.Shelley
 import qualified Cardano.Ledger.State as Ledger
 import qualified Cardano.Ledger.TxIn as Ledger
@@ -339,6 +343,9 @@ import qualified Ogmios.Data.Json.Shelley as Shelley
 -- import qualified Cardano.Ledger.PoolDistr as Ledger
 -- import qualified Cardano.Ledger.Api.State.Query as Ledger
 import qualified Cardano.Protocol.TPraos.Rules.Tickn as TPraos
+import Data.OMap.Strict
+    ( OMap
+    )
 import qualified Ouroboros.Consensus.Shelley.Ledger.Query.Types as Consensus
 
 
@@ -620,11 +627,12 @@ encodeEraSummary x =
             SNothing
 
 encodeGovActionState
-    :: GovActionState ConwayEra
+    :: (Ledger.PParamsUpdate era -> Json)
+    -> GovActionState era
     -> Json
-encodeGovActionState st =
+encodeGovActionState encodePParamsUpdateInEra st =
       "proposal" .= Conway.encodeGovActionId (gasId st)
-   <> Conway.encodeProposalProcedure (gasProposalProcedure st)
+   <> Conway.encodeProposalProcedure encodePParamsUpdateInEra (gasProposalProcedure st)
    <> "since" .= (encodeSingleton "epoch" . encodeEpochNo) (gasProposedIn st)
    <> "until" .= (encodeSingleton "epoch" . encodeEpochNo) (gasExpiresAfter st)
    <> "votes" .= encodeMapAsList
@@ -1727,21 +1735,12 @@ parseQueryLedgerGovernanceProposals genResultInEra =
             SomeShelleyEra ShelleyBasedEraConway ->
                 Just $ SomeStandardQuery
                     (LSQ.BlockQuery $ QueryIfCurrentConway GetGovState)
-                    (eraMismatchOrResult
-                        (encodeFoldable encodeGovActionState
-                            . view Ledger.Conway.pPropsL
-                            . Ledger.Conway.cgsProposals
-                        )
-                    )
+                    (eraMismatchOrResult (encodeFoldable (encodeGovActionState Conway.encodePParamsUpdate) . govProposals))
                     (genResultInEra (Proxy @ConwayEra))
             SomeShelleyEra ShelleyBasedEraDijkstra ->
                 Just $ SomeStandardQuery
                     (LSQ.BlockQuery $ QueryIfCurrentDijkstra GetGovState)
-                    (eraMismatchOrResult
-                        (encodeFoldable Dijkstra.encodeGovActionState
-                            . Dijkstra.govProposals
-                        )
-                    )
+                    (eraMismatchOrResult (encodeFoldable (encodeGovActionState Dijkstra.encodePParamsUpdate) . govProposals))
                     (genResultInEra (Proxy @DijkstraEra))
 
 parseQueryLedgerGovernanceProposalsByProposalReference
@@ -1768,11 +1767,10 @@ parseQueryLedgerGovernanceProposalsByProposalReference genResultInEra =
                 Just $ SomeStandardQuery
                     (LSQ.BlockQuery $ QueryIfCurrentConway GetGovState)
                     (eraMismatchOrResult
-                        (encodeFoldable encodeGovActionState
+                        (encodeFoldable (encodeGovActionState Conway.encodePParamsUpdate)
                             . (`Map.restrictKeys` ks)
                             . OMap.toMap
-                            . view Ledger.Conway.pPropsL
-                            . Ledger.Conway.cgsProposals
+                            . govProposals
                         )
                     )
                     (genResultInEra (Proxy @ConwayEra))
@@ -1780,10 +1778,10 @@ parseQueryLedgerGovernanceProposalsByProposalReference genResultInEra =
                 Just $ SomeStandardQuery
                     (LSQ.BlockQuery $ QueryIfCurrentDijkstra GetGovState)
                     (eraMismatchOrResult
-                        (encodeFoldable Dijkstra.encodeGovActionState
+                        (encodeFoldable (encodeGovActionState Dijkstra.encodePParamsUpdate)
                             . (`Map.restrictKeys` ks)
                             . OMap.toMap
-                            . Dijkstra.govProposals
+                            . govProposals
                         )
                     )
                     (genResultInEra (Proxy @DijkstraEra))
@@ -2924,3 +2922,6 @@ decodeBech32
     -> Json.Parser (Bech32.HumanReadablePart, Bech32.DataPart)
 decodeBech32 =
     either (fail . show) pure . Bech32.decodeLenient . decodeUtf8
+
+govProposals :: forall era. Ledger.ConwayGovState era -> OMap Ledger.GovActionId (GovActionState era)
+govProposals = view Ledger.Conway.pPropsL . view Ledger.cgsProposalsL

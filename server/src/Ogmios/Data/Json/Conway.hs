@@ -7,10 +7,6 @@ module Ogmios.Data.Json.Conway where
 
 import Ogmios.Data.Json.Prelude
 
-import Cardano.Ledger.Compactible
-    ( fromCompact
-    )
-
 import Cardano.Ledger.Api
     ( AsItem (..)
     , AsIx (..)
@@ -25,6 +21,9 @@ import Cardano.Ledger.BaseTypes
 import Cardano.Ledger.Binary
     ( sizedValue
     )
+import Cardano.Ledger.Compactible
+    ( fromCompact
+    )
 import Cardano.Ledger.Conway.PParams
     ( THKD (..)
     )
@@ -37,13 +36,19 @@ import Cardano.Ledger.HKD
 import Cardano.Ledger.Keys
     ( KeyRole (..)
     )
+import Cardano.Ledger.Plutus
+    ( TxOutSource (..)
+    )
 import Ouroboros.Consensus.Shelley.Ledger.Block
     ( ShelleyBlock (..)
     )
+
+import Cardano.Ledger.Babbage.Tx
+    ()
+import Cardano.Ledger.Conway.Tx
+    ()
 import Ouroboros.Consensus.Shelley.Protocol.Praos
     ()
-
-import qualified Data.Map as Map
 
 import qualified Cardano.Ledger.Api as Ledger
 import qualified Cardano.Ledger.Block as Ledger
@@ -52,30 +57,24 @@ import qualified Cardano.Ledger.Credential as Ledger
 import qualified Cardano.Ledger.DRep as Ledger
 import qualified Cardano.Ledger.HKD as Ledger
 
-import qualified Cardano.Ledger.Shelley.PParams as Sh
-
-import qualified Cardano.Ledger.Alonzo.PParams as Al
 import qualified Cardano.Ledger.Alonzo.BlockBody as Al
-
+import qualified Cardano.Ledger.Alonzo.Plutus.TxInfo as Al
+import qualified Cardano.Ledger.Alonzo.PParams as Al
+import qualified Cardano.Ledger.Alonzo.Scripts as Al
+import qualified Cardano.Ledger.Api.State.Query as Cn
 import qualified Cardano.Ledger.Babbage.Core as Ba
-import Cardano.Ledger.Babbage.Tx ()
-
+import qualified Cardano.Ledger.Babbage.TxInfo as Ba
 import qualified Cardano.Ledger.Conway.Genesis as Cn
 import qualified Cardano.Ledger.Conway.Governance as Cn
 import qualified Cardano.Ledger.Conway.PParams as Cn
-import Cardano.Ledger.Conway.Tx ()
+import qualified Cardano.Ledger.Conway.Scripts as Cn
 import qualified Cardano.Ledger.Conway.TxBody as Cn
 import qualified Cardano.Ledger.Conway.TxCert as Cn
-
-import qualified Cardano.Ledger.Alonzo.Plutus.TxInfo as Al
-import qualified Cardano.Ledger.Alonzo.Scripts as Al
-import qualified Cardano.Ledger.Api.State.Query as Cn
-import qualified Cardano.Ledger.Babbage.TxInfo as Ba
-import qualified Cardano.Ledger.Conway.Scripts as Cn
 import qualified Cardano.Ledger.Conway.TxInfo as Cn
-import Cardano.Ledger.Plutus
-    ( TxOutSource (..)
-    )
+import qualified Cardano.Ledger.Shelley.PParams as Sh
+
+import qualified Data.Map as Map
+
 import qualified Ogmios.Data.Json.Allegra as Allegra
 import qualified Ogmios.Data.Json.Alonzo as Alonzo
 import qualified Ogmios.Data.Json.Babbage as Babbage
@@ -200,11 +199,10 @@ encodeNextEpochChange = fmap encodeObject . \case
             )
 
 encodeContextError
-    :: ( PlutusPurpose AsIx era ~ Cn.ConwayPlutusPurpose AsIx era
-       )
-    => Cn.ConwayContextError era
+    :: (PlutusPurpose AsIx era -> (Text, Word32))
+    -> Cn.ConwayContextError era
     -> Json
-encodeContextError err = encodeText $ case err of
+encodeContextError humanReadablePurposeInEra err = encodeText $ case err of
     Cn.CertificateNotSupported{} ->
         "A certificate in the transaction isn't supported in neither plutus:v1 nor plutus:v2. Use plutus:v3 or higher."
     Cn.PlutusPurposeNotSupported{}  ->
@@ -228,14 +226,7 @@ encodeContextError err = encodeText $ case err of
     Cn.BabbageContextError (Ba.ReferenceInputsNotSupported{}) ->
        "Reference inputs not supported in plutus:v1. Use plutus:v2 or higher."
     Cn.BabbageContextError (Ba.RedeemerPointerPointsToNothing purpose) ->
-        let (title, ptr) =
-                case purpose of
-                    Cn.ConwaySpending (AsIx ix) -> ("spending input", ix)
-                    Cn.ConwayMinting (AsIx ix) -> ("minting policy", ix)
-                    Cn.ConwayCertifying (AsIx ix) -> ("publishing certificate", ix)
-                    Cn.ConwayRewarding (AsIx ix) -> ("withdrawing from account", ix)
-                    Cn.ConwayVoting (AsIx ix) -> ("voting as voter", ix)
-                    Cn.ConwayProposing (AsIx ix) -> ("proposing governance proposal", ix)
+        let (title, ptr) = humanReadablePurposeInEra purpose
           in "Couldn't find corresponding redeemer for " <> title <> " #" <> show ptr <> ". Verify your transaction's construction."
     Cn.BabbageContextError (Ba.AlonzoContextError (Al.TimeTranslationPastHorizon e)) ->
         "Uncomputable slot arithmetic; transaction's validity bounds go beyond the foreseeable end of the current era: " <> e
@@ -409,9 +400,10 @@ encodeGenesis x =
        )
 
 encodeGovAction
-    :: Cn.GovAction ConwayEra
+    :: (Ledger.PParamsUpdate era -> Json)
+    -> Cn.GovAction era
     -> Json
-encodeGovAction = \case
+encodeGovAction encodePParamsUpdateInEra = \case
     Cn.ParameterChange ancestor pparamsUpdate guardrails ->
         encodeObject
             ( "type" .=
@@ -419,7 +411,7 @@ encodeGovAction = \case
            <> "ancestor" .=? OmitWhenNothing
                 (encodeGovActionId . Cn.unGovPurposeId) ancestor
            <> "parameters" .=
-                encodePParamsUpdate pparamsUpdate
+                encodePParamsUpdateInEra pparamsUpdate
            <> "guardrails" .=
                 encodeStrictMaybe (\s -> encodeObject ("hash" .= Shelley.encodeScriptHash s)) guardrails
             )
@@ -512,14 +504,14 @@ encodePParams
     => Ledger.PParams era
     -> Json
 encodePParams (Ledger.PParams x) =
-    encodePParamsHKD (\k encode v -> k .= encode v) identity x
+    encodeObject $ encodePParamsHKD (\k encode v -> k .= encode v) identity x
 
 encodePParamsUpdate
     :: (Ledger.PParamsHKD StrictMaybe era ~ Cn.ConwayPParams StrictMaybe era)
     => Ledger.PParamsUpdate era
     -> Json
 encodePParamsUpdate (Ledger.PParamsUpdate x) =
-    encodePParamsHKD (\k encode v -> k .=? OmitWhenNothing encode v) (const SNothing) x
+    encodeObject $ encodePParamsHKD (\k encode v -> k .=? OmitWhenNothing encode v) (const SNothing) x
 
 encodeProposedPPUpdates
     :: forall era.
@@ -530,18 +522,19 @@ encodeProposedPPUpdates
 encodeProposedPPUpdates (Sh.ProposedPPUpdates m) =
     encodeFoldable
         (\(Ledger.PParamsUpdate x) ->
-            encodePParamsHKD
+            encodeObject $ encodePParamsHKD
                 (\k encode v -> k .=? OmitWhenNothing encode v)
                 (const SNothing)
                 x
         )
         m
+
 encodePParamsHKD
     :: forall f era. (HKDFunctor f)
     => (forall a. Text -> (a -> Json) -> Ledger.HKD f a -> Series)
     -> (forall a. a -> Ledger.HKD f a)
     -> Cn.ConwayPParams f era
-    -> Json
+    -> Series
 encodePParamsHKD encode pure_ x =
     encode "minFeeCoefficient"
         (encodeInteger . unCoin . fromCompact . Ba.unCoinPerByte) (unTHKD (Cn.cppTxFeePerByte x)) <>
@@ -629,7 +622,6 @@ encodePParamsHKD encode pure_ x =
         (encodeCoin . fromCompact) (unTHKD (Cn.cppDRepDeposit x)) <>
     encode "delegateRepresentativeMaxIdleTime"
         encodeEpochInterval (unTHKD (Cn.cppDRepActivity x))
-    & encodeObject
 
 encodeDRepVotingThresholds :: Cn.DRepVotingThresholds -> Json
 encodeDRepVotingThresholds x =
@@ -663,9 +655,10 @@ encodePoolVotingThresholds x =
     & encodeObject
 
 encodeProposalProcedure
-    :: Cn.ProposalProcedure ConwayEra
+    :: (Ledger.PParamsUpdate era -> Json)
+    -> Cn.ProposalProcedure era
     -> Series
-encodeProposalProcedure x =
+encodeProposalProcedure encodePParamsUpdateInEra x =
       "deposit" .=
         encodeCoin (Cn.pProcDeposit x)
    <> "returnAccount" .=
@@ -673,7 +666,7 @@ encodeProposalProcedure x =
    <> "metadata" .=
        encodeAnchor (Cn.pProcAnchor x)
    <> "action" .=
-        encodeGovAction (Cn.pProcGovAction x)
+        encodeGovAction encodePParamsUpdateInEra (Cn.pProcGovAction x)
 
 encodeScriptPurposeIndex
     :: forall era. ()
@@ -706,9 +699,11 @@ encodeScriptPurposeIndex = \case
     translate = Alonzo.encodeScriptPurposeIndex @AlonzoEra
 
 encodeScriptPurposeItem
-    :: Cn.ConwayPlutusPurpose AsItem ConwayEra
-    -> Json
-encodeScriptPurposeItem = encodeObject . \case
+    :: (Ledger.TxCert era -> NonEmpty Series)
+    -> (Ledger.PParamsUpdate era -> Json)
+    -> Cn.ConwayPlutusPurpose AsItem era
+    -> Series
+encodeScriptPurposeItem encodeTxCertInEra encodePParamsUpdateInEra = \case
     Cn.ConwaySpending (AsItem txIn) ->
         "purpose" .= encodeText "spend" <>
         "outputReference" .= encodeObject (Shelley.encodeTxIn txIn)
@@ -723,9 +718,9 @@ encodeScriptPurposeItem = encodeObject . \case
         "issuer" .= encodeVoter voter
     Cn.ConwayProposing (AsItem proposal) ->
         "purpose" .= encodeText "propose" <>
-        "proposal" .= encodeObject (encodeProposalProcedure proposal)
+        "proposal" .= encodeObject (encodeProposalProcedure encodePParamsUpdateInEra proposal)
     Cn.ConwayCertifying (AsItem cert) ->
-        case encodeTxCert @ConwayEra cert of
+        case encodeTxCertInEra cert of
             -- Delegation certificate or credential de-registration certificate
             c :| [] ->
                 "purpose" .= encodeText "publish" <>
@@ -752,7 +747,7 @@ encodeTx (fmt, opts) x =
        <>
         "metadata" .=? OmitWhenNothing fst auxiliary
        <>
-        Alonzo.encodeWitnessSet opts (snd <$> auxiliary) encodeScriptPurposeIndex (x ^. Ledger.witsTxL)
+        Alonzo.encodeWitnessSet (snd <$> auxiliary) encodeScriptPurposeIndex (Alonzo.encodeScript opts) (x ^. Ledger.witsTxL)
        <>
         if includeTransactionCbor opts then
            "cbor" .= encodeByteStringBase16 (encodeCbor @ConwayEra x)
@@ -761,7 +756,7 @@ encodeTx (fmt, opts) x =
         )
   where
     auxiliary = do
-        hash <- Shelley.encodeAuxiliaryDataHash <$> Cn.ctbAdHash (x ^. Ledger.bodyTxL)
+        hash <- Shelley.encodeAuxiliaryDataHash . Ledger.hashTxAuxData <$> (x ^. Ledger.auxDataTxL)
         (labels, scripts) <- Alonzo.encodeAuxiliaryData (fmt, opts) <$> x ^. Ledger.auxDataTxL
         pure
             ( encodeObject ("hash" .= hash <> "labels" .= labels)
@@ -779,11 +774,11 @@ encodeTxBody opts x scripts =
     "references" .=? OmitWhen null
         (encodeFoldable (encodeObject . Shelley.encodeTxIn)) (Cn.ctbReferenceInputs x) <>
     "outputs" .=
-        encodeFoldable (encodeObject . Babbage.encodeTxOut opts . sizedValue) (Cn.ctbOutputs x) <>
+        encodeFoldable (encodeObject . Babbage.encodeTxOut encodeScript . sizedValue) (Cn.ctbOutputs x) <>
     "collaterals" .=? OmitWhen null
         (encodeFoldable (encodeObject . Shelley.encodeTxIn)) (Cn.ctbCollateralInputs x) <>
     "collateralReturn" .=? OmitWhenNothing
-        (encodeObject . Babbage.encodeTxOut opts . sizedValue) (Cn.ctbCollateralReturn x) <>
+        (encodeObject . Babbage.encodeTxOut encodeScript . sizedValue) (Cn.ctbCollateralReturn x) <>
     "totalCollateral" .=? OmitWhenNothing
         encodeCoin (Cn.ctbTotalCollateral x) <>
     "certificates" .=? OmitWhen null
@@ -805,7 +800,7 @@ encodeTxBody opts x scripts =
     "validityInterval" .=
         Allegra.encodeValidityInterval (Cn.ctbVldt x) <>
     "proposals" .=? OmitWhen null
-        (encodeFoldable (encodeObject . encodeProposalProcedure))
+        (encodeFoldable (encodeObject . encodeProposalProcedure encodePParamsUpdate))
         (Cn.ctbProposalProcedures x) <>
     "votes" .=? OmitWhen (null . Cn.unVotingProcedures)
         encodeVotingProcedures
@@ -819,6 +814,8 @@ encodeTxBody opts x scripts =
                 encodeCoin (Cn.ctbTreasuryDonation x)
             )
         )
+  where
+    encodeScript = Alonzo.encodeScript opts
 
 encodeTxCert
     :: Cn.ConwayTxCert era
@@ -832,10 +829,11 @@ encodeTxCert = \case
         encodeConwayGovCert cCert :| []
 
 encodeVotingProcedures
-    :: Cn.VotingProcedures ConwayEra
+    :: forall era. ()
+    => Ledger.VotingProcedures era
     -> Json
 encodeVotingProcedures =
-    encodeList identity . Map.foldrWithKey encodeProcedures mempty . Cn.unVotingProcedures
+    encodeList identity . Map.foldrWithKey encodeProcedures mempty . Ledger.unVotingProcedures
   where
     encodeProcedures issuer =
         flip $ Map.foldrWithKey
@@ -844,7 +842,7 @@ encodeVotingProcedures =
 encodeVotingProcedure
     :: Cn.Voter
     -> Cn.GovActionId
-    -> Cn.VotingProcedure ConwayEra
+    -> Cn.VotingProcedure era
     -> Json
 encodeVotingProcedure issuer govActionId x =
     encodeObject
@@ -879,3 +877,14 @@ encodeVoter = encodeObject . \case
     Cn.StakePoolVoter poolId ->
         "role" .= encodeText "stakePoolOperator" <>
         "id" .= Shelley.encodePoolId poolId
+
+humanReadablePurpose
+    :: PlutusPurpose AsIx ConwayEra
+    -> (Text, Word32)
+humanReadablePurpose = \case
+    Cn.ConwaySpending (AsIx ix) -> ("spending input", ix)
+    Cn.ConwayMinting (AsIx ix) -> ("minting policy", ix)
+    Cn.ConwayCertifying (AsIx ix) -> ("publishing certificate", ix)
+    Cn.ConwayRewarding (AsIx ix) -> ("withdrawing from account", ix)
+    Cn.ConwayVoting (AsIx ix) -> ("voting as voter", ix)
+    Cn.ConwayProposing (AsIx ix) -> ("proposing governance proposal", ix)

@@ -19,10 +19,10 @@ import Ogmios.Data.Ledger.PredicateFailure
     , TagMismatchDescription (..)
     )
 
+import qualified Cardano.Ledger.DRep as Ledger
 import qualified Codec.Json.Rpc as Rpc
 import qualified Data.Aeson.Encoding as Json
 
-import qualified Cardano.Ledger.DRep as Ledger
 import qualified Ogmios.Data.Json.Allegra as Allegra
 import qualified Ogmios.Data.Json.Alonzo as Alonzo
 import qualified Ogmios.Data.Json.Babbage as Babbage
@@ -977,6 +977,25 @@ encodePredicateFailure reject = \case
             "Some proposals contain empty treasury withdrawals, which is pointless and a waste of resources."
             Nothing
 
+    PointerAddressInCollateralReturn { pointerAddressOutput } ->
+        reject (predicateFailureCode 69)
+            "The collateral return output contains a pointer address. Pointer addresses — \
+            \which encode a stake reference as (slot, transaction-index, certificate-index) — \
+            \are not permitted in collateral return outputs in the Dijkstra era. The field \
+            \'data.output' describes the offending collateral return output."
+            (pure $ encodeObject
+                ( "output" .= encodeTxOutInAnyEra pointerAddressOutput
+                )
+            )
+
+    SpendingOutputFromSubTransaction ->
+        reject (predicateFailureCode 70)
+            "The transaction attempts to spend outputs that were created by its own \
+            \sub-transactions. A transaction — or any of its sub-transactions — cannot spend \
+            \outputs produced by a sub-transaction within the same top-level transaction, as \
+            \this would create a circular dependency."
+            Nothing
+
     -- NOTE: This should match the encoding also used for 'EvaluateTransactionResponse' in
     -- Data.Protocol.TxSubmission; hence the code.
     UnableToCreateScriptContext { translationError } ->
@@ -1007,25 +1026,6 @@ encodePredicateFailure reject = \case
             \likely discoverd a critical bug..."
             Nothing
 
-    PointerAddressInCollateralReturn { pointerAddressOutput } ->
-        reject (predicateFailureCode 69)
-            "The collateral return output contains a pointer address. Pointer addresses — \
-            \which encode a stake reference as (slot, transaction-index, certificate-index) — \
-            \are not permitted in collateral return outputs in the Dijkstra era. The field \
-            \'data.output' describes the offending collateral return output."
-            (pure $ encodeObject
-                ( "output" .= encodeTxOutInAnyEra pointerAddressOutput
-                )
-            )
-
-    SpendingOutputFromSubTransaction ->
-        reject (predicateFailureCode 70)
-            "The transaction attempts to spend outputs that were created by its own \
-            \sub-transactions. A transaction — or any of its sub-transactions — cannot spend \
-            \outputs produced by a sub-transaction within the same top-level transaction, as \
-            \this would create a circular dependency."
-            Nothing
-
 encodeTagMismatchDescription :: TagMismatchDescription -> Json
 encodeTagMismatchDescription = encodeText . \case
     PassedUnexpectedly ->
@@ -1044,11 +1044,11 @@ encodeTxOutInAnyEra = encodeObject . \case
     TxOutInAnyEra (ShelleyBasedEraAlonzo, out) ->
         Alonzo.encodeTxOut out
     TxOutInAnyEra (ShelleyBasedEraBabbage, out) ->
-        Babbage.encodeTxOut includeAllCbor out
+        Babbage.encodeTxOut (Alonzo.encodeScript includeAllCbor) out
     TxOutInAnyEra (ShelleyBasedEraConway, out) ->
-        Babbage.encodeTxOut includeAllCbor out
+        Babbage.encodeTxOut (Alonzo.encodeScript includeAllCbor) out
     TxOutInAnyEra (ShelleyBasedEraDijkstra, out) ->
-        Dijkstra.encodeTxOut includeAllCbor out
+        Babbage.encodeTxOut (Dijkstra.encodeScript includeAllCbor) out
 
 encodeValueInAnyEra :: ValueInAnyEra -> Json
 encodeValueInAnyEra = \case
@@ -1076,7 +1076,7 @@ encodeScriptPurposeItemInAnyEra = \case
     ScriptPurposeItemInAnyEra (AlonzoBasedEraBabbage, purpose) ->
         Alonzo.encodeScriptPurposeItem purpose
     ScriptPurposeItemInAnyEra (AlonzoBasedEraConway, purpose) ->
-        SJust (Conway.encodeScriptPurposeItem purpose)
+        SJust (encodeObject $ Conway.encodeScriptPurposeItem Conway.encodeTxCert Conway.encodePParamsUpdate purpose)
     ScriptPurposeItemInAnyEra (AlonzoBasedEraDijkstra, purpose) ->
         SJust (Dijkstra.encodeScriptPurposeItem purpose)
 
@@ -1102,7 +1102,7 @@ encodeContextErrorInAnyEra = \case
     ContextErrorInAnyEra (AlonzoBasedEraBabbage, err) ->
         Babbage.encodeContextError err
     ContextErrorInAnyEra (AlonzoBasedEraConway, err) ->
-        Conway.encodeContextError err
+        Conway.encodeContextError Conway.humanReadablePurpose err
     ContextErrorInAnyEra (AlonzoBasedEraDijkstra, err) ->
         Dijkstra.encodeContextError err
 

@@ -9,15 +9,16 @@ import Ogmios.Data.Json.Prelude
 import Cardano.Ledger.Allegra.Scripts
     ( Timelock
     )
-import Cardano.Ledger.Compactible
-    ( CompactForm
-    , Compactible (..)
-    )
-import Cardano.Ledger.HKD ()
 import Cardano.Ledger.Api
     ( AsIx
     , PlutusPurpose
     )
+import Cardano.Ledger.Compactible
+    ( CompactForm
+    , Compactible (..)
+    )
+import Cardano.Ledger.HKD
+    ()
 import Data.SatInt
     ( fromSatInt
     )
@@ -35,12 +36,14 @@ import qualified Cardano.Protocol.TPraos.BHeader as TPraos
 import qualified Cardano.Ledger.Api as Ledger
 import qualified Cardano.Ledger.Block as Ledger
 import qualified Cardano.Ledger.Core as Ledger
-import Cardano.Ledger.Plutus.Language ()
+import Cardano.Ledger.Plutus.Language
+    ()
 
 import qualified Cardano.Ledger.Shelley.API as Sh
 import qualified Cardano.Ledger.Shelley.PParams as Sh
 import qualified Cardano.Ledger.Shelley.TxCert as Sh
 
+import qualified Cardano.Ledger.Alonzo.BlockBody as Al
 import qualified Cardano.Ledger.Alonzo.Core as Al hiding
     ( TranslationError
     )
@@ -51,7 +54,6 @@ import qualified Cardano.Ledger.Alonzo.Scripts as Al
 import qualified Cardano.Ledger.Alonzo.Tx as Al
 import qualified Cardano.Ledger.Alonzo.TxAuxData as Al
 import qualified Cardano.Ledger.Alonzo.TxBody as Al
-import qualified Cardano.Ledger.Alonzo.BlockBody as Al
 import qualified Cardano.Ledger.Alonzo.TxWits as Al
 
 import qualified Ogmios.Data.Json.Allegra as Allegra
@@ -485,7 +487,7 @@ encodeTx (fmt, opts) x =
        <>
         "metadata" .=? OmitWhenNothing fst auxiliary
        <>
-        encodeWitnessSet opts (snd <$> auxiliary) encodeScriptPurposeIndex (x ^. Ledger.witsTxL)
+        encodeWitnessSet (snd <$> auxiliary) encodeScriptPurposeIndex (encodeScript opts) (x ^. Ledger.witsTxL)
        <>
         if includeTransactionCbor opts then
            "cbor" .= encodeByteStringBase16 (encodeCbor @AlonzoEra x)
@@ -569,14 +571,13 @@ encodeScriptIntegrityHash =
 encodeWitnessSet
     :: ( Ledger.Script era ~ Al.AlonzoScript era
        , Al.AlonzoEraScript era
-       , Ledger.NativeScript era ~ Timelock era
        )
-    => IncludeCbor
-    -> StrictMaybe (AuxiliaryScripts era)
+    => StrictMaybe (AuxiliaryScripts era)
     -> (PlutusPurpose AsIx era -> Json)
+    -> (Ledger.Script era -> Json)
     -> Al.AlonzoTxWits era
     -> Series
-encodeWitnessSet opts (fromSMaybe mempty -> auxScripts) encodeScriptPurposeIndexInEra x =
+encodeWitnessSet (fromSMaybe mempty -> auxScripts) encodeScriptPurposeIndexInEra encodeScriptInEra x =
     "signatories" .=
         encodeFoldable2
             Shelley.encodeBootstrapWitness
@@ -584,7 +585,7 @@ encodeWitnessSet opts (fromSMaybe mempty -> auxScripts) encodeScriptPurposeIndex
             (Al.txwitsBoot x)
             (Al.txwitsVKey x) <>
     "scripts" .=? OmitWhen null
-        (encodeMap Shelley.stringifyScriptHash (encodeScript opts))
+        (encodeMap Shelley.stringifyScriptHash encodeScriptInEra)
         (Al.txscripts x <> auxScripts) <>
     "datums" .=? OmitWhen null
         (encodeMap stringifyDataHash encodeData)
