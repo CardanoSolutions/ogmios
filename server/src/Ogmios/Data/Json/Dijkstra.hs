@@ -328,7 +328,7 @@ encodeTx (fmt, opts) x =
        <>
         "spends" .= Alonzo.encodeIsValid (x ^. Ledger.isValidTxL)
        <>
-        encodeTxBody opts (x ^. Ledger.bodyTxL) (strictMaybe mempty (Map.keys . snd) auxiliary)
+        encodeTxBody (fmt, opts) (x ^. Ledger.bodyTxL) (strictMaybe mempty (Map.keys . snd) auxiliary)
        <>
         "metadata" .=? OmitWhenNothing fst auxiliary
        <>
@@ -349,23 +349,87 @@ encodeTx (fmt, opts) x =
             )
 
 encodeTxBody
-    :: IncludeCbor
+    :: (MetadataFormat, IncludeCbor)
     -> Ledger.TxBody Ledger.TopTx DijkstraEra
     -> [Ledger.ScriptHash]
     -> Series
-encodeTxBody opts x scripts =
-    "inputs" .=
-        encodeFoldable (encodeObject . Shelley.encodeTxIn) (x ^. Ledger.inputsTxBodyL) <>
-    "references" .=? OmitWhen null
-        (encodeFoldable (encodeObject . Shelley.encodeTxIn)) (x ^. Ledger.referenceInputsTxBodyL) <>
-    "outputs" .=
-        encodeFoldable (encodeObject . Babbage.encodeTxOut (encodeScript opts)) (x ^. Ledger.outputsTxBodyL) <>
+encodeTxBody (fmt, opts) x scripts =
+    encodeSharedTxBody opts x scripts <>
     "collaterals" .=? OmitWhen null
         (encodeFoldable (encodeObject . Shelley.encodeTxIn)) (x ^. Ledger.collateralInputsTxBodyL) <>
     "collateralReturn" .=? OmitWhenNothing
         (encodeObject . Babbage.encodeTxOut (encodeScript opts)) (x ^. Ledger.collateralReturnTxBodyL) <>
     "totalCollateral" .=? OmitWhenNothing
         encodeCoin (x ^. Ledger.totalCollateralTxBodyL) <>
+    "fee" .=
+        encodeCoin (x ^. Ledger.feeTxBodyL) <>
+    "subTransactions" .=? OmitWhen null
+        (encodeFoldable (encodeSubTx (fmt, opts)))
+        (x ^. Di.subTransactionsTxBodyL)
+
+-- | Encode a sub-transaction. Unlike top-level transactions, sub-transactions
+-- have no 'isValid'/'spends' field, no fee, and no collateral.
+encodeSubTx
+    :: (MetadataFormat, IncludeCbor)
+    -> Ledger.Tx Ledger.SubTx DijkstraEra
+    -> Json
+encodeSubTx (fmt, opts) x =
+    encodeObject
+        ( Shelley.encodeTxId (Ledger.txIdTxBody @DijkstraEra (x ^. Ledger.bodyTxL))
+       <>
+        encodeSubTxBody opts (x ^. Ledger.bodyTxL) (strictMaybe mempty (Map.keys . snd) auxiliary)
+       <>
+        "metadata" .=? OmitWhenNothing fst auxiliary
+       <>
+        Alonzo.encodeWitnessSet (snd <$> auxiliary) encodeScriptPurposeIndex (encodeScript opts) (x ^. Ledger.witsTxL)
+       <>
+        -- NOTE: Using @DijkstraEra (not @ConwayEra as in encodeTx) because
+        -- sub-transactions are a Dijkstra-only feature.
+        if includeTransactionCbor opts then
+           "cbor" .= encodeByteStringBase16 (encodeCbor @DijkstraEra x)
+        else
+           mempty
+        )
+  where
+    auxiliary = do
+        hash <- Shelley.encodeAuxiliaryDataHash . Ledger.hashTxAuxData <$> (x ^. Ledger.auxDataTxL)
+        (labels, scripts) <- Alonzo.encodeAuxiliaryData (fmt, opts) <$> x ^. Ledger.auxDataTxL
+        pure
+            ( encodeObject ("hash" .= hash <> "labels" .= labels)
+            , scripts
+            )
+
+encodeSubTxBody
+    :: IncludeCbor
+    -> Ledger.TxBody Ledger.SubTx DijkstraEra
+    -> [Ledger.ScriptHash]
+    -> Series
+encodeSubTxBody opts x scripts =
+    encodeSharedTxBody opts x scripts <>
+    "requiredTopLevelGuards" .=? OmitWhen null
+        (encodeMapAsList encodeGuardEntry)
+        (x ^. Di.requiredTopLevelGuardsL)
+  where
+    encodeGuardEntry credential mData =
+        encodeObject
+            ( "credential" `Shelley.encodeCredential` credential
+           <> "datum" .=? OmitWhenNothing
+                (Alonzo.encodeData @DijkstraEra) mData
+            )
+
+-- | Encode TxBody fields shared between TopTx and SubTx.
+encodeSharedTxBody
+    :: IncludeCbor
+    -> Ledger.TxBody l DijkstraEra
+    -> [Ledger.ScriptHash]
+    -> Series
+encodeSharedTxBody opts x scripts =
+    "inputs" .=
+        encodeFoldable (encodeObject . Shelley.encodeTxIn) (x ^. Ledger.inputsTxBodyL) <>
+    "references" .=? OmitWhen null
+        (encodeFoldable (encodeObject . Shelley.encodeTxIn)) (x ^. Ledger.referenceInputsTxBodyL) <>
+    "outputs" .=
+        encodeFoldable (encodeObject . Babbage.encodeTxOut (encodeScript opts)) (x ^. Ledger.outputsTxBodyL) <>
     "certificates" .=? OmitWhen null
         (encodeConcatNonEmptyFoldable (fmap encodeObject . encodeTxCert)) (x ^. Ledger.certsTxBodyL) <>
     "withdrawals" .=? OmitWhen (null . Ledger.unWithdrawals)
@@ -380,8 +444,6 @@ encodeTxBody opts x scripts =
         Shelley.encodeNetwork (x ^. Ledger.networkIdTxBodyL) <>
     "scriptIntegrityHash" .=? OmitWhenNothing
         Alonzo.encodeScriptIntegrityHash (x ^. Ledger.scriptIntegrityHashTxBodyL) <>
-    "fee" .=
-        encodeCoin (x ^. Ledger.feeTxBodyL) <>
     "validityInterval" .=
         Allegra.encodeValidityInterval (x ^. Ledger.vldtTxBodyL) <>
     "proposals" .=? OmitWhen null
