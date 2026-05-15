@@ -3,17 +3,33 @@
 --  file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
 -- | Dijkstra is a new era following Conway (protocol version 12).
--- The ledger types share the same CBOR format as Conway's but are nominally
--- distinct (different data family instances). We bridge via CBOR serialization
--- for safe type conversion.
+-- It introduces script guarding, new protocol parameters for reference script
+-- costs, and removes pointer addresses.
 module Ogmios.Data.Json.Dijkstra where
 
 import Ogmios.Data.Json.Prelude
 
+import Cardano.Ledger.Address
+    ( DirectDeposits (..)
+    )
 import Cardano.Ledger.Api
     ( AlonzoEraScript (..)
     , AsItem (..)
     , AsIx (..)
+    )
+import Cardano.Ledger.BaseTypes
+    ( BoundedRational (..)
+    , Exclusive (..)
+    , Inclusive (..)
+    , NonNegativeInterval
+    , PositiveInterval
+    , ProtVer
+    )
+import Cardano.Ledger.Compactible
+    ( fromCompact
+    )
+import Cardano.Ledger.Conway.PParams
+    ( THKD (..)
     )
 import Cardano.Ledger.HKD
     ( HKDFunctor (..)
@@ -43,11 +59,13 @@ import qualified Cardano.Ledger.Block as Ledger
 import qualified Cardano.Ledger.Core as Ledger
 import qualified Cardano.Ledger.HKD as Ledger
 
+import qualified Cardano.Ledger.Alonzo.PParams as Al
 import qualified Cardano.Ledger.Alonzo.Scripts as Al
-import qualified Cardano.Ledger.Alonzo.TxWits as Al
+import qualified Cardano.Ledger.Babbage.Core as Ba
 import qualified Cardano.Ledger.Conway.Scripts as Cn
 import qualified Cardano.Ledger.Dijkstra.PParams as Di
 import qualified Cardano.Ledger.Dijkstra.Scripts as Di
+import qualified Cardano.Ledger.Dijkstra.TxBody as Di
 import qualified Cardano.Ledger.Dijkstra.TxCert as Di
 import qualified Cardano.Ledger.Dijkstra.TxInfo as Di
 import qualified Cardano.Ledger.Shelley.UTxO as Sh
@@ -95,7 +113,7 @@ encodeDelegCert = Conway.encodeDelegCert . \case
     Di.DijkstraRegCert credential deposit ->
         Cn.ConwayRegCert credential (SJust deposit)
     Di.DijkstraUnRegCert credential deposit ->
-        Cn.ConwayRegCert credential (SJust deposit)
+        Cn.ConwayUnRegCert credential (SJust deposit)
     Di.DijkstraDelegCert credential delegatee ->
         Cn.ConwayDelegCert credential delegatee
     Di.DijkstraRegDelegCert credential delegatee deposit ->
@@ -141,14 +159,84 @@ encodePParamsHKD
     -> Di.DijkstraPParams f DijkstraEra
     -> Json
 encodePParamsHKD encode pure_ x =
-    Conway.encodePParamsHKD @f encode pure_ (Ledger.downgradePParamsHKD () x)
-    -- FIXME:
-    -- - override minFeeReferenceScripts now that parameters are available in
-    --   Dijkstra and no longer hard-coded.
-    --
-    -- - override maxReferenceScriptsSize -> maxRefScriptSizePerTx
-    --
-    -- - add maxRefScriptSizePerBlock
+    encode "minFeeCoefficient"
+        (encodeInteger . unCoin . fromCompact . Ba.unCoinPerByte) (unTHKD (Di.dppTxFeePerByte x)) <>
+    encode "minFeeConstant"
+        (encodeCoin . fromCompact) (unTHKD (Di.dppTxFeeFixed x)) <>
+    encode "minFeeReferenceScripts"
+        (\(base :: NonNegativeInterval) -> encodeObject
+            ( "base" .= encodeDouble (fromRational (unboundRational base))
+            )
+        )
+        (unTHKD (Di.dppMinFeeRefScriptCostPerByte x)) <>
+    encode "refScriptCostStride"
+        (encodeNonZero encodeWord32)
+        (unTHKD (Di.dppRefScriptCostStride x)) <>
+    encode "refScriptCostMultiplier"
+        (\(v :: PositiveInterval) -> encodeDouble (fromRational (unboundRational v)))
+        (unTHKD (Di.dppRefScriptCostMultiplier x)) <>
+    encode "maxBlockBodySize"
+        (encodeSingleton "bytes" . encodeWord32) (unTHKD (Di.dppMaxBBSize x)) <>
+    encode "maxBlockHeaderSize"
+        (encodeSingleton "bytes" . encodeWord16) (unTHKD (Di.dppMaxBHSize x)) <>
+    encode "maxTransactionSize"
+        (encodeSingleton "bytes" . encodeWord32) (unTHKD (Di.dppMaxTxSize x)) <>
+    encode "maxReferenceScriptsSize"
+        (encodeSingleton "bytes" . encodeWord32) (unTHKD (Di.dppMaxRefScriptSizePerTx x)) <>
+    encode "maxReferenceScriptsSizePerBlock"
+        (encodeSingleton "bytes" . encodeWord32) (unTHKD (Di.dppMaxRefScriptSizePerBlock x)) <>
+    encode "stakeCredentialDeposit"
+        (encodeCoin . fromCompact) (unTHKD (Di.dppKeyDeposit x)) <>
+    encode "stakePoolDeposit"
+        (encodeCoin . fromCompact) (unTHKD (Di.dppPoolDeposit x)) <>
+    encode "stakePoolRetirementEpochBound"
+        encodeEpochInterval (unTHKD (Di.dppEMax x)) <>
+    encode "desiredNumberOfStakePools"
+        encodeWord16 (unTHKD (Di.dppNOpt x)) <>
+    encode "stakePoolPledgeInfluence"
+        encodeNonNegativeInterval (unTHKD (Di.dppA0 x)) <>
+    encode "monetaryExpansion"
+        encodeUnitInterval (unTHKD (Di.dppRho x)) <>
+    encode "treasuryExpansion"
+        encodeUnitInterval (unTHKD (Di.dppTau x)) <>
+    encode "minStakePoolCost"
+        (encodeCoin . fromCompact) (unTHKD (Di.dppMinPoolCost x)) <>
+    encode "minUtxoDepositConstant"
+        encodeCoin (pure_ (Coin 0)) <>
+    encode "minUtxoDepositCoefficient"
+        (encodeInteger . unCoin . fromCompact . Ba.unCoinPerByte) (unTHKD (Di.dppCoinsPerUTxOByte x)) <>
+    encode "plutusCostModels"
+        Alonzo.encodeCostModels (unTHKD (Di.dppCostModels x)) <>
+    encode "scriptExecutionPrices"
+        Alonzo.encodePrices (unTHKD (Di.dppPrices x)) <>
+    encode "maxExecutionUnitsPerTransaction"
+        (Alonzo.encodeExUnits . Al.unOrdExUnits) (unTHKD (Di.dppMaxTxExUnits x)) <>
+    encode "maxExecutionUnitsPerBlock"
+        (Alonzo.encodeExUnits . Al.unOrdExUnits) (unTHKD (Di.dppMaxBlockExUnits x)) <>
+    encode "maxValueSize"
+        (encodeSingleton "bytes" . encodeWord32) (unTHKD (Di.dppMaxValSize x)) <>
+    encode "collateralPercentage"
+        encodeWord16 (unTHKD (Di.dppCollateralPercentage x)) <>
+    encode "maxCollateralInputs"
+        encodeWord16 (unTHKD (Di.dppMaxCollateralInputs x)) <>
+    encode "version"
+        Shelley.encodeProtVer (fromNoUpdate @f @ProtVer (Di.dppProtocolVersion x)) <>
+    encode "stakePoolVotingThresholds"
+        Conway.encodePoolVotingThresholds (unTHKD (Di.dppPoolVotingThresholds x)) <>
+    encode "delegateRepresentativeVotingThresholds"
+        Conway.encodeDRepVotingThresholds (unTHKD (Di.dppDRepVotingThresholds x)) <>
+    encode "constitutionalCommitteeMinSize"
+        encodeWord16 (unTHKD (Di.dppCommitteeMinSize x)) <>
+    encode "constitutionalCommitteeMaxTermLength"
+        encodeEpochInterval (unTHKD (Di.dppCommitteeMaxTermLength x)) <>
+    encode "governanceActionLifetime"
+        encodeEpochInterval (unTHKD (Di.dppGovActionLifetime x)) <>
+    encode "governanceActionDeposit"
+        (encodeCoin . fromCompact) (unTHKD (Di.dppGovActionDeposit x)) <>
+    encode "delegateRepresentativeDeposit"
+        (encodeCoin . fromCompact) (unTHKD (Di.dppDRepDeposit x)) <>
+    encode "delegateRepresentativeMaxIdleTime"
+        encodeEpochInterval (unTHKD (Di.dppDRepActivity x))
     & encodeObject
 
 encodePParamsUpdate
@@ -284,13 +372,8 @@ encodeTxBody opts x scripts =
         Shelley.encodeWdrl (x ^. Ledger.withdrawalsTxBodyL) <>
     "mint" .=? OmitWhen (== mempty)
         (encodeObject . Mary.encodeMultiAsset) (x ^. Ledger.mintTxBodyL) <>
--- FIXME: guards vs required signers
---
--- Seems like the notion of required signers is replaced in Dijkstra with
--- that of 'guards'. See how we can possibly map that concept to
--- requiredExtraSignatories to not break the API.
---    "requiredExtraSignatories" .=? OmitWhen null
---        (encodeFoldable Shelley.encodeKeyHash) (x ^. Ledger.reqSignerHashesTxBodyL) <>
+    "guards" .=? OmitWhen null
+        (encodeFoldable Shelley.encodeCredentialRaw) (x ^. Di.guardsTxBodyL) <>
     "requiredExtraScripts" .=? OmitWhen null
         (encodeFoldable Shelley.encodeScriptHash) scripts <>
     "network" .=? OmitWhenNothing
@@ -315,12 +398,13 @@ encodeTxBody opts x scripts =
            <> "donation" .=? OmitWhen (== mempty)
                 encodeCoin treasuryDonation
             )
-        )
-  -- FIXME: additional Dijkstra fields
-  --
-  -- - RequiredTopLevelGuards
-  -- - DirectDeposits
-  -- - AccountBalanceIntervals
+        ) <>
+    "directDeposits" .=? OmitWhen (null . unDirectDeposits)
+        (encodeMap Shelley.stringifyRewardAcnt encodeCoin . unDirectDeposits)
+        (x ^. Di.directDepositsTxBodyL) <>
+    "accountBalanceIntervals" .=? OmitWhen (null . Di.unAccountBalanceIntervals)
+        encodeAccountBalanceIntervals
+        (x ^. Di.accountBalanceIntervalsTxBodyL)
   where
     treasuryValue =
         x ^. Ledger.currentTreasuryValueTxBodyL
@@ -346,6 +430,30 @@ encodeUtxo =
     . Sh.unUTxO
   where
     encodeTxOut = Babbage.encodeTxOut (encodeScript includeAllCbor)
+
+encodeAccountBalanceIntervals
+    :: Di.AccountBalanceIntervals DijkstraEra
+    -> Json
+encodeAccountBalanceIntervals =
+    encodeMapAsList encodeEntry . Di.unAccountBalanceIntervals
+  where
+    encodeEntry accountId interval =
+        encodeObject
+            ( "account" `Shelley.encodeCredential` Ledger.unAccountId accountId
+           <> encodeAccountBalanceInterval interval
+            )
+
+encodeAccountBalanceInterval
+    :: Di.AccountBalanceInterval DijkstraEra
+    -> Series
+encodeAccountBalanceInterval = \case
+    Di.AccountBalanceLowerBound (Inclusive lo) ->
+        "lowerBound" .= encodeCoin lo
+    Di.AccountBalanceUpperBound (Exclusive hi) ->
+        "upperBound" .= encodeCoin hi
+    Di.AccountBalanceBothBounds (Inclusive lo) (Exclusive hi) ->
+        "lowerBound" .= encodeCoin lo <>
+        "upperBound" .= encodeCoin hi
 
 humanReadablePurpose
     :: PlutusPurpose AsIx DijkstraEra
