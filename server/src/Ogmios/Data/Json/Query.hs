@@ -337,11 +337,6 @@ import qualified Ogmios.Data.Json.Dijkstra as Dijkstra
 import qualified Ogmios.Data.Json.Mary as Mary
 import qualified Ogmios.Data.Json.Shelley as Shelley
 
--- FIXME
--- Needed with ouroboros-cardano-consensus==0.18.0.0. Otherwise, use the following:
---
--- import qualified Cardano.Ledger.PoolDistr as Ledger
--- import qualified Cardano.Ledger.Api.State.Query as Ledger
 import qualified Cardano.Protocol.TPraos.Rules.Tickn as TPraos
 import Data.OMap.Strict
     ( OMap
