@@ -335,7 +335,7 @@ encodeTx (fmt, opts) x =
         Alonzo.encodeWitnessSet (snd <$> auxiliary) encodeScriptPurposeIndex (encodeScript opts) (x ^. Ledger.witsTxL)
        <>
         if includeTransactionCbor opts then
-           "cbor" .= encodeByteStringBase16 (encodeCbor @ConwayEra x)
+           "cbor" .= encodeByteStringBase16 (encodeCbor @DijkstraEra x)
         else
            mempty
         )
@@ -383,8 +383,6 @@ encodeSubTx (fmt, opts) x =
        <>
         Alonzo.encodeWitnessSet (snd <$> auxiliary) encodeScriptPurposeIndex (encodeScript opts) (x ^. Ledger.witsTxL)
        <>
-        -- NOTE: Using @DijkstraEra (not @ConwayEra as in encodeTx) because
-        -- sub-transactions are a Dijkstra-only feature.
         if includeTransactionCbor opts then
            "cbor" .= encodeByteStringBase16 (encodeCbor @DijkstraEra x)
         else
