@@ -2126,6 +2126,7 @@
       , "maxBlockHeaderSize": { "$ref": "cardano.json#/definitions/NumberOfBytes" }
       , "maxTransactionSize": { "$ref": "cardano.json#/definitions/NumberOfBytes" }
       , "maxReferenceScriptsSize": { "$ref": "cardano.json#/definitions/NumberOfBytes" }
+      , "maxReferenceScriptsSizePerBlock": { "$ref": "cardano.json#/definitions/NumberOfBytes" }
       , "maxValueSize": { "$ref": "cardano.json#/definitions/NumberOfBytes" }
       , "extraEntropy": { "$ref": "cardano.json#/definitions/Nonce" }
       , "stakeCredentialDeposit": { "$ref": "cardano.json#/definitions/Value<AdaOnly>" }
@@ -2220,6 +2221,7 @@
       , "maxExecutionUnitsPerTransaction": { "$ref": "cardano.json#/definitions/ExecutionUnits" }
       , "maxExecutionUnitsPerBlock": { "$ref": "cardano.json#/definitions/ExecutionUnits" }
       , "maxReferenceScriptsSize": { "$ref": "cardano.json#/definitions/NumberOfBytes" }
+      , "maxReferenceScriptsSizePerBlock": { "$ref": "cardano.json#/definitions/NumberOfBytes" }
       , "stakePoolVotingThresholds": { "$ref": "cardano.json#/definitions/StakePoolVotingThresholds" }
       , "constitutionalCommitteeMinSize": { "$ref": "cardano.json#/definitions/UInt16" }
       , "constitutionalCommitteeMaxTermLength": { "$ref": "cardano.json#/definitions/UInt64" }
@@ -2788,6 +2790,11 @@
         { "type": "array"
         , "items": { "$ref": "cardano.json#/definitions/Digest<Blake2b, 224>" }
         }
+      , "requiredExtraGuards":
+        { "type": "array"
+        , "items": { "$ref": "cardano.json#/definitions/Digest<Blake2b, 224>" }
+        , "description": "Script hash guards required by the transaction. Dijkstra era only."
+        }
       , "requiredExtraScripts":
         { "type": "array"
         , "items": { "$ref": "cardano.json#/definitions/Digest<Blake2b, 224>" }
@@ -2829,10 +2836,180 @@
           , "donation": { "$ref": "cardano.json#/definitions/Value<AdaOnly>" }
           }
         }
+      , "directDeposits":
+        { "$ref": "cardano.json#/definitions/Withdrawals"
+        , "description": "Direct deposits to account addresses. Dijkstra era only."
+        }
+      , "accountBalanceIntervals":
+        { "type": "array"
+        , "items": { "$ref": "cardano.json#/definitions/AccountBalanceInterval" }
+        , "description": "Account balance interval constraints. Dijkstra era only."
+        }
+      , "subTransactions":
+        { "type": "array"
+        , "items": { "$ref": "cardano.json#/definitions/SubTransaction" }
+        , "description": "Nested sub-transactions. Dijkstra era only."
+        }
+      , "requiredTopLevelGuards":
+        { "type": "array"
+        , "items": { "$ref": "cardano.json#/definitions/TopLevelGuard" }
+        , "description": "Required top-level guards for sub-transactions. Dijkstra era only."
+        }
       , "cbor":
         { "type": "string"
         , "contentEncoding": "base16"
         , "description": "The raw serialized (CBOR) transaction, as found on-chain. Use --include-transaction-cbor to ALWAYS include the 'cbor' field. Omitted otherwise."
+        }
+      }
+    }
+
+  , "AccountBalanceInterval":
+    { "title": "AccountBalanceInterval"
+    , "type": "object"
+    , "additionalProperties": false
+    , "required": [ "from", "account" ]
+    , "properties":
+      { "from":
+        { "$ref": "cardano.json#/definitions/CredentialOrigin"
+        }
+      , "account":
+        { "$ref": "cardano.json#/definitions/Digest<Blake2b, 224>"
+        }
+      , "greaterThanOrEqualTo":
+        { "$ref": "cardano.json#/definitions/Value<AdaOnly>"
+        }
+      , "strictlyLessThan":
+        { "$ref": "cardano.json#/definitions/Value<AdaOnly>"
+        }
+      }
+    , "oneOf":
+      [ { "required": [ "greaterThanOrEqualTo" ] }
+      , { "required": [ "strictlyLessThan" ] }
+      , { "required": [ "greaterThanOrEqualTo", "strictlyLessThan" ] }
+      ]
+    }
+
+  , "TopLevelGuard":
+    { "title": "TopLevelGuard"
+    , "type": "object"
+    , "additionalProperties": false
+    , "required": [ "from", "credential" ]
+    , "properties":
+      { "from":
+        { "$ref": "cardano.json#/definitions/CredentialOrigin"
+        }
+      , "credential":
+        { "$ref": "cardano.json#/definitions/Digest<Blake2b, 224>"
+        }
+      , "datum":
+        { "$ref": "cardano.json#/definitions/Datum"
+        }
+      }
+    }
+
+  , "SubTransaction":
+    { "title": "SubTransaction"
+    , "type": "object"
+    , "additionalProperties": false
+    , "required": [ "id", "inputs", "outputs", "signatories" ]
+    , "properties":
+      { "id":
+        { "$ref": "cardano.json#/definitions/Digest<Blake2b, 256>"
+        }
+      , "inputs":
+        { "type": "array"
+        , "items": { "$ref": "cardano.json#/definitions/TransactionOutputReference" }
+        }
+      , "references":
+        { "type": "array"
+        , "items": { "$ref": "cardano.json#/definitions/TransactionOutputReference" }
+        }
+      , "outputs":
+        { "type": "array"
+        , "items": { "$ref": "cardano.json#/definitions/TransactionOutput" }
+        }
+      , "certificates":
+        { "type": "array"
+        , "items": { "$ref": "cardano.json#/definitions/Certificate" }
+        }
+      , "withdrawals":
+        { "$ref": "cardano.json#/definitions/Withdrawals"
+        }
+      , "validityInterval":
+        { "$ref": "cardano.json#/definitions/ValidityInterval"
+        }
+      , "mint":
+        { "$ref": "cardano.json#/definitions/Assets"
+        }
+      , "network":
+        { "$ref": "cardano.json#/definitions/Network"
+        }
+      , "scriptIntegrityHash":
+        { "$ref": "cardano.json#/definitions/Digest<Blake2b, 256>"
+        }
+      , "requiredExtraSignatories":
+        { "type": "array"
+        , "items": { "$ref": "cardano.json#/definitions/Digest<Blake2b, 224>" }
+        }
+      , "requiredExtraGuards":
+        { "type": "array"
+        , "items": { "$ref": "cardano.json#/definitions/Digest<Blake2b, 224>" }
+        }
+      , "requiredExtraScripts":
+        { "type": "array"
+        , "items": { "$ref": "cardano.json#/definitions/Digest<Blake2b, 224>" }
+        }
+      , "proposals":
+        { "type": "array"
+        , "items": { "$ref": "cardano.json#/definitions/GovernanceProposal" }
+        }
+      , "votes":
+        { "type": "array"
+        , "items": { "$ref": "cardano.json#/definitions/GovernanceVote" }
+        }
+      , "treasury":
+        { "type": "object"
+        , "additionalProperties": false
+        , "properties":
+          { "value": { "$ref": "cardano.json#/definitions/Value<AdaOnly>" }
+          , "donation": { "$ref": "cardano.json#/definitions/Value<AdaOnly>" }
+          }
+        }
+      , "directDeposits":
+        { "$ref": "cardano.json#/definitions/Withdrawals"
+        }
+      , "accountBalanceIntervals":
+        { "type": "array"
+        , "items": { "$ref": "cardano.json#/definitions/AccountBalanceInterval" }
+        }
+      , "requiredTopLevelGuards":
+        { "type": "array"
+        , "items": { "$ref": "cardano.json#/definitions/TopLevelGuard" }
+        }
+      , "metadata":
+        { "$ref": "cardano.json#/definitions/Metadata"
+        }
+      , "signatories":
+        { "type": "array"
+        , "items": { "$ref": "cardano.json#/definitions/Signatory" }
+        }
+      , "scripts":
+        { "type": "object"
+        , "propertyNames": { "contentEncoding": "base16", "pattern": "^[0-9a-f]+$" }
+        , "additionalProperties": { "$ref": "cardano.json#/definitions/Script" }
+        }
+      , "datums":
+        { "type": "object"
+        , "propertyNames": { "contentEncoding": "base16", "pattern": "^[0-9a-f]+$" }
+        , "additionalProperties": { "$ref": "cardano.json#/definitions/Datum" }
+        }
+      , "redeemers":
+        { "type": "array"
+        , "items": { "$ref": "cardano.json#/definitions/Redeemer" }
+        }
+      , "cbor":
+        { "type": "string"
+        , "contentEncoding": "base16"
         }
       }
     }
