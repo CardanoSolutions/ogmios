@@ -533,12 +533,12 @@ encodeAccountBalanceInterval
     -> Series
 encodeAccountBalanceInterval = \case
     Di.AccountBalanceLowerBound (Inclusive lo) ->
-        "lowerBound" .= encodeCoin lo
+        "greaterThanOrEqualTo" .= encodeCoin lo
     Di.AccountBalanceUpperBound (Exclusive hi) ->
-        "upperBound" .= encodeCoin hi
+        "strictlyLessThan" .= encodeCoin hi
     Di.AccountBalanceBothBounds (Inclusive lo) (Exclusive hi) ->
-        "lowerBound" .= encodeCoin lo <>
-        "upperBound" .= encodeCoin hi
+        "greaterThanOrEqualTo" .= encodeCoin lo <>
+        "strictlyLessThan" .= encodeCoin hi
 
 humanReadablePurpose
     :: PlutusPurpose AsIx DijkstraEra
