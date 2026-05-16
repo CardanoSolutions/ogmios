@@ -207,14 +207,21 @@ inMultipleEras
     => NodeToClientVersion
     -> Ledger.TxId
     -> [GenTxId (CardanoBlock crypto)]
-inMultipleEras _nodeToClientV id =
+inMultipleEras nodeToClientV id =
     -- The list is ordered from the "most probable era", down to the least
     -- probable. This hopefully ensures that we do a minimum number of loops
     -- for the happy path.
-    GenTxIdDijkstra (ShelleyTxId id) :
-    GenTxIdConway (ShelleyTxId id) :
-    GenTxIdBabbage (ShelleyTxId id) :
-        [ GenTxIdAlonzo (ShelleyTxId id)
+    if nodeToClientV > NodeToClientV_23 then
+        [ GenTxIdDijkstra (ShelleyTxId id)
+        , GenTxIdConway (ShelleyTxId id)
+        , GenTxIdBabbage (ShelleyTxId id)
+        , GenTxIdAlonzo (ShelleyTxId id)
+        , GenTxIdMary (ShelleyTxId id)
+        ]
+    else
+        [ GenTxIdConway (ShelleyTxId id)
+        , GenTxIdBabbage (ShelleyTxId id)
+        , GenTxIdAlonzo (ShelleyTxId id)
         , GenTxIdMary (ShelleyTxId id)
         ]
   where
