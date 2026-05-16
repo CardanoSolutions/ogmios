@@ -58,6 +58,13 @@ import qualified Cardano.Ledger.Api as Ledger
 import qualified Cardano.Ledger.Block as Ledger
 import qualified Cardano.Ledger.Core as Ledger
 import qualified Cardano.Ledger.HKD as Ledger
+import Cardano.Ledger.Credential
+    ( Credential (KeyHashObj, ScriptHashObj)
+    )
+import Cardano.Ledger.Keys
+    ( HasKeyRole (coerceKeyRole)
+    , KeyRole (Witness)
+    )
 
 import qualified Cardano.Ledger.Alonzo.PParams as Al
 import qualified Cardano.Ledger.Alonzo.Scripts as Al
@@ -71,6 +78,7 @@ import qualified Cardano.Ledger.Dijkstra.TxInfo as Di
 import qualified Cardano.Ledger.Shelley.UTxO as Sh
 
 import qualified Data.Map.Strict as Map
+import qualified Data.Set as Set
 
 import qualified Cardano.Ledger.Conway.TxCert as Cn
 import qualified Ogmios.Data.Json.Allegra as Allegra
@@ -434,8 +442,10 @@ encodeSharedTxBody opts x scripts =
         Shelley.encodeWdrl (x ^. Ledger.withdrawalsTxBodyL) <>
     "mint" .=? OmitWhen (== mempty)
         (encodeObject . Mary.encodeMultiAsset) (x ^. Ledger.mintTxBodyL) <>
-    "guards" .=? OmitWhen null
-        (encodeFoldable Shelley.encodeCredentialRaw) (x ^. Di.guardsTxBodyL) <>
+    "requiredExtraSignatories" .=? OmitWhen null
+        (encodeFoldable Shelley.encodeKeyHash) guardKeyHashes <>
+    "requiredExtraGuards" .=? OmitWhen null
+        (encodeFoldable Shelley.encodeScriptHash) guardScriptHashes <>
     "requiredExtraScripts" .=? OmitWhen null
         (encodeFoldable Shelley.encodeScriptHash) scripts <>
     "network" .=? OmitWhenNothing
@@ -466,6 +476,21 @@ encodeSharedTxBody opts x scripts =
         encodeAccountBalanceIntervals
         (x ^. Di.accountBalanceIntervalsTxBodyL)
   where
+    guards = x ^. Di.guardsTxBodyL
+
+    guardKeyHashes :: Set.Set (Ledger.KeyHash Witness)
+    guardKeyHashes =
+        foldr (\c acc -> case c of
+            KeyHashObj kh -> Set.insert (coerceKeyRole kh) acc
+            ScriptHashObj _ -> acc
+        ) mempty guards
+
+    guardScriptHashes =
+        foldr (\c acc -> case c of
+            KeyHashObj _ -> acc
+            ScriptHashObj sh -> Set.insert sh acc
+        ) mempty guards
+
     treasuryValue =
         x ^. Ledger.currentTreasuryValueTxBodyL
 
