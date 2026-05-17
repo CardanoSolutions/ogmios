@@ -2296,7 +2296,7 @@
     , "properties":
       { "purpose":
         { "type": "string"
-        , "enum": [ "spend", "mint", "publish", "withdraw", "vote", "propose" ]
+        , "enum": [ "spend", "mint", "publish", "withdraw", "vote", "propose", "guard" ]
         }
       , "index":
         { "$ref": "cardano.json#/definitions/UInt64"

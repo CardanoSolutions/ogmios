@@ -180,8 +180,6 @@ import qualified Cardano.Ledger.Shelley.API.Wallet as Sh.Api
 import qualified Cardano.Ledger.Shelley.UTxO as Sh
 import qualified Cardano.Ledger.TxIn as Ledger
 
--- FIXME
--- Needed with ouroboros-cardano-consensus==0.18.0.0. Otherwise, use the following:
 import qualified Ouroboros.Consensus.Shelley.Ledger.Query.Types as Consensus
 
 genBlock :: Gen Block
@@ -250,7 +248,8 @@ genTxId = arbitrary
 
 genGenTxId :: Gen (GenTxId Block)
 genGenTxId = oneof
-    [ GenTxIdConway . ShelleyTxId <$> genTxId
+    [ GenTxIdDijkstra . ShelleyTxId <$> genTxId
+    , GenTxIdConway . ShelleyTxId <$> genTxId
     , GenTxIdBabbage . ShelleyTxId <$> genTxId
     , GenTxIdAlonzo . ShelleyTxId <$> genTxId
     ]
@@ -349,6 +348,7 @@ genContextError = oneof
     [ ContextErrorInAnyEra . (AlonzoBasedEraAlonzo,) <$> arbitrary
     , ContextErrorInAnyEra . (AlonzoBasedEraBabbage,) <$> arbitrary
     , ContextErrorInAnyEra . (AlonzoBasedEraConway,) <$> arbitrary
+    , ContextErrorInAnyEra . (AlonzoBasedEraDijkstra,) <$> arbitrary
     ]
 
 genPreAlonzoEra :: Gen Text
@@ -373,6 +373,7 @@ genScriptFailure = oneof
     , inAlonzoEra $ MissingScript <$> arbitrary <*> arbitrary
     , inBabbageEra $ MissingScript <$> arbitrary <*> arbitrary
     , inConwayEra $ MissingScript <$> arbitrary <*> arbitrary
+    , inDijkstraEra $ MissingScript <$> arbitrary <*> arbitrary
 
     -- TODO: Also cover ValidationFailedV1 & ValidationFailedV2.
     -- This requires to also generate arbitrary instances for plutus' 'EvaluationError'
@@ -393,6 +394,11 @@ genScriptFailure = oneof
         :: Gen (TransactionScriptFailure ConwayEra)
         -> Gen TransactionScriptFailureInAnyEra
     inConwayEra = fmap (TransactionScriptFailureInAnyEra . (AlonzoBasedEraConway,))
+
+    inDijkstraEra
+        :: Gen (TransactionScriptFailure DijkstraEra)
+        -> Gen TransactionScriptFailureInAnyEra
+    inDijkstraEra = fmap (TransactionScriptFailureInAnyEra . (AlonzoBasedEraDijkstra,))
 
 genAcquireFailure :: Gen AcquireFailure
 genAcquireFailure = elements
