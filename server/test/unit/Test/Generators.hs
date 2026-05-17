@@ -176,7 +176,9 @@ import qualified Cardano.Ledger.DRep as Ledger
 import qualified Cardano.Ledger.State as Ledger
 
 import qualified Cardano.Ledger.Api.State.Query as Ledger
+import qualified Cardano.Ledger.Dijkstra.TxBody as Di
 import qualified Cardano.Ledger.Shelley.API.Wallet as Sh.Api
+import qualified Data.OMap.Strict as OMap
 import qualified Cardano.Ledger.Shelley.UTxO as Sh
 import qualified Cardano.Ledger.TxIn as Ledger
 
@@ -191,10 +193,11 @@ genBlock = oneof
     , BlockAlonzo <$> genTPraosBlockFrom @AlonzoEra
     , BlockBabbage <$> genPraosBlockFrom @BabbageEra
     , BlockConway <$> genPraosBlockFrom @ConwayEra
-    -- NOTE: Dijkstra block generation is not included in unit tests because the
-    -- Dijkstra CBOR block format differs from the codec expectations in the mock
-    -- ChainSync peer. Dijkstra block encoding/decoding is tested via integration
-    -- tests against a real cardano-node.
+    -- NOTE: Dijkstra block generation excluded because randomly generated
+    -- blocks fail CBOR round-tripping in the ChainSync mock peer, likely
+    -- due to block header/body hash inconsistency. The consensus codec
+    -- itself supports Dijkstra's 5-segment block body (with PerasCert)
+    -- and works correctly in production with real cardano-node 11.0.
     ]
   where
     genTPraosBlockFrom
@@ -259,12 +262,19 @@ genTx = oneof
     [ GenTxAlonzo <$> liftA2 ShelleyTx arbitrary arbitrary
     , GenTxBabbage <$> liftA2 ShelleyTx arbitrary arbitrary
     , GenTxConway <$> liftA2 ShelleyTx arbitrary arbitrary
-    -- NOTE: Dijkstra GenTx excluded because its CBOR format differs from the
-    -- codec expectations in mock protocol peers. The Dijkstra Tx data family
-    -- (DijkstraTx) has a different GADT structure than AlonzoTx (Conway), causing
-    -- CBOR round-trip failures in the test mock. Real Dijkstra transactions are
-    -- properly handled via CBOR translation in Dijkstra.encodeTx.
+    , GenTxDijkstra <$> genDijkstraShelleyTx
     ]
+
+-- | Generate a Dijkstra ShelleyTx without sub-transactions.
+-- Sub-transactions' MemoBytes don't survive the CBOR-in-CBOR
+-- round-trip used by the consensus codec in mock protocol peer tests.
+genDijkstraShelleyTx :: Gen (GenTx (ShelleyBlock (Praos StandardCrypto) DijkstraEra))
+genDijkstraShelleyTx = do
+    tx <- arbitrary @(Ledger.Tx Ledger.TopTx DijkstraEra)
+    let body = tx ^. Ledger.bodyTxL
+    let body' = body & Di.subTransactionsTxBodyL .~ OMap.Empty
+    let tx' = tx & Ledger.bodyTxL .~ body'
+    pure $ ShelleyTx (Ledger.txIdTxBody @DijkstraEra body') tx'
 
 genMempoolSizeAndCapacity :: Gen MempoolSizeAndCapacity
 genMempoolSizeAndCapacity = MempoolSizeAndCapacity
@@ -317,8 +327,7 @@ genHardForkApplyTxErr = frequency
     , ( 10, ApplyTxErrAlonzo . AlonzoApplyTxError . pure <$> arbitrary )
     , ( 25, ApplyTxErrBabbage . BabbageApplyTxError . pure <$> arbitrary )
     , ( 25, ApplyTxErrConway . ConwayApplyTxError . pure <$> arbitrary )
-    -- NOTE: Dijkstra ApplyTxError disabled pending investigation of segfault
-    -- , ( 25, ApplyTxErrDijkstra . DijkstraApplyTxError . pure <$> arbitrary )
+    , ( 25, ApplyTxErrDijkstra . DijkstraApplyTxError . pure <$> arbitrary )
     ]
 
 genEvaluateTransactionResponse :: Gen (EvaluateTransactionResponse Block)

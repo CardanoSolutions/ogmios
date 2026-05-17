@@ -4487,6 +4487,34 @@
           , "message": { "type": "string" }
           }
         }
+      , { "title": "SubmitTransactionFailure<PointerAddressInCollateralReturn>"
+        , "description": "The collateral return output contains a pointer address, which is not permitted in the Dijkstra era."
+        , "type": "object"
+        , "required": [ "code", "message", "data" ]
+        , "additionalProperties": false
+        , "properties":
+          { "code": { "type": "integer", "enum": [ 3169 ] }
+          , "message": { "type": "string" }
+          , "data":
+            { "type": "object"
+            , "required": [ "output" ]
+            , "additionalProperties": false
+            , "properties":
+              { "output": { "$ref": "cardano.json#/definitions/TransactionOutput" }
+              }
+            }
+          }
+        }
+      , { "title": "SubmitTransactionFailure<SpendingOutputFromSubTransaction>"
+        , "description": "The transaction attempts to spend outputs created by its own sub-transactions, which would create a circular dependency."
+        , "type": "object"
+        , "required": [ "code", "message" ]
+        , "additionalProperties": false
+        , "properties":
+          { "code": { "type": "integer", "enum": [ 3170 ] }
+          , "message": { "type": "string" }
+          }
+        }
       , { "title": "SubmitTransactionFailure<UnexpectedMempoolError>"
         , "description": "A transaction was rejected due to custom rules that prevented it from entering the mempool. A justification is given as 'data.error'."
         , "type": "object"

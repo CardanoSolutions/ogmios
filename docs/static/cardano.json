@@ -2113,7 +2113,6 @@
       , "minFeeReferenceScripts":
         { "type": "object"
         , "additionalProperties": false
-        , "required": [ "range", "base", "multiplier" ]
         , "properties":
           { "range": { "$ref": "cardano.json#/definitions/UInt32" }
           , "base": { "type": "number" }
@@ -2546,6 +2545,20 @@
             }
           }
         }
+      , { "type": "object"
+        , "title": "Clause<Guard>"
+        , "additionalProperties": false
+        , "required": [ "clause", "from" ]
+        , "properties":
+          { "clause":
+            { "type": "string"
+            , "enum": [ "guard" ]
+            }
+          , "from":
+            { "$ref": "cardano.json#/definitions/Digest<Blake2b, 224>"
+            }
+          }
+        }
       ]
     }
 
@@ -2636,6 +2649,20 @@
             }
           , "issuer":
             { "$ref": "cardano.json#/definitions/GovernanceVoter"
+            }
+          }
+        }
+      , { "title": "ScriptPurpose<Guard>"
+        , "type": "object"
+        , "additionalProperties": false
+        , "required": [ "purpose", "script" ]
+        , "properties":
+          { "purpose":
+            { "type": "string"
+            , "enum": [ "guard" ]
+            }
+          , "script":
+            { "$ref": "cardano.json#/definitions/Digest<Blake2b, 224>"
             }
           }
         }
@@ -2882,10 +2909,9 @@
         { "$ref": "cardano.json#/definitions/Value<AdaOnly>"
         }
       }
-    , "oneOf":
+    , "anyOf":
       [ { "required": [ "greaterThanOrEqualTo" ] }
       , { "required": [ "strictlyLessThan" ] }
-      , { "required": [ "greaterThanOrEqualTo", "strictlyLessThan" ] }
       ]
     }
 
