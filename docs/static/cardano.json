@@ -2909,9 +2909,10 @@
         { "$ref": "cardano.json#/definitions/Value<AdaOnly>"
         }
       }
-    , "anyOf":
-      [ { "required": [ "greaterThanOrEqualTo" ] }
-      , { "required": [ "strictlyLessThan" ] }
+    , "oneOf":
+      [ { "required": [ "greaterThanOrEqualTo" ], "not": { "required": [ "strictlyLessThan" ] } }
+      , { "required": [ "strictlyLessThan" ], "not": { "required": [ "greaterThanOrEqualTo" ] } }
+      , { "required": [ "greaterThanOrEqualTo", "strictlyLessThan" ] }
       ]
     }
 
