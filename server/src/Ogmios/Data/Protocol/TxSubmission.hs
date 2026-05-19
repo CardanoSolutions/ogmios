@@ -476,7 +476,7 @@ utxoFromMempool
     => [GenTx block]
     -> MultiEraUTxO block
 utxoFromMempool =
-    go $ UTxOInBabbageEra mempty
+    go $ UTxOInConwayEra mempty
   where
     go :: MultiEraUTxO block -> [GenTx block] -> MultiEraUTxO block
     go utxo = \case

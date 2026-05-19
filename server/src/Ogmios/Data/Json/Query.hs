@@ -2638,19 +2638,19 @@ decodeSerializedTransaction
 decodeSerializedTransaction = Json.withText "Transaction" $ \(encodeUtf8 -> utf8) -> do
     bytes <- decodeBase16 utf8 <|> invalidEncodingError
     -- NOTE (1):
-    -- The order in which we parser matters! Older eras first. formats
-    -- are forward-compatible, and near hard-forks, there's a period where the
-    -- software can understand the next era but, that era isn't available yet.
-    --
-    -- Therefore, we need to favor parsing older eras so that existing code keep
-    -- working. Transactions are only decoded in the new era when they are using
-    -- features not available in older ones.
+    -- The order in which we parse matters! Conway transactions can successfully
+    -- deserialize as Babbage (the Babbage decoder accepts Conway-era CBOR).
+    -- Since Babbage evaluation was dropped (per era rotation policy), this would
+    -- wrap Conway transactions as GenTxBabbage and reject them as "unsupported
+    -- era". We try Conway and Dijkstra first so transactions are evaluated in
+    -- the current era. Older eras are kept as fallbacks to provide specific
+    -- "unsupported era" diagnostics rather than generic deserialization errors.
     --
     -- NOTE (2):
     -- Avoiding 'asum' here because it generates poor errors on failures.
-    pure $  deserialiseCBOR @BabbageEra GenTxBabbage bytes
+    pure $  deserialiseCBOR @ConwayEra  GenTxConway  bytes
         <|> deserialiseCBOR @DijkstraEra GenTxDijkstra bytes
-        <|> deserialiseCBOR @ConwayEra  GenTxConway  bytes
+        <|> deserialiseCBOR @BabbageEra GenTxBabbage bytes
         <|> deserialiseCBOR @AlonzoEra  GenTxAlonzo  bytes
         <|> deserialiseCBOR @MaryEra    GenTxMary    bytes
         <|> deserialiseCBOR @AllegraEra GenTxAllegra bytes
@@ -2683,20 +2683,26 @@ decodeSerializedTransaction = Json.withText "Transaction" $ \(encodeUtf8 -> utf8
         -> ByteString
         -> MultiEraDecoder (GenTx (CardanoBlock crypto))
     deserialiseCBOR mk bytes =
-        mk <$> decodeCborWith @era "Transaction"
-            (\e -> MultiEraDecoderErrors
-                [ ( SomeShelleyEra (shelleyBasedEra @era)
-                  , e
-                  , fromIntegral $ BS.length bytes
-                  )
-                ]
-            )
-            (Binary.fromPlainDecoder fromCBOR)
-            (if  wrapper `BS.isPrefixOf` bytes
-               then fromStrict bytes
-               else wrap bytes
+        mk <$> either reject pure
+            (Binary.decodeFullDecoder version "Transaction"
+                (Binary.fromPlainDecoder fromCBOR)
+                (if  wrapper `BS.isPrefixOf` bytes
+                   then fromStrict bytes
+                   else wrap bytes
+                )
             )
       where
+        -- Use eraProtVerHigh to accept transactions from any protocol
+        -- version within the era (e.g. Conway PV9, PV10, PV11).
+        version = Ledger.eraProtVerHigh @era
+
+        reject e = MultiEraDecoderErrors
+            [ ( SomeShelleyEra (shelleyBasedEra @era)
+              , e
+              , fromIntegral $ BS.length bytes
+              )
+            ]
+
         wrapper = BS.pack [216, 24] -- D818...
 
         -- Cardano tools have a tendency to wrap cbor in cbor (e.g cardano-cli).
