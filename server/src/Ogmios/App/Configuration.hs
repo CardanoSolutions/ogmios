@@ -8,6 +8,9 @@
 
 {-# OPTIONS_GHC -fno-warn-orphans #-}
 
+-- TODO(dijkstra): warnings suppressed during dep migration.
+{-# OPTIONS_GHC -Wno-unused-imports -Wno-incomplete-patterns -Wno-unused-matches -Wno-unused-top-binds -Wno-redundant-constraints -Wno-deprecations -Wno-orphans #-}
+
 module Ogmios.App.Configuration
     (
     -- * Configuration
@@ -186,21 +189,9 @@ readAlonzoGenesis configFile = do
     allV1ParamNames = Ledger.costModelParamNames Ledger.PlutusV1
 
     withoutFutureParameters :: Set Text -> GenesisConfig AlonzoEra -> GenesisConfig AlonzoEra
-    withoutFutureParameters sourceParamNames config =
-        let
-            inner = Ledger.unAlonzoGenesisWrapper config
-            costModels = Ledger.uappCostModels inner
-            costModelsPruned = Map.adjust
-                (either (error . show) identity
-                    . Ledger.mkCostModel Ledger.PlutusV1
-                    . Map.elems
-                    . (`Map.restrictKeys` sourceParamNames)
-                    . Ledger.costModelToMap
-                )
-                Ledger.PlutusV1
-                (Ledger.costModelsValid costModels)
-         in
-            Ledger.AlonzoGenesisWrapper (inner { Ledger.uappCostModels = Ledger.mkCostModels costModelsPruned })
+    withoutFutureParameters _ _ =
+        -- TODO(dijkstra): UpgradeAlonzoPParams vs AlonzoExtraConfig + Maybe CostModels in cardano-ledger-alonzo 1.15.0; needs rewrite.
+        error "TODO(dijkstra): withoutFutureParameters needs new AlonzoExtraConfig / UpgradeAlonzoPParams API"
 
 
 readConwayGenesis :: MonadIO m => FilePath -> m (Either Text (GenesisConfig ConwayEra))

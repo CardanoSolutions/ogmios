@@ -366,13 +366,14 @@ fromEraIndex
     :: EraIndex (CardanoEras StandardCrypto)
     -> Maybe SomeShelleyEra
 fromEraIndex = \case
-    EraIndex                   Z{}       -> Nothing
-    EraIndex                (S Z{})      -> Just (SomeShelleyEra ShelleyBasedEraShelley)
-    EraIndex             (S (S Z{}))     -> Just (SomeShelleyEra ShelleyBasedEraAllegra)
-    EraIndex          (S (S (S Z{})))    -> Just (SomeShelleyEra ShelleyBasedEraMary)
-    EraIndex       (S (S (S (S Z{}))))   -> Just (SomeShelleyEra ShelleyBasedEraAlonzo)
-    EraIndex    (S (S (S (S (S Z{})))))  -> Just (SomeShelleyEra ShelleyBasedEraBabbage)
-    EraIndex (S (S (S (S (S (S Z{})))))) -> Just (SomeShelleyEra ShelleyBasedEraConway)
+    EraIndex                      Z{}        -> Nothing
+    EraIndex                   (S Z{})       -> Just (SomeShelleyEra ShelleyBasedEraShelley)
+    EraIndex                (S (S Z{}))      -> Just (SomeShelleyEra ShelleyBasedEraAllegra)
+    EraIndex             (S (S (S Z{})))     -> Just (SomeShelleyEra ShelleyBasedEraMary)
+    EraIndex          (S (S (S (S Z{}))))    -> Just (SomeShelleyEra ShelleyBasedEraAlonzo)
+    EraIndex       (S (S (S (S (S Z{})))))   -> Just (SomeShelleyEra ShelleyBasedEraBabbage)
+    EraIndex    (S (S (S (S (S (S Z{}))))))  -> Just (SomeShelleyEra ShelleyBasedEraConway)
+    EraIndex (S (S (S (S (S (S (S Z{}))))))) -> error "TODO(dijkstra): fromEraIndex Dijkstra arm"
 
 -- | Encode an object into a CBOR binary bytestring, based on the era encoder.
 encodeCbor

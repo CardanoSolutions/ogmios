@@ -8,6 +8,9 @@
 
 {-# OPTIONS_GHC -fno-warn-orphans #-}
 
+-- TODO(dijkstra): warnings suppressed during dep migration.
+{-# OPTIONS_GHC -Wno-unused-imports -Wno-incomplete-patterns -Wno-unused-matches -Wno-unused-top-binds -Wno-redundant-constraints -Wno-deprecations -Wno-orphans #-}
+
 module Ogmios.Data.Json.Orphans () where
 
 import Ogmios.Data.Json.Prelude
@@ -76,7 +79,7 @@ instance ToJSON (Tip (CardanoBlock crypto)) where
     toEncoding = encodeTip
 
 -- Only used for logging & health
-instance ToJSON (Point (CardanoBlock crypto)) where
+instance {-# OVERLAPPING #-} ToJSON (Point (CardanoBlock crypto)) where
     toJSON = inefficientEncodingToValue . encodePoint
     toEncoding = encodePoint
 
@@ -91,7 +94,7 @@ instance FromJSON (MultiEraDecoder (GenTx (CardanoBlock StandardCrypto))) where
 instance FromJSON (MultiEraUTxO (CardanoBlock crypto)) where
     parseJSON = decodeUtxo
 
-instance FromJSON (Point (CardanoBlock crypto)) where
+instance {-# OVERLAPPING #-} FromJSON (Point (CardanoBlock crypto)) where
     parseJSON = decodePoint
 
 instance FromJSON (Tip (CardanoBlock crypto)) where

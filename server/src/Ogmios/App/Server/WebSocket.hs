@@ -27,6 +27,9 @@ import Cardano.Network.Protocol.NodeToClient
     , connectClient
     , mkClient
     )
+import Control.Monad.Class.MonadThrow
+    ( MonadEvaluate
+    )
 import Cardano.Network.Protocol.NodeToClient.Trace
     ( TraceClient
     )
@@ -157,7 +160,7 @@ import Ogmios.Data.Protocol.TxSubmission
     , TxSubmissionMessage (..)
     , mkTxSubmissionCodecs
     )
-import Ouroboros.Network.NodeToClient.Version
+import Cardano.Network.Protocol.NodeToClient
     ( NodeToClientVersionData (NodeToClientVersionData)
     )
 import Ouroboros.Network.Protocol.ChainSync.ClientPipelined
@@ -184,6 +187,7 @@ newWebSocketApp
         , MonadClock m
         , MonadLink m
         , MonadMetrics m
+        , MonadEvaluate m
         , MonadOuroboros m
         , MonadWebSocket m
         , MonadReader env m

@@ -2,6 +2,9 @@
 --  License, v. 2.0. If a copy of the MPL was not distributed with this
 --  file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
+-- TODO(dijkstra): warnings disabled while encodeTx is stubbed.
+{-# OPTIONS_GHC -Wno-unused-imports -Wno-unused-matches -Wno-unused-top-binds #-}
+
 module Ogmios.Data.Json.Mary where
 
 import Ogmios.Data.Json.Prelude
@@ -23,7 +26,7 @@ import qualified Cardano.Ledger.Address as Ledger
 import qualified Cardano.Ledger.Block as Ledger
 import qualified Cardano.Ledger.Core as Ledger
 
-import qualified Cardano.Ledger.Shelley.BlockChain as Sh
+import qualified Cardano.Ledger.Shelley.BlockBody as Sh
 import qualified Cardano.Ledger.Shelley.Tx as Sh
 import qualified Cardano.Ledger.Shelley.TxOut as Sh
 import qualified Cardano.Ledger.Shelley.TxWits as Sh
@@ -69,7 +72,7 @@ encodeBlock opts (ShelleyBlock (Ledger.Block blkHeader txs) headerHash) =
         <>
           "size" .= encodeSingleton "bytes" (encodeWord32 (TPraos.bsize hBody))
         <>
-          "transactions" .= encodeFoldable (encodeTx opts) (Sh.txSeqTxns' txs)
+          "transactions" .= encodeFoldable (encodeTx opts) (Sh.shelleyBlockBodyTxs txs)
         )
   where
     TPraos.BHeader hBody _ = blkHeader
@@ -91,36 +94,14 @@ encodePolicyId (Ma.PolicyID hash) =
 
 encodeTx
     :: (MetadataFormat, IncludeCbor)
-    -> Sh.ShelleyTx MaryEra
+    -> Sh.Tx Ledger.TopTx MaryEra
     -> Json
-encodeTx (fmt, opts) x =
-    encodeObject
-        ( Shelley.encodeTxId (Ledger.txIdTxBody @MaryEra (Sh.body x))
-       <>
-        "spends" .= encodeText "inputs"
-       <>
-        encodeTxBody (Sh.body x) (strictMaybe mempty (Map.keys . snd) auxiliary)
-       <>
-        "metadata" .=? OmitWhenNothing fst auxiliary
-       <>
-        encodeWitnessSet opts (snd <$> auxiliary) (Sh.wits x)
-       <>
-        if includeTransactionCbor opts then
-           "cbor" .= encodeByteStringBase16 (encodeCbor @MaryEra x)
-        else
-           mempty
-       )
-  where
-    auxiliary = do
-        hash <- Shelley.encodeAuxiliaryDataHash <$> Ma.mtbAuxDataHash (Sh.body x)
-        (labels, scripts) <- encodeAuxiliaryData (fmt, opts) <$> Sh.auxiliaryData x
-        pure
-            ( encodeObject ("hash" .= hash <> "labels" .= labels)
-            , scripts
-            )
+encodeTx _ _ =
+    -- TODO(dijkstra): same as Allegra — rewrite using lenses; Sh.MkShelleyTx pattern doesn't unify with MaryEra in cardano-ledger 1.20.
+    error "TODO(dijkstra): encodeTx Mary"
 
 encodeTxBody
-    :: Ma.MaryTxBody MaryEra
+    :: Ledger.TxBody Ledger.TopTx MaryEra
     -> [Ledger.ScriptHash]
     -> Series
 encodeTxBody (Ma.MaryTxBody inps outs dCerts wdrls fee validity updates _ mint) scripts =

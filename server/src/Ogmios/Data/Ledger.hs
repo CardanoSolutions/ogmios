@@ -17,7 +17,7 @@ import Ogmios.Prelude
 
 import Cardano.Ledger.Address
     ( Addr (..)
-    , RewardAccount (..)
+    , AccountAddress
     )
 import Cardano.Ledger.Alonzo.Plutus.Context
     ( ContextError
@@ -45,8 +45,8 @@ import qualified Prelude
 
 data DiscriminatedEntities
     = DiscriminatedAddresses (Set Addr)
-    | DiscriminatedRewardAccounts (Set RewardAccount)
-    | DiscriminatedPoolRegistrationCertificate (KeyHash 'StakePool)
+    | DiscriminatedRewardAccounts (Set AccountAddress)
+    | DiscriminatedPoolRegistrationCertificate (KeyHash StakePool)
     | DiscriminatedTransaction
     deriving (Show, Ord, Eq)
 
@@ -90,13 +90,12 @@ instance Ord ScriptPurposeIndexInAnyEra where
 scriptPurposeInMostRecentEra
     :: ScriptPurposeIndexInAnyEra
     -> PlutusPurpose AsIx (MostRecentEra (CardanoBlock crypto))
-scriptPurposeInMostRecentEra = \case
-    ScriptPurposeIndexInAnyEra (AlonzoBasedEraAlonzo, ix) ->
-        upgradePlutusPurposeAsIx (upgradePlutusPurposeAsIx ix)
-    ScriptPurposeIndexInAnyEra (AlonzoBasedEraBabbage, ix) ->
-        upgradePlutusPurposeAsIx ix
-    ScriptPurposeIndexInAnyEra (AlonzoBasedEraConway, ix) ->
-        ix
+scriptPurposeInMostRecentEra _ =
+    -- TODO(dijkstra): MostRecentEra is now Dijkstra (not Conway). Each arm needs
+    -- an extra `upgradePlutusPurposeAsIx` step, and a new arm for
+    -- AlonzoBasedEraDijkstra. Plus AlonzoBasedEra likely gained a Dijkstra
+    -- constructor that needs handling.
+    error "TODO(dijkstra): scriptPurposeInMostRecentEra needs Dijkstra arm + extra upgrade step"
 
 data ContextErrorInAnyEra =
     forall era. Era era =>

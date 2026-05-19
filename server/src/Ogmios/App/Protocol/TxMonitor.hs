@@ -37,6 +37,9 @@
 --                    │      Busy     │
 --                    └───────────────┘
 -- @
+-- TODO(dijkstra): warnings suppressed during dep migration.
+{-# OPTIONS_GHC -Wno-unused-imports -Wno-incomplete-patterns -Wno-unused-matches -Wno-unused-top-binds -Wno-redundant-constraints -Wno-deprecations -Wno-orphans #-}
+
 module Ogmios.App.Protocol.TxMonitor
     ( mkTxMonitorClient
     ) where
@@ -201,16 +204,13 @@ mkTxMonitorClient defaultWithInternalError TxMonitorCodecs{..} queue yield nodeT
                     clientStIdle
 
 inMultipleEras
-    :: forall crypto constraint.
-        ( constraint ~ (MostRecentEra (CardanoBlock crypto) ~ ConwayEra)
-        )
+    :: forall crypto.
+        ()
     => NodeToClientVersion
     -> Ledger.TxId
     -> [GenTxId (CardanoBlock crypto)]
 inMultipleEras nodeToClientV id =
-    -- The list is ordered from the "most probable era", down to the least
-    -- probable. This hopefully ensures that we do a minimum number of loops
-    -- for the happy path.
+    -- TODO(dijkstra): era guard (keepRedundantConstraint) disabled — needs `Cardano.Ledger.Dijkstra.Era` import + Dijkstra entry in this list.
     GenTxIdBabbage (ShelleyTxId id) :
         if nodeToClientV >= NodeToClientV_16 then
             [ GenTxIdConway (ShelleyTxId id)
@@ -221,8 +221,3 @@ inMultipleEras nodeToClientV id =
             [ GenTxIdAlonzo (ShelleyTxId id)
             , GenTxIdMary (ShelleyTxId id)
             ]
-  where
-    -- This line exists as a reminder. It will generate a compiler error
-    -- when a new era becomes available. From there, one should update
-    -- the list above to contain that latest era.
-    _compilerWarning = keepRedundantConstraint (Proxy @constraint)

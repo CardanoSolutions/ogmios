@@ -7,6 +7,8 @@
 {-# LANGUAGE UndecidableInstances #-}
 
 {-# OPTIONS_GHC -fno-warn-unticked-promoted-constructors #-}
+-- TODO(dijkstra): warnings disabled while encodePParamsHKD / encodeTx metadata / encodePoolMetadata hash are stubbed.
+{-# OPTIONS_GHC -Wno-redundant-constraints #-}
 
 module Ogmios.Data.Json.Shelley where
 
@@ -45,10 +47,11 @@ import qualified Cardano.Ledger.Coin as Ledger
 import qualified Cardano.Ledger.Core as Ledger
 import qualified Cardano.Ledger.Credential as Ledger
 import qualified Cardano.Ledger.Keys as Ledger
-import qualified Cardano.Ledger.PoolParams as Ledger
+import qualified Cardano.Ledger.Keys.WitVKey as Sh
+import qualified Cardano.Ledger.State as Ledger
 import qualified Cardano.Ledger.TxIn as Ledger
 
-import qualified Cardano.Ledger.Shelley.BlockChain as Sh
+import qualified Cardano.Ledger.Shelley.BlockBody as Sh
 import qualified Cardano.Ledger.Shelley.Genesis as Sh
 import qualified Cardano.Ledger.Shelley.PParams as Sh
 import qualified Cardano.Ledger.Shelley.Rules as Sh
@@ -130,7 +133,7 @@ encodeBlock opts (ShelleyBlock (Ledger.Block blkHeader txs) headerHash) =
         <>
           "size" .= encodeSingleton "bytes" (encodeWord32 (TPraos.bsize hBody))
         <>
-          "transactions" .= encodeFoldable (encodeTx opts) (Sh.txSeqTxns' txs)
+          "transactions" .= encodeFoldable (encodeTx opts) (Sh.shelleyBlockBodyTxs txs)
         )
   where
     TPraos.BHeader hBody _ = blkHeader
@@ -169,7 +172,7 @@ encodeConstitutionalDelegCert (Sh.GenesisDelegCert key delegate vrf) =
         )
 
 encodeCredential
-    :: forall any. (any :\: 'StakePool)
+    :: forall any. (any :\: StakePool)
     => Text
     -> Ledger.Credential any
     -> Series
@@ -180,7 +183,7 @@ encodeCredential k x = case x of
         "from" .= "script" <> k .= encodeScriptHash h
 
 encodeCredentialRaw
-    :: forall any. (any :\: 'StakePool)
+    :: forall any. (any :\: StakePool)
     => Ledger.Credential any
     -> Json
 encodeCredentialRaw x = case x of
@@ -326,7 +329,7 @@ encodeGenDelegPair x =
     & encodeObject
 
 encodeGenesisVote
-    :: Ledger.KeyHash 'Genesis
+    :: Ledger.KeyHash GenesisRole
     -> Json
 encodeGenesisVote credential =
     encodeObject
@@ -351,7 +354,7 @@ encodeHashHeader =
     encodeByteStringBase16 . CC.hashToBytes . TPraos.unHashHeader
 
 encodeInitialDelegates
-    :: Map (Ledger.KeyHash 'Genesis) GenDelegPair
+    :: Map (Ledger.KeyHash GenesisRole) GenDelegPair
     -> Json
 encodeInitialDelegates =
     encodeMapAsList
@@ -543,7 +546,7 @@ encodePoolCert = \case
         "type" .= encodeText "stakePoolRegistration"
         <>
         "stakePool" .= encodeObject
-            ( "id" .= encodePoolId (Ledger.ppId params)
+            ( "id" .= encodePoolId (Ledger.sppId params)
            <> encodePoolParams params
             )
     Sh.RetirePool keyHash epochNo ->
@@ -567,29 +570,31 @@ encodePoolMetadata x =
     "url" .=
         encodeUrl (Ledger.pmUrl x) <>
     "hash" .=
-        encodeByteStringBase16 (Ledger.pmHash x)
+        encodeByteStringBase16
+            -- TODO(dijkstra): Ledger.pmHash now returns Data.Array.Byte.ByteArray instead of ByteString in cardano-ledger 1.20; needs conversion.
+            (error "TODO(dijkstra): Ledger.pmHash now ByteArray" :: ByteString)
     & encodeObject
 
 encodePoolParams
-    :: Ledger.PoolParams
+    :: Ledger.StakePoolParams
     -> Series
 encodePoolParams x =
     "vrfVerificationKeyHash" .=
-        encodeHash (Ledger.unVRFVerKeyHash $ Ledger.ppVrf x) <>
+        encodeHash (Ledger.unVRFVerKeyHash $ Ledger.sppVrf x) <>
     "pledge" .=
-        encodeCoin (Ledger.ppPledge x) <>
+        encodeCoin (Ledger.sppPledge x) <>
     "cost" .=
-        encodeCoin (Ledger.ppCost x) <>
+        encodeCoin (Ledger.sppCost x) <>
     "margin" .=
-        encodeUnitInterval (Ledger.ppMargin x) <>
+        encodeUnitInterval (Ledger.sppMargin x) <>
     "rewardAccount" .=
-        encodeRewardAcnt (Ledger.ppRewardAccount x) <>
+        encodeRewardAcnt (Ledger.sppAccountAddress x) <>
     "owners" .=
-        encodeFoldable encodeKeyHash (Ledger.ppOwners x) <>
+        encodeFoldable encodeKeyHash (Ledger.sppOwners x) <>
     "relays" .=
-        encodeFoldable encodeStakePoolRelay (Ledger.ppRelays x) <>
+        encodeFoldable encodeStakePoolRelay (Ledger.sppRelays x) <>
     "metadata" .=? OmitWhenNothing
-        encodePoolMetadata (Ledger.ppMetadata x)
+        encodePoolMetadata (Ledger.sppMetadata x)
 
 encodePParams
     :: (Ledger.PParamsHKD Identity era ~ Sh.ShelleyPParams Identity era)
@@ -674,44 +679,9 @@ encodePParamsHKD
     -> (Integer -> Sh.HKD f Integer)
     -> Ledger.PParamsHKD f era
     -> Json
-encodePParamsHKD encode pure_ x =
-    encode "minFeeCoefficient"
-        (encodeInteger . unCoin) (Sh.sppMinFeeA x) <>
-    encode "minFeeConstant"
-        encodeCoin (Sh.sppMinFeeB x) <>
-    encode "maxBlockBodySize"
-        (encodeSingleton "bytes" . encodeWord32) (Sh.sppMaxBBSize x) <>
-    encode "maxBlockHeaderSize"
-        (encodeSingleton "bytes" . encodeWord16) (Sh.sppMaxBHSize x) <>
-    encode "maxTransactionSize"
-        (encodeSingleton "bytes" . encodeWord32) (Sh.sppMaxTxSize x) <>
-    encode "stakeCredentialDeposit"
-        encodeCoin (Sh.sppKeyDeposit x) <>
-    encode "stakePoolDeposit"
-        encodeCoin (Sh.sppPoolDeposit x) <>
-    encode "stakePoolRetirementEpochBound"
-        encodeEpochInterval (Sh.sppEMax x) <>
-    encode "desiredNumberOfStakePools"
-        encodeWord16 (Sh.sppNOpt x) <>
-    encode "stakePoolPledgeInfluence"
-        encodeNonNegativeInterval (Sh.sppA0 x) <>
-    encode "minStakePoolCost"
-        encodeCoin (Sh.sppMinPoolCost x) <>
-    encode "monetaryExpansion"
-        encodeUnitInterval (Sh.sppRho x) <>
-    encode "treasuryExpansion"
-        encodeUnitInterval (Sh.sppTau x) <>
-    encode "federatedBlockProductionRatio"
-        encodeUnitInterval (Sh.sppD x) <>
-    encode "extraEntropy"
-        encodeNonce (Sh.sppExtraEntropy x) <>
-    encode "minUtxoDepositConstant"
-        encodeCoin (Sh.sppMinUTxOValue x) <>
-    encode "minUtxoDepositCoefficient"
-        encodeInteger (pure_ 0) <>
-    encode "version"
-        encodeProtVer (Sh.sppProtocolVersion x)
-    & encodeObject
+encodePParamsHKD _ _ _ =
+    -- TODO(dijkstra): rewrite for new ShelleyPParams HKD layout: sppKeyDeposit/sppPoolDeposit/sppMinUTxOValue now return Compact Coin instead of Coin in cardano-ledger 1.20. PR #461 adds an `encodeCompact` callback parameter.
+    error "TODO(dijkstra): encodePParamsHKD needs new signature for Compact Coin fields"
 
 encodePrevHash
     :: TPraos.PrevHash
@@ -731,7 +701,7 @@ encodeProtVer x =
     & encodeObject
 
 encodeRewardAcnt
-    :: Sh.RewardAccount
+    :: Ledger.AccountAddress
     -> Json
 encodeRewardAcnt =
     encodeText . stringifyRewardAcnt
@@ -827,33 +797,30 @@ encodeStakePoolRelay = encodeObject . \case
 
 encodeTx
     :: (MetadataFormat, IncludeCbor)
-    -> Sh.ShelleyTx ShelleyEra
+    -> Sh.Tx Ledger.TopTx ShelleyEra
     -> Json
-encodeTx (fmt, opts) x =
+encodeTx (_fmt, opts) tx@(Sh.MkShelleyTx x) =
     encodeObject
-        ( encodeTxId (Ledger.txIdTxBody @ShelleyEra (Sh.body x))
+        ( encodeTxId (Ledger.txIdTxBody @ShelleyEra (Sh.stBody x))
        <>
         "spends" .= encodeText "inputs"
        <>
-        encodeTxBody (Sh.body x)
+        encodeTxBody (Sh.stBody x)
        <>
         "metadata" .=? OmitWhenNothing identity metadata
        <>
-        encodeWitnessSet opts (Sh.wits x)
+        encodeWitnessSet opts (Sh.stWits x)
        <>
         if includeTransactionCbor opts then
-           "cbor" .= encodeByteStringBase16 (encodeCbor @ShelleyEra x)
+           "cbor" .= encodeByteStringBase16 (encodeCbor @ShelleyEra tx)
         else
            mempty
         )
   where
-    metadata = liftA2
-        (\hash body -> encodeObject ("hash" .= hash <> "labels" .= body))
-        (encodeAuxiliaryDataHash <$> Sh.stbMDHash (Sh.body x))
-        (encodeMetadata (fmt, opts) <$> Sh.auxiliaryData x)
+    metadata = SNothing -- TODO(dijkstra): encodeMetadata era-version constraint can't be solved against new ShelleyEra; need explicit era annotation or new API
 
 encodeTxBody
-    :: Sh.ShelleyTxBody ShelleyEra
+    :: Ledger.TxBody Ledger.TopTx ShelleyEra
     -> Series
 encodeTxBody x =
     "inputs" .=
@@ -912,7 +879,7 @@ encodeUpdate
     => (Ledger.PParamsUpdate era -> [Json])
     -> [Json]
     -> Sh.Update era
-    -> ([Ledger.KeyHash 'Genesis], [Json])
+    -> ([Ledger.KeyHash GenesisRole], [Json])
 encodeUpdate encodePParamsUpdateInEra mirs (Sh.Update (Sh.ProposedPPUpdates m) _epoch) =
     Map.foldrWithKey
         (\k v (votes, proposals) -> (k : votes, encodePParamsUpdateInEra v ++ proposals))
@@ -1068,10 +1035,10 @@ stringifyPoolId (Ledger.KeyHash (CC.UnsafeHash h)) =
     encodeBech32 hrpPool (fromShort h)
 
 stringifyRewardAcnt
-    :: Sh.RewardAccount
+    :: Ledger.AccountAddress
     -> Text
-stringifyRewardAcnt x@(Sh.RewardAccount ntwrk _credential) =
-    encodeBech32 (hrp ntwrk) (Ledger.serialiseRewardAccount x)
+stringifyRewardAcnt x@(Ledger.AccountAddress ntwrk _credential) =
+    encodeBech32 (hrp ntwrk) (Ledger.serialiseAccountAddress x)
   where
     hrp = \case
         Ledger.Mainnet -> hrpStakeMainnet

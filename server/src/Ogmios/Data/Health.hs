@@ -245,10 +245,11 @@ eraIndexToCardanoEra
     => EraIndex (CardanoEras crypto)
     -> CardanoEra
 eraIndexToCardanoEra = \case
-    EraIndex                   Z{}       -> Byron
-    EraIndex                (S Z{})      -> Shelley
-    EraIndex             (S (S Z{}))     -> Allegra
-    EraIndex          (S (S (S Z{})))    -> Mary
-    EraIndex       (S (S (S (S Z{}))))   -> Alonzo
-    EraIndex    (S (S (S (S (S Z{})))))  -> Babbage
-    EraIndex (S (S (S (S (S (S Z{})))))) -> Conway
+    EraIndex                      Z{}        -> Byron
+    EraIndex                   (S Z{})       -> Shelley
+    EraIndex                (S (S Z{}))      -> Allegra
+    EraIndex             (S (S (S Z{})))     -> Mary
+    EraIndex          (S (S (S (S Z{}))))    -> Alonzo
+    EraIndex       (S (S (S (S (S Z{})))))   -> Babbage
+    EraIndex    (S (S (S (S (S (S Z{}))))))  -> Conway
+    EraIndex (S (S (S (S (S (S (S Z{}))))))) -> error "TODO(dijkstra): eraIndexToCardanoEra Dijkstra arm; needs Dijkstra added to CardanoEra type"

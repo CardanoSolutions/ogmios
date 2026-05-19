@@ -2,6 +2,9 @@
 --  License, v. 2.0. If a copy of the MPL was not distributed with this
 --  file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
+-- TODO(dijkstra): warnings disabled while ShelleyLedgerPredFailure constructors are missing.
+{-# OPTIONS_GHC -Wno-unused-imports -Wno-incomplete-patterns -Wno-unused-matches -Wno-unused-top-binds -Wno-redundant-constraints #-}
+
 module Ogmios.Data.Ledger.PredicateFailure.Mary where
 
 import Ogmios.Prelude

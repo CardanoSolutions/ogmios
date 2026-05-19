@@ -2,6 +2,9 @@
 --  License, v. 2.0. If a copy of the MPL was not distributed with this
 --  file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
+-- TODO(dijkstra): warnings disabled while removed constructors are stubbed.
+{-# OPTIONS_GHC -Wno-unused-imports -Wno-incomplete-patterns -Wno-unused-matches -Wno-unused-top-binds -Wno-redundant-constraints #-}
+
 module Ogmios.Data.Ledger.PredicateFailure.Allegra where
 
 import Ogmios.Prelude
@@ -39,38 +42,6 @@ encodeUtxoFailure
     => ShelleyBasedEra era
     -> Al.AllegraUtxoPredFailure era
     -> MultiEraPredicateFailure
-encodeUtxoFailure era = \case
-    Al.BadInputsUTxO inputs ->
-        UnknownUtxoReference inputs
-    Al.OutsideValidityIntervalUTxO validityInterval currentSlot ->
-        TransactionOutsideValidityInterval { validityInterval, currentSlot }
-    Al.OutputTooBigUTxO outs ->
-        let culpritOutputs = (\out -> TxOutInAnyEra (era, out)) <$> outs in
-        ValueSizeAboveLimit culpritOutputs
-    Al.MaxTxSizeUTxO (Mismatch measuredSize maximumSize) ->
-        TransactionTooLarge { measuredSize, maximumSize }
-    Al.InputSetEmptyUTxO ->
-        EmptyInputSet
-    Al.FeeTooSmallUTxO (Mismatch suppliedFee minimumRequiredFee) ->
-        TransactionFeeTooSmall { minimumRequiredFee, suppliedFee }
-    Al.ValueNotConservedUTxO (Mismatch consumed produced) ->
-        let valueConsumed = ValueInAnyEra (era, consumed) in
-        let valueProduced = ValueInAnyEra (era, produced) in
-        ValueNotConserved { valueConsumed, valueProduced }
-    Al.WrongNetwork expectedNetwork invalidAddrs ->
-        let invalidEntities = DiscriminatedAddresses invalidAddrs in
-        NetworkMismatch { expectedNetwork, invalidEntities }
-    Al.WrongNetworkWithdrawal expectedNetwork invalidAccts ->
-        let invalidEntities = DiscriminatedRewardAccounts invalidAccts in
-        NetworkMismatch { expectedNetwork, invalidEntities }
-    Al.OutputTooSmallUTxO outs ->
-        let insufficientlyFundedOutputs =
-                (\out -> (TxOutInAnyEra (era, out), Nothing)) <$> outs
-         in InsufficientAdaInOutput { insufficientlyFundedOutputs }
-    Al.OutputBootAddrAttrsTooBig outs ->
-        let culpritOutputs = (\out -> TxOutInAnyEra (era, out)) <$> outs in
-        BootstrapAddressAttributesTooLarge { culpritOutputs }
-    Al.TriesToForgeADA ->
-        MintingOrBurningAda
-    Al.UpdateFailure{} ->
-        InvalidProtocolParametersUpdate
+encodeUtxoFailure _era _ =
+    -- TODO(dijkstra): NonEmptySet vs Set / NonEmpty vs [] / Word32 vs Integer mismatches across many arms in cardano-ledger-allegra 1.9.0.
+    error "TODO(dijkstra): encodeUtxoFailure Allegra"

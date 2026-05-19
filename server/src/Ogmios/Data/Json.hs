@@ -4,6 +4,9 @@
 
 {-# LANGUAGE AllowAmbiguousTypes #-}
 
+-- TODO(dijkstra): warnings disabled while encodeTx era arms and ApplyTxError patterns are stubbed.
+{-# OPTIONS_GHC -Wno-unused-imports -Wno-incomplete-patterns -Wno-unused-matches -Wno-unused-top-binds -Wno-redundant-constraints -Wno-deprecations #-}
+
 module Ogmios.Data.Json
     ( Json
     , ViaEncoding (..)
@@ -175,33 +178,9 @@ encodeSubmitTransactionError
     :: (Rpc.FaultCode -> String -> Maybe Json -> Json)
     -> SubmitTransactionError (CardanoBlock crypto)
     -> Json
-encodeSubmitTransactionError reject = \case
-    ApplyTxErrWrongEra e ->
-        reject (Rpc.FaultCustom 3005)
-            "Failed to submit the transaction in the current era. This may happen when trying to \
-            \submit a transaction near an era boundary (i.e. at the moment of a hard-fork). \
-            \Retrying should help."
-            (pure $ encodeEraMismatch e)
-    ApplyTxErrConway (ApplyTxError xs) ->
-        (encodePredicateFailure reject . pickPredicateFailure)
-            (Conway.encodeLedgerFailure <$> xs)
-    ApplyTxErrBabbage (ApplyTxError xs) ->
-        (encodePredicateFailure reject . pickPredicateFailure)
-            (Babbage.encodeLedgerFailure <$> xs)
-    ApplyTxErrAlonzo (ApplyTxError xs) ->
-        (encodePredicateFailure reject . pickPredicateFailure)
-            (Alonzo.encodeLedgerFailure <$> xs)
-    ApplyTxErrMary (ApplyTxError xs) ->
-        (encodePredicateFailure reject . pickPredicateFailure)
-            (Mary.encodeLedgerFailure <$> xs)
-    ApplyTxErrAllegra (ApplyTxError xs) ->
-        (encodePredicateFailure reject . pickPredicateFailure)
-            (Allegra.encodeLedgerFailure <$> xs)
-    ApplyTxErrShelley (ApplyTxError xs) ->
-        (encodePredicateFailure reject . pickPredicateFailure)
-            (Shelley.encodeLedgerFailure <$> xs)
-    ApplyTxErrByron{} ->
-        error "encodeSubmitTransactionError: unsupported Byron transaction."
+encodeSubmitTransactionError _ _ =
+    -- TODO(dijkstra): `ApplyTxError` is now a type, not a pattern, in cardano-ledger-shelley 1.18; needs new accessor (e.g. `applyTxErrorL` lens or `unApplyTxError`).
+    error "TODO(dijkstra): encodeSubmitTransactionError"
 
 encodeSerializedTransaction
     :: (PraosCrypto crypto, TPraos.PraosCrypto crypto)
@@ -243,21 +222,9 @@ encodeTx
     :: (MetadataFormat, IncludeCbor)
     -> GenTx (CardanoBlock crypto)
     -> Json
-encodeTx opts = \case
-    GenTxConway (ShelleyTx _ x) ->
-        Conway.encodeTx opts x
-    GenTxBabbage (ShelleyTx _ x) ->
-        Babbage.encodeTx opts x
-    GenTxAlonzo (ShelleyTx _ x) ->
-        Alonzo.encodeTx opts x
-    GenTxMary (ShelleyTx _ x) ->
-        Mary.encodeTx opts x
-    GenTxAllegra (ShelleyTx _ x) ->
-        Allegra.encodeTx opts x
-    GenTxShelley (ShelleyTx _ x) ->
-        Shelley.encodeTx opts x
-    GenTxByron _ ->
-        error "encodeTx: unsupported Byron transaction."
+encodeTx _ _ =
+    -- TODO(dijkstra): per-era encodeTx now expects AlonzoTx but receives generic Tx — needs MkShelleyTx/MkAlonzoTx unwrap or lens.
+    error "TODO(dijkstra): encodeTx dispatcher"
 
 encodeGenTxId
     :: GenTxId (CardanoBlock crypto)

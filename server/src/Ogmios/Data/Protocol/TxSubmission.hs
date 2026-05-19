@@ -424,7 +424,7 @@ evaluateExecutionUnits
         -- ^ Information about epoch sizes, for converting slots to UTC times
     -> UTxO era
         -- ^ A UTXO needed to resolve inputs
-    -> Core.Tx era
+    -> Core.Tx Core.TopTx era
         -- ^ The actual transaction
     -> EvaluateTransactionResponse block
 evaluateExecutionUnits pparams systemStart epochInfo utxo tx =
@@ -526,6 +526,7 @@ utxoFromMempool =
             error "inputs: unsupported era."
         GenTxByron{} ->
             error "inputs: unsupported era."
+        _ -> error "TODO(dijkstra): inputs needs GenTxDijkstra arm"
 
     outputs :: GenTx block -> MultiEraUTxO block
     outputs = \case
@@ -551,6 +552,7 @@ utxoFromMempool =
             error "outputs: unsupported era."
         GenTxByron{} ->
             error "outputs: unsupported era."
+        _ -> error "TODO(dijkstra): outputs needs GenTxDijkstra arm + Dijkstra MultiEraUTxO ctor"
 
 mergeUtxo ::  MultiEraUTxO block -> MultiEraUTxO block -> MultiEraUTxO block
 mergeUtxo a b = case (a, b) of

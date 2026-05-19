@@ -2,6 +2,9 @@
 --  License, v. 2.0. If a copy of the MPL was not distributed with this
 --  file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
+-- TODO(dijkstra): warnings disabled while encoders are stubbed.
+{-# OPTIONS_GHC -Wno-unused-imports -Wno-incomplete-patterns -Wno-unused-matches -Wno-unused-top-binds -Wno-redundant-constraints -Wno-deprecations #-}
+
 module Ogmios.Data.Json.Babbage where
 
 import Ogmios.Data.Json.Prelude
@@ -40,7 +43,7 @@ import qualified Cardano.Ledger.Mary.Value as Ma
 
 import qualified Cardano.Ledger.Alonzo.PParams as Al
 import qualified Cardano.Ledger.Alonzo.Scripts as Al
-import qualified Cardano.Ledger.Alonzo.TxSeq as Al
+import qualified Cardano.Ledger.Alonzo.BlockBody as Al
 
 import qualified Cardano.Ledger.Babbage.Core as Ba
 import qualified Cardano.Ledger.Babbage.PParams as Ba
@@ -59,18 +62,9 @@ encodeBlock
     :: (MetadataFormat, IncludeCbor)
     -> ShelleyBlock (Praos StandardCrypto) BabbageEra
     -> Json
-encodeBlock opts (ShelleyBlock (Ledger.Block blkHeader txs) headerHash) =
-    encodeObject
-        ( "type" .= encodeText "praos"
-        <>
-          "era" .= encodeText "babbage"
-        <>
-          "id" .= Shelley.encodeShelleyHash headerHash
-        <>
-          encodeHeader blkHeader
-        <>
-          "transactions" .= encodeFoldable (encodeTx opts) (Al.txSeqTxns txs)
-        )
+encodeBlock _ _ =
+    -- TODO(dijkstra): alonzoBlockBodyTxs yields generic Tx, not AlonzoTx — needs lens-based shape.
+    error "TODO(dijkstra): encodeBlock Babbage"
 
 encodeContextError
     :: ( Ba.PlutusPurpose AsIx era ~ Al.AlonzoPlutusPurpose AsIx era
@@ -204,70 +198,25 @@ encodePParamsHKD
     -> (Integer -> Sh.HKD f Integer)
     -> Ba.BabbagePParams f era
     -> Json
-encodePParamsHKD encode pure_ x =
-    encode "minFeeCoefficient"
-        (encodeInteger . unCoin) (Ba.bppMinFeeA x) <>
-    encode "minFeeConstant"
-        encodeCoin (Ba.bppMinFeeB x) <>
-    encode "maxBlockBodySize"
-        (encodeSingleton "bytes" . encodeWord32) (Ba.bppMaxBBSize x) <>
-    encode "maxBlockHeaderSize"
-        (encodeSingleton "bytes" . encodeWord16) (Ba.bppMaxBHSize x) <>
-    encode "maxTransactionSize"
-        (encodeSingleton "bytes" . encodeWord32) (Ba.bppMaxTxSize x) <>
-    encode "stakeCredentialDeposit"
-        encodeCoin (Ba.bppKeyDeposit x) <>
-    encode "stakePoolDeposit"
-        encodeCoin (Ba.bppPoolDeposit x) <>
-    encode "stakePoolRetirementEpochBound"
-        encodeEpochInterval (Ba.bppEMax x) <>
-    encode "desiredNumberOfStakePools"
-        encodeWord16 (Ba.bppNOpt x) <>
-    encode "stakePoolPledgeInfluence"
-        encodeNonNegativeInterval (Ba.bppA0 x) <>
-    encode "monetaryExpansion"
-        encodeUnitInterval (Ba.bppRho x) <>
-    encode "treasuryExpansion"
-        encodeUnitInterval (Ba.bppTau x) <>
-    encode "minStakePoolCost"
-        encodeCoin (Ba.bppMinPoolCost x) <>
-    encode "minUtxoDepositConstant"
-        (encodeCoin . Coin) (pure_ 0) <>
-    encode "minUtxoDepositCoefficient"
-        (encodeInteger . unCoin . Ba.unCoinPerByte) (Ba.bppCoinsPerUTxOByte x) <>
-    encode "plutusCostModels"
-        Alonzo.encodeCostModels (Ba.bppCostModels x) <>
-    encode "scriptExecutionPrices"
-        Alonzo.encodePrices (Ba.bppPrices x) <>
-    encode "maxExecutionUnitsPerTransaction"
-        (Alonzo.encodeExUnits . Al.unOrdExUnits) (Ba.bppMaxTxExUnits x) <>
-    encode "maxExecutionUnitsPerBlock"
-        (Alonzo.encodeExUnits . Al.unOrdExUnits) (Ba.bppMaxBlockExUnits x) <>
-    encode "maxValueSize"
-        (encodeSingleton "bytes" . encodeNatural) (Ba.bppMaxValSize x) <>
-    encode "collateralPercentage"
-        encodeNatural (Ba.bppCollateralPercentage x) <>
-    encode "maxCollateralInputs"
-        encodeNatural (Ba.bppMaxCollateralInputs x) <>
-    encode "version"
-        Shelley.encodeProtVer (Ba.bppProtocolVersion x)
-    & encodeObject
+encodePParamsHKD _ _ _ =
+    -- TODO(dijkstra): BabbagePParams HKD layout changed (Compact Coin / Word32 vs Natural mismatches).
+    error "TODO(dijkstra): encodePParamsHKD Babbage"
 
 encodeTx
     :: (MetadataFormat, IncludeCbor)
-    -> Ba.AlonzoTx BabbageEra
+    -> Ba.AlonzoTx Ledger.TopTx BabbageEra
     -> Json
 encodeTx (fmt, opts) x =
     encodeObject
-        ( Shelley.encodeTxId (Ledger.txIdTxBody @BabbageEra (Ba.body x))
+        ( Shelley.encodeTxId (Ledger.txIdTxBody @BabbageEra (Ba.atBody x))
        <>
-        "spends" .= Alonzo.encodeIsValid (Ba.isValid x)
+        "spends" .= Alonzo.encodeIsValid (Ba.atIsValid x)
        <>
-        encodeTxBody opts (Ba.body x) (strictMaybe mempty (Map.keys . snd) auxiliary)
+        encodeTxBody opts (Ba.atBody x) (strictMaybe mempty (Map.keys . snd) auxiliary)
        <>
         "metadata" .=? OmitWhenNothing fst auxiliary
        <>
-        Alonzo.encodeWitnessSet opts (snd <$> auxiliary) Alonzo.encodeScriptPurposeIndex (Ba.wits x)
+        Alonzo.encodeWitnessSet opts (snd <$> auxiliary) Alonzo.encodeScriptPurposeIndex (Ba.atWits x)
        <>
         if includeTransactionCbor opts then
            "cbor" .= encodeByteStringBase16 (encodeCbor @BabbageEra x)
@@ -276,8 +225,8 @@ encodeTx (fmt, opts) x =
        )
   where
     auxiliary = do
-        hash <- Shelley.encodeAuxiliaryDataHash <$> Ba.btbAuxDataHash (Ba.body x)
-        (labels, scripts) <- Alonzo.encodeAuxiliaryData (fmt, opts) <$> Ba.auxiliaryData x
+        hash <- Shelley.encodeAuxiliaryDataHash <$> Ba.btbAuxDataHash (Ba.atBody x)
+        (labels, scripts) <- Alonzo.encodeAuxiliaryData (fmt, opts) <$> Ba.atAuxData x
         pure
             ( encodeObject ("hash" .= hash <> "labels" .= labels)
             , scripts
@@ -285,7 +234,7 @@ encodeTx (fmt, opts) x =
 
 encodeTxBody
     :: IncludeCbor
-    -> Ba.BabbageTxBody BabbageEra
+    -> Ledger.TxBody Ledger.TopTx BabbageEra
     -> [Ledger.ScriptHash]
     -> Series
 encodeTxBody opts x scripts =

@@ -4,6 +4,10 @@
 
 {-# LANGUAGE UndecidableInstances #-}
 
+-- TODO(dijkstra): warnings disabled while the AlonzoTx Upgrade instance is stubbed
+-- (AlonzoTx now has kind `TxLevel -> Type -> Type` in cardano-ledger 1.20).
+{-# OPTIONS_GHC -Wno-unused-imports -Wno-unused-top-binds -Wno-incomplete-patterns #-}
+
 -- | Provides translation of types across the current era and the latest era.
 module Ogmios.Data.EraTranslation
     ( -- * Type Families
@@ -27,10 +31,12 @@ import Cardano.Ledger.Babbage.Tx
 import Cardano.Ledger.Babbage.TxOut
     ( BabbageTxOut (..)
     )
+import Cardano.Ledger.Api.Tx.Body
+    ( upgradeTxBody
+    )
 import Cardano.Ledger.Core
     ( PreviousEra
     , translateEraThroughCBOR
-    , upgradeTxBody
     )
 import Cardano.Ledger.Shelley.UTxO
     ( UTxO (..)
@@ -88,17 +94,23 @@ instance Upgrade UTxO ConwayEra where
 -- Tx
 ----------
 
+-- TODO(dijkstra): AlonzoTx now has kind `TxLevel -> Type -> Type` in cardano-ledger 1.20;
+-- the Upgrade instance head needs to apply a TxLevel (e.g. TopTx).
+-- PR #461 replaces this with `instance Upgrade (Tx TopTx) ConwayEra` using the generic
+-- ledger `Tx` type instead of `AlonzoTx`. Stubbed out until that refactor lands.
+{-
 instance Upgrade AlonzoTx ConwayEra where
     type Upgraded AlonzoTx = AlonzoTx
     upgrade tx = force $ unsafeFromRight $ do
-        body <- left show $ upgradeTxBody (Alonzo.body tx)
+        body <- left show $ upgradeTxBody (Alonzo.atBody tx)
         left show $ runExcept $ do
-            wits <- translateEraThroughCBOR "witness" $ Alonzo.wits tx
-            auxiliaryData <- case Alonzo.auxiliaryData tx of
+            wits <- translateEraThroughCBOR "witness" $ Alonzo.atWits tx
+            auxiliaryData <- case Alonzo.atAuxData tx of
               SNothing -> pure SNothing
               SJust auxData -> SJust <$> translateEraThroughCBOR "auxiliaryData" auxData
-            let isValid = Alonzo.isValid tx
-            pure $ AlonzoTx{body,wits,auxiliaryData,isValid}
+            let isValid = Alonzo.atIsValid tx
+            pure $ AlonzoTx { atBody = body, atWits = wits, atAuxData = auxiliaryData, atIsValid = isValid }
+-}
 
 ----------
 -- GenTx

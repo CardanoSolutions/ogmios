@@ -2,6 +2,10 @@
 --  License, v. 2.0. If a copy of the MPL was not distributed with this
 --  file, You can obtain one at http://mozilla.org/MPL/2.0/.
 
+-- TODO(dijkstra): warnings disabled while this module is stubbed for the new
+-- cardano-ledger-core 1.20 API (ChainAccountState / ActiveStake / StakePoolSnapShot / NonZero Coin).
+{-# OPTIONS_GHC -Wno-unused-imports -Wno-unused-top-binds -Wno-unused-matches -Wno-redundant-constraints -Wno-dodgy-imports #-}
+
 module Ogmios.Data.Ledger.Rewards
     ( RewardsProvenance (..)
     , PoolRewardsInfo (..)
@@ -27,6 +31,9 @@ import Cardano.Ledger.Coin
     )
 import Cardano.Ledger.Credential
     ( Credential (..)
+    )
+import Cardano.Ledger.Keys
+    ( KeyRole (..)
     )
 import Cardano.Ledger.Shelley.Genesis
     ( ShelleyGenesis (..)
@@ -98,7 +105,7 @@ data RewardsProvenance = RewardsProvenance
   , activeStake :: !Coin
   -- ^ The amount of Lovelace that is delegated during the given epoch.
   , pools :: Map
-      (KeyHash 'StakePool)
+      (KeyHash StakePool)
       (PoolRewardsInfo)
   -- ^ Stake pools specific information needed to compute the rewards for its members.
   }
@@ -115,7 +122,7 @@ data PoolRewardsInfo = PoolRewardsInfo
   -- ^ The number of blocks the stake pool produced
   , poolLeaderReward :: !Coin
   -- ^ The leader reward
-  , poolDelegators :: !(Map (Credential 'Staking) Coin)
+  , poolDelegators :: !(Map (Credential Staking) Coin)
   -- ^ A map of all its delegators, and their respective stake.
   }
   deriving (Show, Eq, Ord, Generic)
@@ -147,118 +154,12 @@ rewardsProvenance
     -> Coin
     -> ActiveSlotCoeff
     -> RewardsProvenance
-rewardsProvenance slotsPerEpoch b@(BlocksMade b') es@(EpochState acnt _ ss _) maxSupply asc =
-    RewardsProvenance
-        { spe = case slotsPerEpoch of EpochSize n -> n
-        , fees = ssFee ss
-        , blocks = b
-        , blocksCount
-        , maxSupply
-        , deltaR1
-        , totalStake
-        , activeStake
-        , d
-        , expectedBlocks
-        , eta
-        , rPot
-        , deltaT1
-        , pools
-        }
-  where
-    SnapShot stake delegs poolParams =
-        ssStakeGo ss
-
-    Coin reserves =
-        asReserves acnt
-
-    pr =
-      es ^. prevPParamsEpochStateL
-
-    deltaR1 =
-      rationalToCoinViaFloor $
-          min 1 eta
-              * unboundRational (pr ^. ppRhoL)
-              * fromIntegral reserves
-
-    d =
-        unboundRational (pr ^. ppDG)
-
-    expectedBlocks =
-      floor $ (1 - d) * unboundRational (activeSlotVal asc) * fromIntegral (unEpochSize slotsPerEpoch)
-
-    blocksCount =
-        fromIntegral $ Map.foldr (+) 0 b' :: Integer
-
-    eta
-      | unboundRational (pr ^. ppDG) >= 0.8 = 1
-      | otherwise = blocksCount % expectedBlocks
-
-    Coin rPot =
-        ssFee ss <> deltaR1
-
-    deltaT1 =
-        floor $ unboundRational (pr ^. ppTauL) * fromIntegral rPot
-
-    availableRewards =
-        Coin $ rPot - deltaT1
-
-    activeStake =
-        sumAllStake stake
-
-    totalStake =
-        circulation es maxSupply
-
-    stakePerPool =
-        sumStakePerPool delegs stake
-
-    mkPoolRewardInfoCurry =
-      mkPoolRewardInfo
-        pr
-        availableRewards
-        b
-        (fromIntegral blocksCount)
-        stake
-        delegs
-        stakePerPool
-        totalStake
-        activeStake
-
-    delegators :: Map (KeyHash 'StakePool) (Map (Credential 'Staking) Coin)
-    delegators =
-        VMap.foldlWithKey
-            (flipFold $ \account ->
-                let balance = maybe mempty (word64ToCoin . unCompactCoin) (VMap.lookup account (unStake stake))
-                 in Map.alter $ Just . \case
-                        Nothing -> Map.singleton account balance
-                        Just m -> Map.insert account balance m
-            )
-            mempty
-            delegs
-
-    pools =
-        poolParams
-            & VMap.map mkPoolRewardInfoCurry
-            & VMap.toMap
-            & Map.mapWithKey (\poolId -> \case
-                Left s -> PoolRewardsInfo
-                    { poolRelativeStake = s
-                    , poolPot = mempty
-                    , poolBlocks = 0
-                    , poolLeaderReward = mempty
-                    , poolDelegators = fromMaybe mempty (Map.lookup poolId delegators)
-                    }
-                Right i -> PoolRewardsInfo
-                    { poolRelativeStake = Ledger.poolRelativeStake i
-                    , poolPot = Ledger.poolPot i
-                    , poolBlocks = Ledger.poolBlocks i
-                    , poolLeaderReward = lRewardAmount $ Ledger.poolLeaderReward i
-                    , poolDelegators = fromMaybe mempty (Map.lookup poolId delegators)
-                    }
-              )
+rewardsProvenance _ _ _ _ _ =
+    error "TODO(dijkstra): rewardsProvenance needs full rewrite for new cardano-ledger-core 1.20 API (ActiveStake / StakePoolSnapShot / NonZero Coin / ChainAccountState; mkPoolRewardInfo arity changed)"
 
 circulation :: EpochState era -> Coin -> Coin
 circulation (EpochState acnt _ _ _) supply =
-  supply <-> asReserves acnt
+  supply <-> (error "TODO(dijkstra): asReserves no longer on ChainAccountState in cardano-ledger-core 1.20; needs new accessor" :: Coin)
 
 flipFold :: (k -> v -> a -> a) -> (a -> k -> v -> a)
 flipFold f a k v = f k v a
