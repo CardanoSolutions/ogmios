@@ -128,6 +128,27 @@ Ogmios provides a language-agnostic API which can be implemented using any WebSo
 </tr>
 <thead></table>
 
+## Development
+
+This project uses a [Nix flake](https://nixos.wiki/wiki/Flakes) for development and CI.
+
+### With direnv
+
+If you have [direnv](https://direnv.net/) installed, simply run:
+
+```sh
+direnv allow
+```
+
+This will automatically initialize git submodules and enter the development shell.
+
+### Without direnv
+
+```sh
+git submodule update --init --recursive
+nix develop "git+file:.?submodules=1" --impure
+```
+
 ## Sponsors
 
 A big thank to [all our sponsors 💖](https://github.com/CardanoSolutions#-sponsors).
