@@ -793,6 +793,11 @@
       ]
     }
 
+  , "Credits":
+    { "title": "credits"
+    , "$ref": "cardano.json#/definitions/Withdrawals"
+    }
+
   , "Datum":
     { "title": "Datum"
     , "type": "string"
@@ -1019,11 +1024,6 @@
     , "examples":
       [ "c248757d390181c517a5beadc9c3fe64bf821d3e889a963fc717003ec248757d"
       ]
-    }
-
-  , "DirectDeposits":
-    { "title": "DirectDeposits"
-    , "$ref": "cardano.json#/definitions/Withdrawals"
     }
 
   , "Epoch":
@@ -2803,6 +2803,10 @@
       , "withdrawals":
         { "$ref": "cardano.json#/definitions/Withdrawals"
         }
+      , "credits":
+        { "$ref": "cardano.json#/definitions/Credits"
+        , "description": "Credits to account addresses (opposite of withdrawals). From Dijkstra era only."
+        }
       , "fee":
         { "$ref": "cardano.json#/definitions/Value<AdaOnly>"
         }
@@ -2822,14 +2826,14 @@
         { "type": "array"
         , "items": { "$ref": "cardano.json#/definitions/Digest<Blake2b, 224>" }
         }
-      , "requiredExtraGuards":
-        { "type": "array"
-        , "items": { "$ref": "cardano.json#/definitions/Digest<Blake2b, 224>" }
-        , "description": "Script hash guards required by the transaction. Dijkstra era only."
-        }
       , "requiredExtraScripts":
         { "type": "array"
         , "items": { "$ref": "cardano.json#/definitions/Digest<Blake2b, 224>" }
+        }
+      , "guards":
+        { "type": "array"
+        , "items": { "$ref": "cardano.json#/definitions/Digest<Blake2b, 224>" }
+        , "description": "Scripts which must pass for the transaction to be valid. Meant to replace the 'withdraw-0' design pattern. From Dijkstra era only."
         }
       , "proposals":
         { "type": "array"
@@ -2868,24 +2872,15 @@
           , "donation": { "$ref": "cardano.json#/definitions/Value<AdaOnly>" }
           }
         }
-      , "directDeposits":
-        { "$ref": "cardano.json#/definitions/DirectDeposits"
-        , "description": "Direct deposits to account addresses. Dijkstra era only."
-        }
       , "accountBalanceIntervals":
         { "type": "array"
         , "items": { "$ref": "cardano.json#/definitions/AccountBalanceInterval" }
-        , "description": "Account balance interval constraints. Dijkstra era only."
+        , "description": "Interval contraints regarding accounts. This is used by scripts which must validates account balances with some levels of flexibility. From Dijkstra era only."
         }
       , "subTransactions":
         { "type": "array"
         , "items": { "$ref": "cardano.json#/definitions/SubTransaction" }
-        , "description": "Nested sub-transactions. Dijkstra era only."
-        }
-      , "requiredTopLevelGuards":
-        { "type": "array"
-        , "items": { "$ref": "cardano.json#/definitions/TopLevelGuard" }
-        , "description": "Required top-level guards for sub-transactions. Dijkstra era only."
+        , "description": "Nested sub-transactions. From Dijkstra era only."
         }
       , "cbor":
         { "type": "string"
@@ -2967,6 +2962,9 @@
       , "withdrawals":
         { "$ref": "cardano.json#/definitions/Withdrawals"
         }
+      , "credits":
+        { "$ref": "cardano.json#/definitions/Credits"
+        }
       , "validityInterval":
         { "$ref": "cardano.json#/definitions/ValidityInterval"
         }
@@ -2983,13 +2981,19 @@
         { "type": "array"
         , "items": { "$ref": "cardano.json#/definitions/Digest<Blake2b, 224>" }
         }
-      , "requiredExtraGuards":
-        { "type": "array"
-        , "items": { "$ref": "cardano.json#/definitions/Digest<Blake2b, 224>" }
-        }
       , "requiredExtraScripts":
         { "type": "array"
         , "items": { "$ref": "cardano.json#/definitions/Digest<Blake2b, 224>" }
+        }
+      , "guards":
+        { "type": "array"
+        , "description": "Scripts which must pass for the (sub) transaction to be valid. Meant to replace the 'withdraw-0' design pattern."
+        , "items": { "$ref": "cardano.json#/definitions/Digest<Blake2b, 224>" }
+        }
+      , "topLevelGuards":
+        { "type": "array"
+        , "description": "Like 'guards', but apply to the host transaction."
+        , "items": { "$ref": "cardano.json#/definitions/TopLevelGuard" }
         }
       , "proposals":
         { "type": "array"
@@ -3007,16 +3011,9 @@
           , "donation": { "$ref": "cardano.json#/definitions/Value<AdaOnly>" }
           }
         }
-      , "directDeposits":
-        { "$ref": "cardano.json#/definitions/DirectDeposits"
-        }
       , "accountBalanceIntervals":
         { "type": "array"
         , "items": { "$ref": "cardano.json#/definitions/AccountBalanceInterval" }
-        }
-      , "requiredTopLevelGuards":
-        { "type": "array"
-        , "items": { "$ref": "cardano.json#/definitions/TopLevelGuard" }
         }
       , "metadata":
         { "$ref": "cardano.json#/definitions/Metadata"

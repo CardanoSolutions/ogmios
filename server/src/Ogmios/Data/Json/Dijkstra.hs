@@ -413,7 +413,7 @@ encodeSubTxBody
     -> Series
 encodeSubTxBody opts x scripts =
     encodeSharedTxBody opts x scripts <>
-    "requiredTopLevelGuards" .=? OmitWhen null
+    "topLevelGuards" .=? OmitWhen null
         (encodeMapAsList encodeGuardEntry)
         (x ^. Di.requiredTopLevelGuardsL)
   where
@@ -441,14 +441,17 @@ encodeSharedTxBody opts x scripts =
         (encodeConcatNonEmptyFoldable (fmap encodeObject . encodeTxCert)) (x ^. Ledger.certsTxBodyL) <>
     "withdrawals" .=? OmitWhen (null . Ledger.unWithdrawals)
         Shelley.encodeWdrl (x ^. Ledger.withdrawalsTxBodyL) <>
+    "credits" .=? OmitWhen (null . unDirectDeposits)
+        (encodeMap Shelley.stringifyRewardAcnt encodeCoin . unDirectDeposits)
+        (x ^. Di.directDepositsTxBodyL) <>
     "mint" .=? OmitWhen (== mempty)
         (encodeObject . Mary.encodeMultiAsset) (x ^. Ledger.mintTxBodyL) <>
     "requiredExtraSignatories" .=? OmitWhen null
         (encodeFoldable Shelley.encodeKeyHash) guardKeyHashes <>
-    "requiredExtraGuards" .=? OmitWhen null
-        (encodeFoldable Shelley.encodeScriptHash) guardScriptHashes <>
     "requiredExtraScripts" .=? OmitWhen null
         (encodeFoldable Shelley.encodeScriptHash) scripts <>
+    "guards" .=? OmitWhen null
+        (encodeFoldable Shelley.encodeScriptHash) guardScriptHashes <>
     "network" .=? OmitWhenNothing
         Shelley.encodeNetwork (x ^. Ledger.networkIdTxBodyL) <>
     "scriptIntegrityHash" .=? OmitWhenNothing
@@ -470,9 +473,6 @@ encodeSharedTxBody opts x scripts =
                 encodeCoin treasuryDonation
             )
         ) <>
-    "directDeposits" .=? OmitWhen (null . unDirectDeposits)
-        (encodeMap Shelley.stringifyRewardAcnt encodeCoin . unDirectDeposits)
-        (x ^. Di.directDepositsTxBodyL) <>
     "accountBalanceIntervals" .=? OmitWhen (null . Di.unAccountBalanceIntervals)
         encodeAccountBalanceIntervals
         (x ^. Di.accountBalanceIntervalsTxBodyL)
