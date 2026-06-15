@@ -13,8 +13,7 @@ import Cardano.Ledger.Api
     , PlutusPurpose
     )
 import Cardano.Ledger.BaseTypes
-    ( BoundedRational (..)
-    , EpochNo
+    ( EpochNo
     , NonNegativeInterval
     , ProtVer
     )
@@ -541,7 +540,7 @@ encodePParamsHKD encode pure_ x =
     encode "minFeeConstant"
         (encodeCoin . fromCompact) (unTHKD (Cn.cppTxFeeFixed x)) <>
     encode "minFeeReferenceScripts"
-        (\(base :: NonNegativeInterval) -> encodeObject
+        (\(base :: NonNegativeInterval) -> encodeObject $
             -- NOTE: This will very likely always be an integer. The ledger
             -- represent this as a 'NonNegativeInterval', which technically
             -- allow any _Rational_ value between 0 and +INFINITY, but it is
@@ -553,12 +552,9 @@ encodePParamsHKD encode pure_ x =
             -- JSON, and we can still accomodate decimal representation so long
             -- as they don't get _too precise_ (which should be a fair
             -- assumption in this context).
-            ( "base" .= encodeDouble (fromRational (unboundRational base))
-            <>
-              "range" .= encodeWord32 25600
-            <>
-              "multiplier" .= encodeDouble 1.2
-            )
+            "base" .= encodeNonNegativeIntervalAsDouble base <>
+            "range" .= encodeWord32 25600 <>
+            "multiplier" .= encodeDouble 1.2
         )
         (unTHKD (Cn.cppMinFeeRefScriptCostPerByte x))
         <>

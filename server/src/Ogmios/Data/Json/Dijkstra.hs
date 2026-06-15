@@ -18,11 +18,8 @@ import Cardano.Ledger.Api
     , AsIx (..)
     )
 import Cardano.Ledger.BaseTypes
-    ( BoundedRational (..)
-    , Exclusive (..)
+    ( Exclusive (..)
     , Inclusive (..)
-    , NonNegativeInterval
-    , PositiveInterval
     , ProtVer
     )
 import Cardano.Ledger.Compactible
@@ -158,43 +155,14 @@ encodeNativeScript ns = encodeObject (go (getMemoRawType ns))
 
 encodePParams :: Ledger.PParams DijkstraEra -> Json
 encodePParams (Ledger.PParams x) =
-    encodePParamsHKD (\k enc v -> k .= enc v) identity
-        -- Nest ref-script params inside minFeeReferenceScripts for API
-        -- backward compatibility with Conway's JSON shape.
-        ( "minFeeReferenceScripts" .= encodeObject
-            ( "base" .= encodeDouble (fromRational (unboundRational
-                (unTHKD (Di.dppMinFeeRefScriptCostPerByte x) :: NonNegativeInterval)))
-           <> "range" .= encodeNonZero encodeWord32
-                (unTHKD (Di.dppRefScriptCostStride x))
-           <> "multiplier" .= encodeDouble (fromRational (unboundRational
-                (unTHKD (Di.dppRefScriptCostMultiplier x) :: PositiveInterval)))
-            )
-        ) x
+    encodePParamsHKD (\k enc v -> k .= enc v) identity x
 
 encodePParamsUpdate
     :: Ledger.PParamsUpdate DijkstraEra
     -> Json
 encodePParamsUpdate (Ledger.PParamsUpdate x) =
-    encodePParamsHKD (\k enc v -> k .=? OmitWhenNothing enc v) (const SNothing)
-        -- Nest ref-script params inside minFeeReferenceScripts, including
-        -- only the sub-fields that are present in this update.
-        ( if isSJust mBase || isSJust mStride || isSJust mMult
-            then "minFeeReferenceScripts" .= encodeObject
-                ( "base" .=? OmitWhenNothing
-                    (\(base :: NonNegativeInterval) ->
-                        encodeDouble (fromRational (unboundRational base))) mBase
-               <> "range" .=? OmitWhenNothing
-                    (encodeNonZero encodeWord32) mStride
-               <> "multiplier" .=? OmitWhenNothing
-                    (\(v :: PositiveInterval) ->
-                        encodeDouble (fromRational (unboundRational v))) mMult
-                )
-            else mempty
-        ) x
-  where
-    mBase = unTHKD (Di.dppMinFeeRefScriptCostPerByte x)
-    mStride = unTHKD (Di.dppRefScriptCostStride x)
-    mMult = unTHKD (Di.dppRefScriptCostMultiplier x)
+    encodePParamsHKD
+        (\k enc v -> k .=? OmitWhenNothing enc v) (const SNothing) x
 
 -- | Encode PParams fields shared between full PParams and PParamsUpdate.
 -- The ref-script fields (minFeeReferenceScripts, stride, multiplier) are
@@ -204,15 +172,24 @@ encodePParamsHKD
     :: forall f. (HKDFunctor f)
     => (forall a. Text -> (a -> Json) -> Ledger.HKD f a -> Series)
     -> (forall a. a -> Ledger.HKD f a)
-    -> Series
     -> Di.DijkstraPParams f DijkstraEra
     -> Json
-encodePParamsHKD encode pure_ refScriptSeries x =
+encodePParamsHKD encode pure_ x =
     encode "minFeeCoefficient"
         (encodeInteger . unCoin . fromCompact . Ba.unCoinPerByte) (unTHKD (Di.dppTxFeePerByte x)) <>
     encode "minFeeConstant"
         (encodeCoin . fromCompact) (unTHKD (Di.dppTxFeeFixed x)) <>
-    refScriptSeries <>
+    (let
+        minFeeReferenceScripts = encodeObject $
+            (encode "base" encodeNonNegativeIntervalAsDouble (unTHKD (Di.dppMinFeeRefScriptCostPerByte x))) <>
+            (encode "range" (encodeNonZero encodeWord32) (unTHKD (Di.dppRefScriptCostStride x))) <>
+            (encode "multiplier" encodePositiveIntervalAsDouble (unTHKD (Di.dppRefScriptCostMultiplier x)))
+      in
+        if minFeeReferenceScripts == encodeObject mempty then
+            mempty
+        else
+            "minFeeReferenceScripts" .= minFeeReferenceScripts
+    ) <>
     encode "maxBlockBodySize"
         (encodeSingleton "bytes" . encodeWord32) (unTHKD (Di.dppMaxBBSize x)) <>
     encode "maxBlockHeaderSize"

@@ -56,9 +56,12 @@ module Ogmios.Data.Json.Prelude
     , encodeNominalDiffTime
     , encodeNominalDiffTimeMicro
     , encodeNonNegativeInterval
+    , encodeNonNegativeIntervalAsDouble
     , encodeNonZero
     , encodeNull
     , encodePort
+    , encodePositiveInterval
+    , encodePositiveIntervalAsDouble
     , encodePositiveUnitInterval
     , encodeRational
     , encodeRelativeTime
@@ -115,6 +118,7 @@ import Cardano.Ledger.BaseTypes
     , NonNegativeInterval
     , NonZero (..)
     , Port
+    , PositiveInterval
     , PositiveUnitInterval
     , StrictMaybe (..)
     , UnitInterval
@@ -380,6 +384,11 @@ encodeNonNegativeInterval =
     encodeRational . unboundRational
 {-# INLINABLE encodeNonNegativeInterval #-}
 
+encodeNonNegativeIntervalAsDouble :: NonNegativeInterval -> Json
+encodeNonNegativeIntervalAsDouble =
+    encodeDouble . fromRational . unboundRational
+{-# INLINABLE encodeNonNegativeIntervalAsDouble #-}
+
 encodeNonZero :: (a -> Json) -> NonZero a -> Json
 encodeNonZero encode =
     encode . unNonZero
@@ -394,6 +403,16 @@ encodePort :: Port -> Json
 encodePort =
     encodeWord16 . portToWord16
 {-# INLINABLE encodePort #-}
+
+encodePositiveInterval :: PositiveInterval -> Json
+encodePositiveInterval =
+    encodeRational . unboundRational
+{-# INLINABLE encodePositiveInterval #-}
+
+encodePositiveIntervalAsDouble :: PositiveInterval -> Json
+encodePositiveIntervalAsDouble =
+    encodeDouble . fromRational . unboundRational
+{-# INLINABLE encodePositiveIntervalAsDouble #-}
 
 encodePositiveUnitInterval :: PositiveUnitInterval -> Json
 encodePositiveUnitInterval =
