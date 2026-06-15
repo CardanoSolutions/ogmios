@@ -22,12 +22,13 @@ import Cardano.Ledger.Compactible
     ( CompactForm
     , Compactible (..)
     )
-import Cardano.Ledger.HKD
-    ()
 import Ouroboros.Consensus.Shelley.Ledger.Block
     ( ShelleyBlock (..)
     )
+
 import Ouroboros.Consensus.Shelley.Protocol.Praos
+    ()
+import Cardano.Ledger.HKD
     ()
 
 import qualified Data.Map.Strict as Map
@@ -41,6 +42,8 @@ import qualified Cardano.Ledger.Plutus.Data as Ledger
 
 import qualified Cardano.Ledger.Shelley.API as Sh
 import qualified Cardano.Ledger.Shelley.PParams as Sh
+
+import qualified Cardano.Ledger.Allegra.Scripts as Al
 
 import qualified Cardano.Ledger.Mary.Value as Ma
 
@@ -303,8 +306,8 @@ encodeTxBody opts x scripts =
         encodeFoldable (encodeObject . Shelley.encodeTxIn) (Ba.btbInputs x) <>
     "references" .=? OmitWhen null
         (encodeFoldable (encodeObject . Shelley.encodeTxIn)) (Ba.btbReferenceInputs x) <>
-    "outputs" .=
-        encodeFoldable (encodeObject . encodeTxOut encodeScript . sizedValue) (Ba.btbOutputs x) <>
+    "outputs" .=? OmitWhen null
+        (encodeFoldable (encodeObject . encodeTxOut encodeScript . sizedValue)) (Ba.btbOutputs x) <>
     "collaterals" .=? OmitWhen null
         (encodeFoldable (encodeObject . Shelley.encodeTxIn)) (Ba.btbCollateral x) <>
     "collateralReturn" .=? OmitWhenNothing
@@ -327,7 +330,7 @@ encodeTxBody opts x scripts =
         Alonzo.encodeScriptIntegrityHash (Ba.btbScriptIntegrityHash x) <>
     "fee" .=
         encodeCoin (Ba.btbTxFee x) <>
-    "validityInterval" .=
+    "validityInterval" .=? OmitWhen (\it -> isSNothing (Al.invalidBefore it) && isSNothing (Al.invalidHereafter it))
         Allegra.encodeValidityInterval (Ba.btbValidityInterval x) <>
     "proposals" .=? OmitWhen null
         (encodeList (encodeSingleton "action")) actions <>

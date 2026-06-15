@@ -56,6 +56,7 @@ import qualified Cardano.Ledger.Credential as Ledger
 import qualified Cardano.Ledger.DRep as Ledger
 import qualified Cardano.Ledger.HKD as Ledger
 
+import qualified Cardano.Ledger.Allegra.Scripts as Al
 import qualified Cardano.Ledger.Alonzo.BlockBody as Al
 import qualified Cardano.Ledger.Alonzo.Plutus.TxInfo as Al
 import qualified Cardano.Ledger.Alonzo.PParams as Al
@@ -769,8 +770,8 @@ encodeTxBody opts x scripts =
         encodeFoldable (encodeObject . Shelley.encodeTxIn) (Cn.ctbSpendInputs x) <>
     "references" .=? OmitWhen null
         (encodeFoldable (encodeObject . Shelley.encodeTxIn)) (Cn.ctbReferenceInputs x) <>
-    "outputs" .=
-        encodeFoldable (encodeObject . Babbage.encodeTxOut encodeScript . sizedValue) (Cn.ctbOutputs x) <>
+    "outputs" .=? OmitWhen null
+        (encodeFoldable (encodeObject . Babbage.encodeTxOut encodeScript . sizedValue)) (Cn.ctbOutputs x) <>
     "collaterals" .=? OmitWhen null
         (encodeFoldable (encodeObject . Shelley.encodeTxIn)) (Cn.ctbCollateralInputs x) <>
     "collateralReturn" .=? OmitWhenNothing
@@ -793,7 +794,7 @@ encodeTxBody opts x scripts =
         Alonzo.encodeScriptIntegrityHash (Cn.ctbScriptIntegrityHash x) <>
     "fee" .=
         encodeCoin (Cn.ctbTxfee x) <>
-    "validityInterval" .=
+    "validityInterval" .=? OmitWhen (\it -> isSNothing (Al.invalidBefore it) && isSNothing (Al.invalidHereafter it))
         Allegra.encodeValidityInterval (Cn.ctbVldt x) <>
     "proposals" .=? OmitWhen null
         (encodeFoldable (encodeObject . encodeProposalProcedure encodePParamsUpdate))
@@ -801,7 +802,7 @@ encodeTxBody opts x scripts =
     "votes" .=? OmitWhen (null . Cn.unVotingProcedures)
         encodeVotingProcedures
         (Cn.ctbVotingProcedures x) <>
-    "treasury" .=? OmitWhen (\_ -> isSJust (Cn.ctbCurrentTreasuryValue x) || Cn.ctbTreasuryDonation x /= mempty)
+    "treasury" .=? OmitWhen (\_ -> isSNothing (Cn.ctbCurrentTreasuryValue x) && Cn.ctbTreasuryDonation x == mempty)
         identity
         (encodeObject
             ( "value" .=? OmitWhenNothing

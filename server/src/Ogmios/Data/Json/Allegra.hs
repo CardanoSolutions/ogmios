@@ -156,8 +156,8 @@ encodeTxBody
 encodeTxBody (Al.AllegraTxBody inps outs dCerts wdrls fee validity updates _) requiredScripts =
     "inputs" .=
         encodeFoldable (encodeObject . Shelley.encodeTxIn) inps <>
-    "outputs" .=
-        encodeFoldable (encodeObject . Shelley.encodeTxOut) outs <>
+    "outputs" .=? OmitWhen null
+        (encodeFoldable  (encodeObject . Shelley.encodeTxOut)) outs <>
     "withdrawals" .=? OmitWhen (null . Ledger.unWithdrawals)
         Shelley.encodeWdrl wdrls <>
     "certificates" .=? OmitWhen null
@@ -166,7 +166,7 @@ encodeTxBody (Al.AllegraTxBody inps outs dCerts wdrls fee validity updates _) re
         (encodeFoldable Shelley.encodeScriptHash) requiredScripts <>
     "fee" .=
         encodeCoin fee <>
-    "validityInterval" .=
+    "validityInterval" .=? OmitWhen (\it -> isSNothing (Al.invalidBefore it) && isSNothing (Al.invalidHereafter it))
         encodeValidityInterval validity <>
     "proposals" .=? OmitWhen null
         (encodeList (encodeSingleton "action")) actions <>

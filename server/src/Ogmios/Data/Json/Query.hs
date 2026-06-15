@@ -129,8 +129,6 @@ import Cardano.Ledger.Alonzo.Genesis
 import Cardano.Ledger.Api.State.Query
     ( CommitteeMembersState
     )
-import Cardano.Ledger.Babbage
-    ()
 import Cardano.Ledger.Binary
     ( Annotator
     , FromCBOR (..)
@@ -158,8 +156,6 @@ import Cardano.Ledger.Keys
 import Cardano.Ledger.Shelley.Genesis
     ( ShelleyGenesis
     )
-import Cardano.Ledger.Shelley.LedgerState
-    ()
 import Cardano.Ledger.Shelley.Rewards
     ( StakeShare (..)
     )
@@ -187,6 +183,9 @@ import Data.Aeson
     )
 import Data.Generics.Product.Positions
     ( position
+    )
+import Data.OMap.Strict
+    ( OMap
     )
 import Ogmios.Control.MonadDisk
     ( MonadDisk (..)
@@ -257,8 +256,6 @@ import Ouroboros.Consensus.Shelley.Ledger.Query
 import Ouroboros.Consensus.Shelley.Protocol.Abstract
     ( ProtoCrypto
     )
-import Ouroboros.Consensus.Shelley.Protocol.TPraos
-    ()
 import Ouroboros.Network.Block
     ( Point (..)
     , Serialised (..)
@@ -274,6 +271,15 @@ import Ouroboros.Network.Point
 import Relude.Extra
     ( lens
     )
+
+import Cardano.Ledger.Api
+    ()
+import Cardano.Ledger.Babbage
+    ()
+import Cardano.Ledger.Shelley.LedgerState
+    ()
+import Ouroboros.Consensus.Shelley.Protocol.TPraos
+    ()
 
 import qualified Cardano.Ledger.Binary.Coders as Binary
 import qualified Cardano.Ledger.Binary.Decoding as Binary
@@ -304,8 +310,6 @@ import qualified PlutusLedgerApi.Common as Plutus
 import qualified Cardano.Ledger.Address as Ledger
 import qualified Cardano.Ledger.Allegra.Scripts as Ledger.Allegra
 import qualified Cardano.Ledger.Alonzo.Scripts as Ledger.Alonzo
-import Cardano.Ledger.Api
-    ()
 import qualified Cardano.Ledger.Babbage.TxBody as Ledger.Babbage
 import qualified Cardano.Ledger.BaseTypes as Ledger
 import qualified Cardano.Ledger.Coin as Ledger
@@ -338,9 +342,6 @@ import qualified Ogmios.Data.Json.Mary as Mary
 import qualified Ogmios.Data.Json.Shelley as Shelley
 
 import qualified Cardano.Protocol.TPraos.Rules.Tickn as TPraos
-import Data.OMap.Strict
-    ( OMap
-    )
 import qualified Ouroboros.Consensus.Shelley.Ledger.Query.Types as Consensus
 
 

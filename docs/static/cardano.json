@@ -2766,7 +2766,7 @@
     { "title": "Transaction"
     , "type": "object"
     , "additionalProperties": false
-    , "required": [ "id", "spends", "inputs", "outputs", "signatories" ]
+    , "required": [ "id", "spends", "inputs", "signatories" ]
     , "properties":
       { "id":
         { "$ref": "cardano.json#/definitions/Digest<Blake2b, 256>"
@@ -2969,7 +2969,7 @@
     { "title": "SubTransaction"
     , "type": "object"
     , "additionalProperties": false
-    , "required": [ "id", "inputs", "outputs", "signatories" ]
+    , "required": [ "id", "inputs", "signatories" ]
     , "properties":
       { "id":
         { "$ref": "cardano.json#/definitions/Digest<Blake2b, 256>"

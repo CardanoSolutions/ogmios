@@ -29,6 +29,7 @@ import qualified Cardano.Ledger.Shelley.TxOut as Sh
 import qualified Cardano.Ledger.Shelley.TxWits as Sh
 import qualified Cardano.Ledger.Shelley.UTxO as Sh
 
+import qualified Cardano.Ledger.Allegra.Scripts as Al
 import qualified Cardano.Ledger.Allegra.TxAuxData as Al
 
 import qualified Cardano.Ledger.Mary.TxBody as Ma
@@ -126,8 +127,8 @@ encodeTxBody
 encodeTxBody (Ma.MaryTxBody inps outs dCerts wdrls fee validity updates _ mint) scripts =
     "inputs" .=
         encodeFoldable (encodeObject . Shelley.encodeTxIn) inps <>
-    "outputs" .=
-        encodeFoldable (encodeObject . encodeTxOut) outs <>
+    "outputs" .=? OmitWhen null
+        (encodeFoldable (encodeObject . encodeTxOut)) outs <>
     "withdrawals" .=? OmitWhen (null . Ledger.unWithdrawals)
         Shelley.encodeWdrl wdrls <>
     "certificates" .=? OmitWhen null
@@ -138,7 +139,7 @@ encodeTxBody (Ma.MaryTxBody inps outs dCerts wdrls fee validity updates _ mint) 
         (encodeObject . encodeMultiAsset) mint <>
     "fee" .=
         encodeCoin fee <>
-    "validityInterval" .=
+    "validityInterval" .=? OmitWhen (\it -> isSNothing (Al.invalidBefore it) && isSNothing (Al.invalidHereafter it))
         Allegra.encodeValidityInterval validity <>
     "proposals" .=? OmitWhen null
         (encodeList (encodeSingleton "action")) actions <>

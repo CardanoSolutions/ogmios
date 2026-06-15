@@ -28,8 +28,15 @@ import Cardano.Ledger.Compactible
 import Cardano.Ledger.Conway.PParams
     ( THKD (..)
     )
+import Cardano.Ledger.Credential
+    ( Credential (KeyHashObj, ScriptHashObj)
+    )
 import Cardano.Ledger.HKD
     ( HKDFunctor (..)
+    )
+import Cardano.Ledger.Keys
+    ( HasKeyRole (coerceKeyRole)
+    , KeyRole (Witness)
     )
 import Cardano.Ledger.MemoBytes
     ( getMemoRawType
@@ -55,18 +62,13 @@ import qualified Cardano.Ledger.Api as Ledger
 import qualified Cardano.Ledger.Block as Ledger
 import qualified Cardano.Ledger.Core as Ledger
 import qualified Cardano.Ledger.HKD as Ledger
-import Cardano.Ledger.Credential
-    ( Credential (KeyHashObj, ScriptHashObj)
-    )
-import Cardano.Ledger.Keys
-    ( HasKeyRole (coerceKeyRole)
-    , KeyRole (Witness)
-    )
 
+import qualified Cardano.Ledger.Allegra.Scripts as Al
 import qualified Cardano.Ledger.Alonzo.PParams as Al
 import qualified Cardano.Ledger.Alonzo.Scripts as Al
 import qualified Cardano.Ledger.Babbage.Core as Ba
 import qualified Cardano.Ledger.Conway.Scripts as Cn
+import qualified Cardano.Ledger.Conway.TxCert as Cn
 import qualified Cardano.Ledger.Dijkstra.PParams as Di
 import qualified Cardano.Ledger.Dijkstra.Scripts as Di
 import qualified Cardano.Ledger.Dijkstra.TxBody as Di
@@ -77,7 +79,6 @@ import qualified Cardano.Ledger.Shelley.UTxO as Sh
 import qualified Data.Map.Strict as Map
 import qualified Data.Set as Set
 
-import qualified Cardano.Ledger.Conway.TxCert as Cn
 import qualified Ogmios.Data.Json.Allegra as Allegra
 import qualified Ogmios.Data.Json.Alonzo as Alonzo
 import qualified Ogmios.Data.Json.Babbage as Babbage
@@ -435,8 +436,8 @@ encodeSharedTxBody opts x scripts =
         encodeFoldable (encodeObject . Shelley.encodeTxIn) (x ^. Ledger.inputsTxBodyL) <>
     "references" .=? OmitWhen null
         (encodeFoldable (encodeObject . Shelley.encodeTxIn)) (x ^. Ledger.referenceInputsTxBodyL) <>
-    "outputs" .=
-        encodeFoldable (encodeObject . Babbage.encodeTxOut (encodeScript opts)) (x ^. Ledger.outputsTxBodyL) <>
+    "outputs" .=? OmitWhen null
+        (encodeFoldable (encodeObject . Babbage.encodeTxOut (encodeScript opts))) (x ^. Ledger.outputsTxBodyL) <>
     "certificates" .=? OmitWhen null
         (encodeConcatNonEmptyFoldable (fmap encodeObject . encodeTxCert)) (x ^. Ledger.certsTxBodyL) <>
     "withdrawals" .=? OmitWhen (null . Ledger.unWithdrawals)
@@ -456,7 +457,7 @@ encodeSharedTxBody opts x scripts =
         Shelley.encodeNetwork (x ^. Ledger.networkIdTxBodyL) <>
     "scriptIntegrityHash" .=? OmitWhenNothing
         Alonzo.encodeScriptIntegrityHash (x ^. Ledger.scriptIntegrityHashTxBodyL) <>
-    "validityInterval" .=
+    "validityInterval" .=? OmitWhen (\it -> isSNothing (Al.invalidBefore it) && isSNothing (Al.invalidHereafter it))
         Allegra.encodeValidityInterval (x ^. Ledger.vldtTxBodyL) <>
     "proposals" .=? OmitWhen null
         (encodeFoldable (encodeObject . Conway.encodeProposalProcedure encodePParamsUpdate))
