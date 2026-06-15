@@ -568,7 +568,7 @@ encodePParamsHKD encode pure_ x =
         (encodeSingleton "bytes" . encodeWord16) (unTHKD (Cn.cppMaxBHSize x)) <>
     encode "maxTransactionSize"
         (encodeSingleton "bytes" . encodeWord32) (unTHKD (Cn.cppMaxTxSize x)) <>
-    encode "maxReferenceScriptsSize"
+    encode "maxReferenceScriptsSizePerTransaction"
         (encodeSingleton "bytes" . encodeWord32) (pure_ @Word32 204800) <> -- NOTE: Hard-coded in Conway.
     encode "stakeCredentialDeposit"
         (encodeCoin . fromCompact) (unTHKD (Cn.cppKeyDeposit x)) <>

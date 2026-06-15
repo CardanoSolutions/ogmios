@@ -2129,7 +2129,7 @@
       , "maxBlockBodySize": { "$ref": "cardano.json#/definitions/NumberOfBytes" }
       , "maxBlockHeaderSize": { "$ref": "cardano.json#/definitions/NumberOfBytes" }
       , "maxTransactionSize": { "$ref": "cardano.json#/definitions/NumberOfBytes" }
-      , "maxReferenceScriptsSize": { "$ref": "cardano.json#/definitions/NumberOfBytes" }
+      , "maxReferenceScriptsSizePerTransaction": { "$ref": "cardano.json#/definitions/NumberOfBytes" }
       , "maxReferenceScriptsSizePerBlock": { "$ref": "cardano.json#/definitions/NumberOfBytes" }
       , "maxValueSize": { "$ref": "cardano.json#/definitions/NumberOfBytes" }
       , "extraEntropy": { "$ref": "cardano.json#/definitions/Nonce" }
@@ -2224,7 +2224,7 @@
       , "scriptExecutionPrices": { "$ref": "cardano.json#/definitions/ScriptExecutionPrices" }
       , "maxExecutionUnitsPerTransaction": { "$ref": "cardano.json#/definitions/ExecutionUnits" }
       , "maxExecutionUnitsPerBlock": { "$ref": "cardano.json#/definitions/ExecutionUnits" }
-      , "maxReferenceScriptsSize": { "$ref": "cardano.json#/definitions/NumberOfBytes" }
+      , "maxReferenceScriptsSizePerTransaction": { "$ref": "cardano.json#/definitions/NumberOfBytes" }
       , "maxReferenceScriptsSizePerBlock": { "$ref": "cardano.json#/definitions/NumberOfBytes" }
       , "stakePoolVotingThresholds": { "$ref": "cardano.json#/definitions/StakePoolVotingThresholds" }
       , "constitutionalCommitteeMinSize": { "$ref": "cardano.json#/definitions/UInt16" }

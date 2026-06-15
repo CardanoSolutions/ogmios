@@ -219,7 +219,7 @@ encodePParamsHKD encode pure_ refScriptSeries x =
         (encodeSingleton "bytes" . encodeWord16) (unTHKD (Di.dppMaxBHSize x)) <>
     encode "maxTransactionSize"
         (encodeSingleton "bytes" . encodeWord32) (unTHKD (Di.dppMaxTxSize x)) <>
-    encode "maxReferenceScriptsSize"
+    encode "maxReferenceScriptsSizePerTransaction"
         (encodeSingleton "bytes" . encodeWord32) (unTHKD (Di.dppMaxRefScriptSizePerTx x)) <>
     encode "maxReferenceScriptsSizePerBlock"
         (encodeSingleton "bytes" . encodeWord32) (unTHKD (Di.dppMaxRefScriptSizePerBlock x)) <>
