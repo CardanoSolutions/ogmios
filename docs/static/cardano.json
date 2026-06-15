@@ -2892,27 +2892,58 @@
 
   , "AccountBalanceInterval":
     { "title": "AccountBalanceInterval"
-    , "type": "object"
-    , "additionalProperties": false
-    , "required": [ "from", "account" ]
-    , "properties":
-      { "from":
-        { "$ref": "cardano.json#/definitions/CredentialOrigin"
-        }
-      , "account":
-        { "$ref": "cardano.json#/definitions/Digest<Blake2b, 224>"
-        }
-      , "greaterThanOrEqualTo":
-        { "$ref": "cardano.json#/definitions/Value<AdaOnly>"
-        }
-      , "strictlyLessThan":
-        { "$ref": "cardano.json#/definitions/Value<AdaOnly>"
-        }
-      }
     , "oneOf":
-      [ { "required": [ "greaterThanOrEqualTo" ], "not": { "required": [ "strictlyLessThan" ] } }
-      , { "required": [ "strictlyLessThan" ], "not": { "required": [ "greaterThanOrEqualTo" ] } }
-      , { "required": [ "greaterThanOrEqualTo", "strictlyLessThan" ] }
+      [ { "title": "AccountBalanceIntervalAtLeast"
+        , "additionalProperties": false
+        , "required": [ "from", "credential", "atLeast" ]
+        , "description": "Minimum (inclusive) balance of the target account."
+        , "properties":
+          { "from":
+            { "$ref": "cardano.json#/definitions/CredentialOrigin"
+            }
+          , "credential":
+            { "$ref": "cardano.json#/definitions/Digest<Blake2b, 224>"
+            }
+          , "atLeast":
+            { "$ref": "cardano.json#/definitions/Value<AdaOnly>"
+            }
+          }
+        }
+      , { "title": "AccountBalanceIntervalAtMost"
+        , "additionalProperties": false
+        , "required": [ "from", "credential", "atMost" ]
+        , "description": "Maximum (exclusive) balance of the target account."
+        , "properties":
+          { "from":
+            { "$ref": "cardano.json#/definitions/CredentialOrigin"
+            }
+          , "credential":
+            { "$ref": "cardano.json#/definitions/Digest<Blake2b, 224>"
+            }
+          , "atMost":
+            { "$ref": "cardano.json#/definitions/Value<AdaOnly>"
+            }
+          }
+        }
+      , { "title": "AccountBalanceIntervalWithin"
+        , "additionalProperties": false
+        , "required": [ "from", "credential", "atLeast", "atMost" ]
+        , "description": "Minimum (inclusive) and maximum (exclusive) balances of the target account."
+        , "properties":
+          { "from":
+            { "$ref": "cardano.json#/definitions/CredentialOrigin"
+            }
+          , "credential":
+            { "$ref": "cardano.json#/definitions/Digest<Blake2b, 224>"
+            }
+          , "atLeast":
+            { "$ref": "cardano.json#/definitions/Value<AdaOnly>"
+            }
+          , "atMost":
+            { "$ref": "cardano.json#/definitions/Value<AdaOnly>"
+            }
+          }
+        }
       ]
     }
 

@@ -525,7 +525,7 @@ encodeAccountBalanceIntervals =
   where
     encodeEntry accountId interval =
         encodeObject
-            ( "account" `Shelley.encodeCredential` Ledger.unAccountId accountId
+            ( "credential" `Shelley.encodeCredential` Ledger.unAccountId accountId
            <> encodeAccountBalanceInterval interval
             )
 
@@ -534,12 +534,12 @@ encodeAccountBalanceInterval
     -> Series
 encodeAccountBalanceInterval = \case
     Di.AccountBalanceLowerBound (Inclusive lo) ->
-        "greaterThanOrEqualTo" .= encodeCoin lo
+        "atLeast" .= encodeCoin lo
     Di.AccountBalanceUpperBound (Exclusive hi) ->
-        "strictlyLessThan" .= encodeCoin hi
+        "atMost" .= encodeCoin hi
     Di.AccountBalanceBothBounds (Inclusive lo) (Exclusive hi) ->
-        "greaterThanOrEqualTo" .= encodeCoin lo <>
-        "strictlyLessThan" .= encodeCoin hi
+        "atLeast" .= encodeCoin lo <>
+        "atMost" .= encodeCoin hi
 
 humanReadablePurpose
     :: PlutusPurpose AsIx DijkstraEra
