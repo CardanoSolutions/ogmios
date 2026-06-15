@@ -839,28 +839,6 @@
       }
     }
 
-  , "Digest<Any>":
-    { "title": "Digest<Any>"
-    , "type": "string"
-    , "description": "A hash digest from an unspecified algorithm and length."
-    , "contentEncoding": "base16"
-    , "examples":
-      [ "90181c517a5beadc9c3fe64bf8"
-      ]
-    }
-
-  , "Digest<Blake2b, 224>":
-    { "title": "Digest<Blake2b, 224>"
-    , "type": "string"
-    , "description": "A Blake2b 28-byte hash digest, encoded in base16."
-    , "contentEncoding": "base16"
-    , "minLength": 56
-    , "maxLength": 56
-    , "examples":
-      [ "90181c517a5beadc9c3fe64bf821d3e889a963fc717003ec248757d3"
-      ]
-    }
-
   , "DelegateRepresentative":
     { "title": "DelegateRepresentative"
     , "oneOf":
@@ -1009,6 +987,28 @@
       ]
     }
 
+  , "Digest<Any>":
+    { "title": "Digest<Any>"
+    , "type": "string"
+    , "description": "A hash digest from an unspecified algorithm and length."
+    , "contentEncoding": "base16"
+    , "examples":
+      [ "90181c517a5beadc9c3fe64bf8"
+      ]
+    }
+
+  , "Digest<Blake2b, 224>":
+    { "title": "Digest<Blake2b, 224>"
+    , "type": "string"
+    , "description": "A Blake2b 28-byte hash digest, encoded in base16."
+    , "contentEncoding": "base16"
+    , "minLength": 56
+    , "maxLength": 56
+    , "examples":
+      [ "90181c517a5beadc9c3fe64bf821d3e889a963fc717003ec248757d3"
+      ]
+    }
+
   , "Digest<Blake2b, 256>":
     { "title": "Digest<Blake2b, 256>"
     , "type": "string"
@@ -1019,6 +1019,11 @@
     , "examples":
       [ "c248757d390181c517a5beadc9c3fe64bf821d3e889a963fc717003ec248757d"
       ]
+    }
+
+  , "DirectDeposits":
+    { "title": "DirectDeposits"
+    , "$ref": "cardano.json#/definitions/Withdrawals"
     }
 
   , "Epoch":
@@ -2864,7 +2869,7 @@
           }
         }
       , "directDeposits":
-        { "$ref": "cardano.json#/definitions/Withdrawals"
+        { "$ref": "cardano.json#/definitions/DirectDeposits"
         , "description": "Direct deposits to account addresses. Dijkstra era only."
         }
       , "accountBalanceIntervals":
@@ -3003,7 +3008,7 @@
           }
         }
       , "directDeposits":
-        { "$ref": "cardano.json#/definitions/Withdrawals"
+        { "$ref": "cardano.json#/definitions/DirectDeposits"
         }
       , "accountBalanceIntervals":
         { "type": "array"
