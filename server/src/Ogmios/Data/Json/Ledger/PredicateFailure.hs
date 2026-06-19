@@ -988,16 +988,8 @@ encodePredicateFailure reject = \case
                 )
             )
 
-    SpendingOutputFromSubTransaction ->
-        reject (predicateFailureCode 70)
-            "The transaction attempts to spend outputs that were created by its own \
-            \sub-transactions. A transaction — or any of its sub-transactions — cannot spend \
-            \outputs produced by a sub-transaction within the same top-level transaction, as \
-            \this would create a circular dependency."
-            Nothing
-
     StakePoolVRFKeyAlreadyRegistered { poolId, alreadyRegisteredVrfKey } ->
-        reject (predicateFailureCode 71)
+        reject (predicateFailureCode 70)
             "Stake pool can (no longer) re-use an already used VRF key. Yet this \
             \transaction contains a pool which declares a VRF key that is already in use. \
             \The field 'data.poolId' indicates the offending pool, while the field \

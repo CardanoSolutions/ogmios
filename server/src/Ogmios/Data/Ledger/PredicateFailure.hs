@@ -565,11 +565,6 @@ data MultiEraPredicateFailure
         { pointerAddressOutput :: TxOutInAnyEra
         }
 
-    -- A transaction attempts to spend outputs produced by its own
-    -- sub-transactions, which creates a circular dependency.
-    | SpendingOutputFromSubTransaction
-
-
 -- | Return the most relevant ledger rule from a list of errors. What does 'most
 -- relevant' means -> some errors can actually be responsible for other errors
 -- down the line. For example, a unknown / missing input utxo may cause a
@@ -682,4 +677,3 @@ predicateFailurePriority = \case
     ValidationTagMismatch{} -> 20
 
     PointerAddressInCollateralReturn{} -> 2
-    SpendingOutputFromSubTransaction{} -> 2

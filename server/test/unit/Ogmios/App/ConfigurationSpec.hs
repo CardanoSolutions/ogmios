@@ -14,7 +14,6 @@ import Ogmios.App.Configuration
     ( readAlonzoGenesis
     , readByronGenesis
     , readConwayGenesis
-    , readDijkstraGenesis
     , readShelleyGenesis
     )
 import Test.Hspec

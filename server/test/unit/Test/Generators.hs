@@ -173,6 +173,7 @@ import qualified Data.Map as Map
 import qualified Ouroboros.Network.Point as Point
 
 import qualified Cardano.Ledger.Api.Governance as Ledger
+import qualified Cardano.Ledger.Dijkstra.Rules as Dijkstra
 import qualified Cardano.Ledger.Block as Ledger
 import qualified Cardano.Ledger.Core as Ledger
 import qualified Cardano.Ledger.DRep as Ledger
@@ -329,8 +330,14 @@ genHardForkApplyTxErr = frequency
     , ( 10, ApplyTxErrAlonzo . AlonzoApplyTxError . pure <$> arbitrary )
     , ( 25, ApplyTxErrBabbage . BabbageApplyTxError . pure <$> arbitrary )
     , ( 25, ApplyTxErrConway . ConwayApplyTxError . pure <$> arbitrary )
-    , ( 25, ApplyTxErrDijkstra . DijkstraApplyTxError . pure <$> arbitrary )
+    , ( 25, ApplyTxErrDijkstra . DijkstraApplyTxError . pure <$> genDijkstraMempoolFailure )
     ]
+
+genDijkstraMempoolFailure :: Gen (Dijkstra.DijkstraMempoolPredFailure DijkstraEra)
+genDijkstraMempoolFailure =
+    arbitrary `suchThat` \case
+        Dijkstra.LedgerFailure Dijkstra.DijkstraSpendingOutputFromSameTx{} -> False
+        _ -> True
 
 genEvaluateTransactionResponse :: Gen (EvaluateTransactionResponse Block)
 genEvaluateTransactionResponse = frequency

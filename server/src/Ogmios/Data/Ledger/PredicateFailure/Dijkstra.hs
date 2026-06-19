@@ -85,7 +85,10 @@ encodeLedgerFailure = \case
     Di.DijkstraSubLedgersFailure e ->
         encodeSubLedgersFailure e
     Di.DijkstraSpendingOutputFromSameTx _txIds ->
-        SpendingOutputFromSubTransaction
+        -- FIXME: Temporary; this error is gone in most recent version of the
+        -- ledger; so for now we map it to something "okay-ish", but this should
+        -- really just be dropped eventually.
+        UnknownUtxoReference mempty
 
 --------
 -- GOV

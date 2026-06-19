@@ -4506,23 +4506,13 @@
             }
           }
         }
-      , { "title": "SubmitTransactionFailure<SpendingOutputFromSubTransaction>"
-        , "description": "The transaction attempts to spend outputs created by its own sub-transactions, which would create a circular dependency."
-        , "type": "object"
-        , "required": [ "code", "message" ]
-        , "additionalProperties": false
-        , "properties":
-          { "code": { "type": "integer", "enum": [ 3170 ] }
-          , "message": { "type": "string" }
-          }
-        }
       , { "title": "SubmitTransactionFailure<StakePoolVRFKeyAlreadyRegistered>"
         , "description": "Stake pool can (no longer) re-use an already used VRF key. Yet this transaction contains a pool which declares a VRF key that is already in use."
         , "type": "object"
         , "required": [ "code", "message", "data" ]
         , "additionalProperties": false
         , "properties":
-          { "code": { "type": "integer", "enum": [ 3171 ] }
+          { "code": { "type": "integer", "enum": [ 3170 ] }
           , "message": { "type": "string" }
           , "data":
             { "type": "object"
