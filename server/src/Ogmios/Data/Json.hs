@@ -47,9 +47,6 @@ import Ogmios.Data.Json.Prelude
 import Cardano.Ledger.Binary
     ( ToCBOR (..)
     )
-import Ouroboros.Consensus.Shelley.Ledger.Mempool
-    ( ApplyTxError (..)
-    )
 import Cardano.Network.Protocol.NodeToClient
     ( GenTx
     , GenTxId
@@ -94,7 +91,8 @@ import Ouroboros.Consensus.Protocol.Praos
     ( PraosCrypto
     )
 import Ouroboros.Consensus.Shelley.Ledger.Mempool
-    ( GenTx (..)
+    ( ApplyTxError (..)
+    , GenTx (..)
     , TxId (..)
     )
 import Ouroboros.Network.Block
