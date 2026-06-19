@@ -18,6 +18,27 @@ Do not hesitate to upvote discussions or comments to show your interest!
 
  Pull requests are welcome, but we do recommend to open an issue to bring any idea to discussion first!
 
+##### Adding Support For A New Era
+
+Ogmios generally supports the current Cardano era and the next era when one is available, so era transitions usually require a coordinated bump across the server, tests, generated schemas, and clients. After updating the Cardano dependencies and the hard-fork block type, audit these areas:
+
+- Type-level era plumbing: update `Ogmios.Prelude`, `Ogmios.Data.EraTranslation`, era indexes, `MostRecentEra` assumptions, and helper constraints such as `ShelleyBasedEra` and `AlonzoBasedEra`.
+- Node-to-client protocol support: check `server/modules/ouroboros-network-ogmios/src/Cardano/Network/Protocol/NodeToClient.hs` for supported versions, codec configuration, raw transaction id conversion, and any version gates that decide when the new era may flow over the wire.
+- Runtime protocols: inspect `server/src/Ogmios/App/Protocol/ChainSync.hs`, `StateQuery.hs`, `TxSubmission.hs`, and `TxMonitor.hs` for era-specific branches, `QueryIfCurrent*` constructors, transaction evaluation paths, and mempool lookup order.
+- JSON and ledger adapters: add or update the era-specific JSON module, `Ogmios.Data.Json`, `Ogmios.Data.Json.Query`, predicate failure encoders, script failure encoders, `Ogmios.Data.Ledger`, and `Ogmios.Data.Protocol.TxSubmission`.
+- Configuration, health, and genesis behavior: update era names in health reporting and configuration parsing. Do not add genesis-query support by reflex; some eras intentionally reuse the previous era's genesis configuration or have no genesis configuration at all.
+- Tests and generators: extend `server/test/unit/Test/Generators.hs`, `Test/Generators/Orphans.hs`, protocol specs, JSON specs, and golden vectors so the new era is generated and round-tripped. Include a direct node-to-client roundtrip for a block in the new era, because this catches consensus codec gaps before Ogmios JSON is involved.
+- Schemas and clients: regenerate and review JSON schemas and TypeScript clients, especially public era unions, block shapes, query result types, and error variants.
+
+Useful searches when reviewing an era bump:
+
+```sh
+rg -n "Conway|MostRecentEra|EraIndex|NodeToClientV_|ShelleyBasedEra|AlonzoBasedEra|QueryIfCurrent|GenTx|Block[A-Z]" server/src server/test/unit server/modules/ouroboros-network-ogmios/src clients
+rg -n "conway|ConwayEra|ShelleyBasedEraConway|AlonzoBasedEraConway|QueryIfCurrentConway" server/src server/test/unit server/modules/ouroboros-network-ogmios/src clients
+```
+
+Not every reference to the previous era is wrong. Older-era codecs, backwards-compatible parsers, historical block encoders, and genesis-query support often need to remain as-is. Treat each remaining previous-era reference as either a deliberate historical branch or a missing new-era branch, and document the decision in the pull request when it is not obvious.
+
 #### 3. Donation
 
 Want to give some financial support? Have a look at the [sponsors page](https://github.com/sponsors/KtorZ/) for more details.
