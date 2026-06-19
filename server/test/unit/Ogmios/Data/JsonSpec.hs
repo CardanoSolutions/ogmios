@@ -793,23 +793,27 @@ spec = do
             Nothing
             (parseQueryLedgerDelegateRepresentatives genDelegateRepresentativesResult)
 
-        validateNetworkQuery 10 "blockHeight"
+        validateNetworkQuery 10 "blockHeight" ""
             Nothing
             (parseQueryNetworkBlockHeight (const $ genWithOrigin genBlockNo))
 
-        validateNetworkQuery 10 "genesisConfiguration"
+        validateNetworkQuery 10 "genesisConfiguration" "shelley"
             (Just [aesonQQ|{ "era": "shelley" }|])
             (parseQueryNetworkGenesisConfiguration genGenesisConfig)
 
-        validateNetworkQuery 20 "genesisConfiguration"
+        validateNetworkQuery 20 "genesisConfiguration" "alonzo"
             (Just [aesonQQ|{ "era": "alonzo" }|])
             (parseQueryNetworkGenesisConfiguration genGenesisConfig)
 
-        validateNetworkQuery 5 "startTime"
+        validateNetworkQuery 10 "genesisConfiguration" "conway"
+            (Just [aesonQQ|{ "era": "conway" }|])
+            (parseQueryNetworkGenesisConfiguration genGenesisConfig)
+
+        validateNetworkQuery 5 "startTime" ""
             Nothing
             (parseQueryNetworkStartTime (const genSystemStart))
 
-        validateNetworkQuery 10 "tip"
+        validateNetworkQuery 10 "tip" ""
             Nothing
             (parseQueryNetworkTip (const genPoint))
 
@@ -1246,15 +1250,17 @@ validateLedgerStateQuery n subMethod params parser = do
 validateNetworkQuery
     :: Int
     -> Text
+    -> Text
     -> Maybe Json.Value
     -> (Json.Value -> Json.Parser (QueryInEra Gen Block))
     -> SpecWith ()
-validateNetworkQuery n subMethod params parser = do
+validateNetworkQuery n subMethod variant params parser = do
   let category = "Network"
   let propName = "Query" <> category <> titleize subMethod
   let requestRef = "ogmios.json#/properties/" <> propName
   let responseRef = requestRef <> "Response"
   let method = "query" <> category <> "/" <> subMethod
+  let vectorName = toString (propName <> (if variant /= mempty then "_" else "") <> variant)
   parallel $ specify (toString propName) $ do
     queryRefs <- unsafeReadSchemaRef (SchemaRef requestRef)
     runQuickCheck $ withMaxSuccess 1 $ prop_validateToJSON
@@ -1265,6 +1271,7 @@ validateNetworkQuery n subMethod params parser = do
         )
         queryRefs
         params
+
     case Json.parseEither parser (fromMaybe Json.emptyObject params)  of
         Left e ->
             expectationFailure $ "failed to parse JSON: " <> show e
@@ -1286,7 +1293,7 @@ validateNetworkQuery n subMethod params parser = do
                 Just SomeEffectfullQuery{} -> do
                     error "unexpected effectful query in JSON spec"
                 Just (SomeStandardQuery _ encodeResult genResult) -> do
-                    generateTestVectors (n, toString propName)
+                    generateTestVectors (n, vectorName)
                         (reasonablySized $ genResult Proxy)
                         (encodeQueryResponse encodeResult)
                     runQuickCheck $ withMaxSuccess n $ forAllBlind
@@ -1296,7 +1303,7 @@ validateNetworkQuery n subMethod params parser = do
                             responseRefs
                         )
                 Just (SomeCompoundQuery _ _ _ encodeResult genResult) -> do
-                    generateTestVectors (n, toString propName)
+                    generateTestVectors (n, vectorName)
                         (reasonablySized $ genResult Proxy)
                         (encodeQueryResponse encodeResult)
                     runQuickCheck $ withMaxSuccess n $ forAllBlind
@@ -1306,7 +1313,7 @@ validateNetworkQuery n subMethod params parser = do
                             responseRefs
                         )
                 Just (SomeCompound2Query _ _ _ _ encodeResult genResult) -> do
-                    generateTestVectors (n, toString propName)
+                    generateTestVectors (n, vectorName)
                         (reasonablySized $ genResult Proxy)
                         (encodeQueryResponse encodeResult)
                     runQuickCheck $ withMaxSuccess n $ forAllBlind
@@ -1316,7 +1323,7 @@ validateNetworkQuery n subMethod params parser = do
                             responseRefs
                         )
                 Just (SomeAdHocQuery _ encodeResult genResult) -> do
-                    generateTestVectors (n, toString propName)
+                    generateTestVectors (n, vectorName)
                         (reasonablySized $ genResult Proxy)
                         (encodeQueryResponse (Right . encodeResult))
                     runQuickCheck $ withMaxSuccess n $ forAllBlind
