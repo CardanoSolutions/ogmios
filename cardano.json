@@ -160,7 +160,7 @@
         }
       , "era":
         { "type": "string"
-        , "enum": [ "shelley", "allegra", "mary", "alonzo", "babbage", "conway" ]
+        , "enum": [ "shelley", "allegra", "mary", "alonzo", "babbage", "conway", "dijkstra" ]
         }
       , "id": { "$ref": "cardano.json#/definitions/Digest<Blake2b, 256>" }
       , "ancestor":
@@ -312,7 +312,7 @@
         , "additionalProperties": false
         , "required": [ "verificationKey" ]
         , "properties":
-          { "verificationKey": { "$ref": "cardano.json#/definitions/VerificationKey" }
+          { "verificationKey": { "$ref": "cardano.json#/definitions/ExtendedVerificationKey" }
           }
         }
       , "proposal":
@@ -793,6 +793,11 @@
       ]
     }
 
+  , "Credits":
+    { "title": "credits"
+    , "$ref": "cardano.json#/definitions/Withdrawals"
+    }
+
   , "Datum":
     { "title": "Datum"
     , "type": "string"
@@ -837,28 +842,6 @@
         }
       , "treasuryWithdrawals": { "$ref": "cardano.json#/definitions/Ratio" }
       }
-    }
-
-  , "Digest<Any>":
-    { "title": "Digest<Any>"
-    , "type": "string"
-    , "description": "A hash digest from an unspecified algorithm and length."
-    , "contentEncoding": "base16"
-    , "examples":
-      [ "90181c517a5beadc9c3fe64bf8"
-      ]
-    }
-
-  , "Digest<Blake2b, 224>":
-    { "title": "Digest<Blake2b, 224>"
-    , "type": "string"
-    , "description": "A Blake2b 28-byte hash digest, encoded in base16."
-    , "contentEncoding": "base16"
-    , "minLength": 56
-    , "maxLength": 56
-    , "examples":
-      [ "90181c517a5beadc9c3fe64bf821d3e889a963fc717003ec248757d3"
-      ]
     }
 
   , "DelegateRepresentative":
@@ -1009,6 +992,28 @@
       ]
     }
 
+  , "Digest<Any>":
+    { "title": "Digest<Any>"
+    , "type": "string"
+    , "description": "A hash digest from an unspecified algorithm and length."
+    , "contentEncoding": "base16"
+    , "examples":
+      [ "90181c517a5beadc9c3fe64bf8"
+      ]
+    }
+
+  , "Digest<Blake2b, 224>":
+    { "title": "Digest<Blake2b, 224>"
+    , "type": "string"
+    , "description": "A Blake2b 28-byte hash digest, encoded in base16."
+    , "contentEncoding": "base16"
+    , "minLength": 56
+    , "maxLength": 56
+    , "examples":
+      [ "90181c517a5beadc9c3fe64bf821d3e889a963fc717003ec248757d3"
+      ]
+    }
+
   , "Digest<Blake2b, 256>":
     { "title": "Digest<Blake2b, 256>"
     , "type": "string"
@@ -1032,13 +1037,13 @@
   , "Era":
     { "title": "Era"
     , "type": "string"
-    , "enum": [ "byron", "shelley", "allegra", "mary", "alonzo", "babbage", "conway" ]
+    , "enum": [ "byron", "shelley", "allegra", "mary", "alonzo", "babbage", "conway", "dijkstra" ]
     }
 
   , "EraWithGenesis":
     { "title": "EraWithGenesis"
     , "type": "string"
-    , "enum": [ "byron", "shelley", "alonzo", "conway" ]
+    , "enum": [ "byron", "shelley", "alonzo", "conway", "dijkstra" ]
     }
 
   , "EraParameters":
@@ -1277,6 +1282,36 @@
           , "delegateRepresentativeVotingThresholds": { "$ref": "cardano.json#/definitions/DelegateRepresentativeVotingThresholds" }
           , "delegateRepresentativeDeposit": { "$ref": "cardano.json#/definitions/Value<AdaOnly>" }
           , "delegateRepresentativeMaxIdleTime": { "$ref": "cardano.json#/definitions/Epoch" }
+          }
+        }
+      }
+    }
+
+  , "Genesis<Dijkstra>":
+    { "title": "Genesis<Dijkstra>"
+    , "type": "object"
+    , "description": "An Dijkstra genesis configuration, with information used to bootstrap the era. Some parameters are also updatable across the era."
+    , "additionalProperties": false
+    , "required":
+      [ "era"
+      , "maxReferenceScriptsSizePerBlock"
+      , "maxReferenceScriptsSizePerTransaction"
+      , "minFeeReferenceScripts"
+      ]
+    , "properties":
+      { "era":
+        { "type": "string"
+        , "enum": [ "dijkstra" ]
+        }
+      , "maxReferenceScriptsSizePerTransaction": { "$ref": "cardano.json#/definitions/NumberOfBytes" }
+      , "maxReferenceScriptsSizePerBlock": { "$ref": "cardano.json#/definitions/NumberOfBytes" }
+      , "minFeeReferenceScripts":
+        { "type": "object"
+        , "additionalProperties": false
+        , "required": ["range", "multiplier"]
+        , "properties":
+          { "range": { "$ref": "cardano.json#/definitions/UInt32" }
+          , "multiplier": { "type": "number" }
           }
         }
       }
@@ -1754,7 +1789,7 @@
   , "Language":
     { "title": "Language"
     , "type": "string"
-    , "enum": [ "plutus:v1", "plutus:v2", "plutus:v3" ]
+    , "enum": [ "plutus:v1", "plutus:v2", "plutus:v3", "plutus:v4" ]
     }
 
   , "KesVerificationKey":
@@ -2113,7 +2148,6 @@
       , "minFeeReferenceScripts":
         { "type": "object"
         , "additionalProperties": false
-        , "required": [ "range", "base", "multiplier" ]
         , "properties":
           { "range": { "$ref": "cardano.json#/definitions/UInt32" }
           , "base": { "type": "number" }
@@ -2125,7 +2159,8 @@
       , "maxBlockBodySize": { "$ref": "cardano.json#/definitions/NumberOfBytes" }
       , "maxBlockHeaderSize": { "$ref": "cardano.json#/definitions/NumberOfBytes" }
       , "maxTransactionSize": { "$ref": "cardano.json#/definitions/NumberOfBytes" }
-      , "maxReferenceScriptsSize": { "$ref": "cardano.json#/definitions/NumberOfBytes" }
+      , "maxReferenceScriptsSizePerTransaction": { "$ref": "cardano.json#/definitions/NumberOfBytes" }
+      , "maxReferenceScriptsSizePerBlock": { "$ref": "cardano.json#/definitions/NumberOfBytes" }
       , "maxValueSize": { "$ref": "cardano.json#/definitions/NumberOfBytes" }
       , "extraEntropy": { "$ref": "cardano.json#/definitions/Nonce" }
       , "stakeCredentialDeposit": { "$ref": "cardano.json#/definitions/Value<AdaOnly>" }
@@ -2219,7 +2254,8 @@
       , "scriptExecutionPrices": { "$ref": "cardano.json#/definitions/ScriptExecutionPrices" }
       , "maxExecutionUnitsPerTransaction": { "$ref": "cardano.json#/definitions/ExecutionUnits" }
       , "maxExecutionUnitsPerBlock": { "$ref": "cardano.json#/definitions/ExecutionUnits" }
-      , "maxReferenceScriptsSize": { "$ref": "cardano.json#/definitions/NumberOfBytes" }
+      , "maxReferenceScriptsSizePerTransaction": { "$ref": "cardano.json#/definitions/NumberOfBytes" }
+      , "maxReferenceScriptsSizePerBlock": { "$ref": "cardano.json#/definitions/NumberOfBytes" }
       , "stakePoolVotingThresholds": { "$ref": "cardano.json#/definitions/StakePoolVotingThresholds" }
       , "constitutionalCommitteeMinSize": { "$ref": "cardano.json#/definitions/UInt16" }
       , "constitutionalCommitteeMaxTermLength": { "$ref": "cardano.json#/definitions/UInt64" }
@@ -2294,7 +2330,7 @@
     , "properties":
       { "purpose":
         { "type": "string"
-        , "enum": [ "spend", "mint", "publish", "withdraw", "vote", "propose" ]
+        , "enum": [ "spend", "mint", "publish", "withdraw", "vote", "propose", "guard" ]
         }
       , "index":
         { "$ref": "cardano.json#/definitions/UInt64"
@@ -2421,7 +2457,7 @@
         , "properties":
           { "language":
             { "type": "string"
-            , "enum": [ "plutus:v1", "plutus:v2", "plutus:v3" ]
+            , "enum": [ "plutus:v1", "plutus:v2", "plutus:v3", "plutus:v4" ]
             }
           , "cbor":
             { "type": "string"
@@ -2544,6 +2580,20 @@
             }
           }
         }
+      , { "type": "object"
+        , "title": "Clause<Guard>"
+        , "additionalProperties": false
+        , "required": [ "clause", "from" ]
+        , "properties":
+          { "clause":
+            { "type": "string"
+            , "enum": [ "guard" ]
+            }
+          , "from":
+            { "$ref": "cardano.json#/definitions/Digest<Blake2b, 224>"
+            }
+          }
+        }
       ]
     }
 
@@ -2634,6 +2684,20 @@
             }
           , "issuer":
             { "$ref": "cardano.json#/definitions/GovernanceVoter"
+            }
+          }
+        }
+      , { "title": "ScriptPurpose<Guard>"
+        , "type": "object"
+        , "additionalProperties": false
+        , "required": [ "purpose", "script" ]
+        , "properties":
+          { "purpose":
+            { "type": "string"
+            , "enum": [ "guard" ]
+            }
+          , "script":
+            { "$ref": "cardano.json#/definitions/Digest<Blake2b, 224>"
             }
           }
         }
@@ -2732,7 +2796,7 @@
     { "title": "Transaction"
     , "type": "object"
     , "additionalProperties": false
-    , "required": [ "id", "spends", "inputs", "outputs", "signatories" ]
+    , "required": [ "id", "spends", "inputs", "signatories" ]
     , "properties":
       { "id":
         { "$ref": "cardano.json#/definitions/Digest<Blake2b, 256>"
@@ -2769,6 +2833,10 @@
       , "withdrawals":
         { "$ref": "cardano.json#/definitions/Withdrawals"
         }
+      , "credits":
+        { "$ref": "cardano.json#/definitions/Credits"
+        , "description": "Credits to account addresses (opposite of withdrawals). From Dijkstra era only."
+        }
       , "fee":
         { "$ref": "cardano.json#/definitions/Value<AdaOnly>"
         }
@@ -2791,6 +2859,11 @@
       , "requiredExtraScripts":
         { "type": "array"
         , "items": { "$ref": "cardano.json#/definitions/Digest<Blake2b, 224>" }
+        }
+      , "guards":
+        { "type": "array"
+        , "items": { "$ref": "cardano.json#/definitions/Digest<Blake2b, 224>" }
+        , "description": "Scripts which must pass for the transaction to be valid. Meant to replace the 'withdraw-0' design pattern. From Dijkstra era only."
         }
       , "proposals":
         { "type": "array"
@@ -2829,10 +2902,204 @@
           , "donation": { "$ref": "cardano.json#/definitions/Value<AdaOnly>" }
           }
         }
+      , "accountBalanceIntervals":
+        { "type": "array"
+        , "items": { "$ref": "cardano.json#/definitions/AccountBalanceInterval" }
+        , "description": "Interval contraints regarding accounts. This is used by scripts which must validates account balances with some levels of flexibility. From Dijkstra era only."
+        }
+      , "subTransactions":
+        { "type": "array"
+        , "items": { "$ref": "cardano.json#/definitions/SubTransaction" }
+        , "description": "Nested sub-transactions. From Dijkstra era only."
+        }
       , "cbor":
         { "type": "string"
         , "contentEncoding": "base16"
         , "description": "The raw serialized (CBOR) transaction, as found on-chain. Use --include-transaction-cbor to ALWAYS include the 'cbor' field. Omitted otherwise."
+        }
+      }
+    }
+
+  , "AccountBalanceInterval":
+    { "title": "AccountBalanceInterval"
+    , "oneOf":
+      [ { "title": "AccountBalanceIntervalAtLeast"
+        , "additionalProperties": false
+        , "required": [ "from", "credential", "atLeast" ]
+        , "description": "Minimum (inclusive) balance of the target account."
+        , "properties":
+          { "from":
+            { "$ref": "cardano.json#/definitions/CredentialOrigin"
+            }
+          , "credential":
+            { "$ref": "cardano.json#/definitions/Digest<Blake2b, 224>"
+            }
+          , "atLeast":
+            { "$ref": "cardano.json#/definitions/Value<AdaOnly>"
+            }
+          }
+        }
+      , { "title": "AccountBalanceIntervalAtMost"
+        , "additionalProperties": false
+        , "required": [ "from", "credential", "atMost" ]
+        , "description": "Maximum (exclusive) balance of the target account."
+        , "properties":
+          { "from":
+            { "$ref": "cardano.json#/definitions/CredentialOrigin"
+            }
+          , "credential":
+            { "$ref": "cardano.json#/definitions/Digest<Blake2b, 224>"
+            }
+          , "atMost":
+            { "$ref": "cardano.json#/definitions/Value<AdaOnly>"
+            }
+          }
+        }
+      , { "title": "AccountBalanceIntervalWithin"
+        , "additionalProperties": false
+        , "required": [ "from", "credential", "atLeast", "atMost" ]
+        , "description": "Minimum (inclusive) and maximum (exclusive) balances of the target account."
+        , "properties":
+          { "from":
+            { "$ref": "cardano.json#/definitions/CredentialOrigin"
+            }
+          , "credential":
+            { "$ref": "cardano.json#/definitions/Digest<Blake2b, 224>"
+            }
+          , "atLeast":
+            { "$ref": "cardano.json#/definitions/Value<AdaOnly>"
+            }
+          , "atMost":
+            { "$ref": "cardano.json#/definitions/Value<AdaOnly>"
+            }
+          }
+        }
+      ]
+    }
+
+  , "TopLevelGuard":
+    { "title": "TopLevelGuard"
+    , "type": "object"
+    , "additionalProperties": false
+    , "required": [ "from", "credential" ]
+    , "properties":
+      { "from":
+        { "$ref": "cardano.json#/definitions/CredentialOrigin"
+        }
+      , "credential":
+        { "$ref": "cardano.json#/definitions/Digest<Blake2b, 224>"
+        }
+      , "datum":
+        { "$ref": "cardano.json#/definitions/Datum"
+        }
+      }
+    }
+
+  , "SubTransaction":
+    { "title": "SubTransaction"
+    , "type": "object"
+    , "additionalProperties": false
+    , "required": [ "id", "inputs", "signatories" ]
+    , "properties":
+      { "id":
+        { "$ref": "cardano.json#/definitions/Digest<Blake2b, 256>"
+        }
+      , "inputs":
+        { "type": "array"
+        , "items": { "$ref": "cardano.json#/definitions/TransactionOutputReference" }
+        }
+      , "references":
+        { "type": "array"
+        , "items": { "$ref": "cardano.json#/definitions/TransactionOutputReference" }
+        }
+      , "outputs":
+        { "type": "array"
+        , "items": { "$ref": "cardano.json#/definitions/TransactionOutput" }
+        }
+      , "certificates":
+        { "type": "array"
+        , "items": { "$ref": "cardano.json#/definitions/Certificate" }
+        }
+      , "withdrawals":
+        { "$ref": "cardano.json#/definitions/Withdrawals"
+        }
+      , "credits":
+        { "$ref": "cardano.json#/definitions/Credits"
+        }
+      , "validityInterval":
+        { "$ref": "cardano.json#/definitions/ValidityInterval"
+        }
+      , "mint":
+        { "$ref": "cardano.json#/definitions/Assets"
+        }
+      , "network":
+        { "$ref": "cardano.json#/definitions/Network"
+        }
+      , "scriptIntegrityHash":
+        { "$ref": "cardano.json#/definitions/Digest<Blake2b, 256>"
+        }
+      , "requiredExtraSignatories":
+        { "type": "array"
+        , "items": { "$ref": "cardano.json#/definitions/Digest<Blake2b, 224>" }
+        }
+      , "requiredExtraScripts":
+        { "type": "array"
+        , "items": { "$ref": "cardano.json#/definitions/Digest<Blake2b, 224>" }
+        }
+      , "guards":
+        { "type": "array"
+        , "description": "Scripts which must pass for the (sub) transaction to be valid. Meant to replace the 'withdraw-0' design pattern."
+        , "items": { "$ref": "cardano.json#/definitions/Digest<Blake2b, 224>" }
+        }
+      , "topLevelGuards":
+        { "type": "array"
+        , "description": "Like 'guards', but apply to the host transaction."
+        , "items": { "$ref": "cardano.json#/definitions/TopLevelGuard" }
+        }
+      , "proposals":
+        { "type": "array"
+        , "items": { "$ref": "cardano.json#/definitions/GovernanceProposal" }
+        }
+      , "votes":
+        { "type": "array"
+        , "items": { "$ref": "cardano.json#/definitions/GovernanceVote" }
+        }
+      , "treasury":
+        { "type": "object"
+        , "additionalProperties": false
+        , "properties":
+          { "value": { "$ref": "cardano.json#/definitions/Value<AdaOnly>" }
+          , "donation": { "$ref": "cardano.json#/definitions/Value<AdaOnly>" }
+          }
+        }
+      , "accountBalanceIntervals":
+        { "type": "array"
+        , "items": { "$ref": "cardano.json#/definitions/AccountBalanceInterval" }
+        }
+      , "metadata":
+        { "$ref": "cardano.json#/definitions/Metadata"
+        }
+      , "signatories":
+        { "type": "array"
+        , "items": { "$ref": "cardano.json#/definitions/Signatory" }
+        }
+      , "scripts":
+        { "type": "object"
+        , "propertyNames": { "contentEncoding": "base16", "pattern": "^[0-9a-f]+$" }
+        , "additionalProperties": { "$ref": "cardano.json#/definitions/Script" }
+        }
+      , "datums":
+        { "type": "object"
+        , "propertyNames": { "contentEncoding": "base16", "pattern": "^[0-9a-f]+$" }
+        , "additionalProperties": { "$ref": "cardano.json#/definitions/Datum" }
+        }
+      , "redeemers":
+        { "type": "array"
+        , "items": { "$ref": "cardano.json#/definitions/Redeemer" }
+        }
+      , "cbor":
+        { "type": "string"
+        , "contentEncoding": "base16"
         }
       }
     }
