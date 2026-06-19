@@ -79,6 +79,7 @@ import qualified Cardano.Ledger.Shelley.UTxO as Sh
 import qualified Data.Map.Strict as Map
 import qualified Data.Set as Set
 
+import qualified Cardano.Ledger.Dijkstra.Genesis as Di
 import qualified Ogmios.Data.Json.Allegra as Allegra
 import qualified Ogmios.Data.Json.Alonzo as Alonzo
 import qualified Ogmios.Data.Json.Babbage as Babbage
@@ -124,6 +125,20 @@ encodeDelegCert = Conway.encodeDelegCert . \case
         Cn.ConwayDelegCert credential delegatee
     Di.DijkstraRegDelegCert credential delegatee deposit ->
         Cn.ConwayRegDelegCert credential delegatee deposit
+
+encodeGenesis
+    :: Di.DijkstraGenesis
+    -> Json
+encodeGenesis (Di.dgUpgradePParams -> x) =
+   encodeObject
+       ( "era" .= encodeText "dijkstra" <>
+         "maxReferenceScriptsSizePerTransaction" .= encodeSingleton "bytes" (encodeWord32 (Di.udppMaxRefScriptSizePerTx x)) <>
+         "maxReferenceScriptsSizePerBlock" .= encodeSingleton "bytes" (encodeWord32 (Di.udppMaxRefScriptSizePerBlock x)) <>
+         "minFeeReferenceScripts" .= encodeObject
+            ( "range" .= encodeNonZero encodeWord32 (Di.udppRefScriptCostStride x) <>
+              "multiplier" .= encodePositiveIntervalAsDouble (Di.udppRefScriptCostMultiplier x)
+            )
+       )
 
 encodeNativeScript
     :: Di.DijkstraNativeScript DijkstraEra

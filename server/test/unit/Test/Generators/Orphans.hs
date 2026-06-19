@@ -12,8 +12,6 @@ import Ogmios.Prelude
 import Cardano.Ledger.Alonzo.Core
     ( AlonzoEraScript (..)
     )
-import Cardano.Ledger.Alonzo.Plutus.Context
-    ()
 import Ogmios.Data.Json.Query
     ( RewardAccountSummary (..)
     )
@@ -33,6 +31,8 @@ import qualified Cardano.Ledger.Alonzo.Core as Ledger
 import qualified Cardano.Ledger.Alonzo.Plutus.Context as Ledger
 import qualified Test.Cardano.Ledger.Alonzo.Arbitrary as Ledger
 
+import Cardano.Ledger.Alonzo.Plutus.Context
+    ()
 import Test.Cardano.Ledger.Conway.Arbitrary
     ()
 import Test.Cardano.Ledger.Dijkstra.Arbitrary
@@ -43,6 +43,7 @@ instance Arbitrary ScriptPurposeIndexInAnyEra where
         [ ScriptPurposeIndexInAnyEra . (AlonzoBasedEraAlonzo,) <$> arbitrary
         , ScriptPurposeIndexInAnyEra . (AlonzoBasedEraBabbage,) <$> arbitrary
         , ScriptPurposeIndexInAnyEra . (AlonzoBasedEraConway,) <$> arbitrary
+        , ScriptPurposeIndexInAnyEra . (AlonzoBasedEraDijkstra,) <$> arbitrary
         ]
 
 instance Arbitrary RewardAccountSummary where

@@ -276,6 +276,13 @@ mkStateQueryClient tr defaultWithInternalError StateQueryCodecs{..} GetGenesisCo
                                     (QueryResponse . encodeResult)
                                     result
                                 pure $ LSQ.SendMsgRelease clientStIdle
+                            GetDijkstraGenesis -> do
+                                result <- getDijkstraGenesis
+                                yieldResult toResponse $ either
+                                    QueryInvalidGenesisConfiguration
+                                    (QueryResponse . encodeResult)
+                                    result
+                                pure $ LSQ.SendMsgRelease clientStIdle
 
             , LSQ.recvMsgFailure = \failure -> do
                 let response = QueryAcquireFailure failure
@@ -387,8 +394,13 @@ mkStateQueryClient tr defaultWithInternalError StateQueryCodecs{..} GetGenesisCo
                                 (QueryResponse . encodeResult)
                                 result
                             pure $ LSQ.SendMsgRelease clientStIdle
-
-
+                        GetDijkstraGenesis -> do
+                            result <- getDijkstraGenesis
+                            yieldResult toResponse $ either
+                                QueryInvalidGenesisConfiguration
+                                (QueryResponse . encodeResult)
+                                result
+                            pure $ LSQ.SendMsgRelease clientStIdle
 
 --
 -- Helpers

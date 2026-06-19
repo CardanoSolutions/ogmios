@@ -126,6 +126,7 @@ data GetGenesisConfig (m :: Type -> Type) = GetGenesisConfig
     , getShelleyGenesis :: m (GenesisConfig ShelleyEra)
     , getAlonzoGenesis :: m (GenesisConfig AlonzoEra)
     , getConwayGenesis :: m (Either Text (GenesisConfig ConwayEra))
+    , getDijkstraGenesis :: m (Either Text (GenesisConfig DijkstraEra))
     }
 
 --

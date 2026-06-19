@@ -23,6 +23,7 @@ module Ogmios.App.Configuration
     , readShelleyGenesis
     , readAlonzoGenesis
     , readConwayGenesis
+    , readDijkstraGenesis
 
     -- * NetworkParameters
     , NetworkParameters (..)
@@ -40,10 +41,6 @@ import Ogmios.Prelude
 import Cardano.Chain.Slotting
     ( EpochSlots (..)
     )
-import Cardano.Ledger.Alonzo.Genesis
-    ( AlonzoExtraConfig (..)
-    , extraConfig
-    )
 import Control.Arrow
     ( left
     )
@@ -52,9 +49,7 @@ import Data.Aeson
     , genericToEncoding
     )
 import Data.Aeson.Lens
-    ( _JSON'
-    , _String
-    , _Value
+    ( _String
     , key
     )
 import Data.Time.Clock.POSIX
@@ -84,11 +79,7 @@ import System.FilePath
     )
 
 import qualified Cardano.Chain.Genesis as Byron
-import qualified Cardano.Ledger.Api as Ledger
-import qualified Cardano.Ledger.Plutus as Ledger
 import qualified Data.Aeson as Json
-import qualified Data.Map as Map
-import qualified Data.Set as Set
 import qualified Data.Text as T
 import qualified Data.Yaml as Yaml
 
@@ -147,66 +138,7 @@ readAlonzoGenesis configFile = do
         Nothing ->
             liftIO $ fail "Missing 'AlonzoGenesisFile' from node's configuration."
         Just (toString -> genesisFile) -> do
-            -- We have to decode Alonzo into an intermediate value first because
-            -- the default JSON decoder from the cardano-ledge can no longer
-            -- decode the genesis configuration.
-            --
-            -- The reason being that the decoder checks for the existence of
-            -- various parameters in the cost model for Plutus V1. Yet, new
-            -- parameters were added retro-actively to the cost model, so they
-            -- aren't present in the genesis config. But the decoder doesn't
-            -- care and fails.
-            --
-            -- So we have to manually add some placeholder key values to the
-            -- base genesis, so that the decoder can succeed; only to drop them
-            -- after from the map because they aren't actually part of the
-            -- genesis configuration.
-            value :: Yaml.Value <- Yaml.decodeFileThrow (replaceFileName configFile genesisFile)
-
-            let (costModelsWithFutureParams, sourceParamNames) = withFutureParameters (value ^. getter)
-                  where
-                    getter = key "costModels" . key "PlutusV1" . _JSON'
-
-            let valueWithPlaceholders = value & setter .~ Json.toJSON costModelsWithFutureParams
-                  where
-                    setter = key "costModels" . key "PlutusV1" . _Value
-
-            genesis <- liftIO $ Yaml.decodeThrow (Yaml.encode valueWithPlaceholders)
-
-            pure (withoutFutureParameters sourceParamNames genesis)
-  where
-    withFutureParameters :: Map Text Int64  -> (Map Text Int64, Set Text)
-    withFutureParameters genesisParams = foldr
-        (\paramName (params, sourceParamNames) ->
-            case Map.lookup paramName params of
-              Just{} -> (params, Set.insert paramName sourceParamNames)
-              Nothing -> (Map.insert paramName 0 params, sourceParamNames)
-        )
-        (genesisParams, Set.empty)
-        allV1ParamNames
-
-    allV1ParamNames :: [Text]
-    allV1ParamNames = Ledger.costModelParamNames Ledger.PlutusV1
-
-    withoutFutureParameters :: Set Text -> GenesisConfig AlonzoEra -> GenesisConfig AlonzoEra
-    withoutFutureParameters sourceParamNames genesis =
-        case extraConfig genesis of
-            Nothing -> genesis
-            Just (AlonzoExtraConfig maybeCostModels) ->
-                case maybeCostModels of
-                    Nothing -> genesis
-                    Just cms ->
-                        let pruned = Map.adjust pruneCostModel Ledger.PlutusV1 (Ledger.costModelsValid cms)
-                            cms' = Ledger.mkCostModels pruned
-                         in genesis { extraConfig = Just (AlonzoExtraConfig (Just cms')) }
-      where
-        pruneCostModel cm =
-            case Ledger.mkCostModel Ledger.PlutusV1 (Map.elems prunedParams) of
-                Right cm' -> cm'
-                Left _    -> cm
-          where
-            prunedParams = Map.restrictKeys (Ledger.costModelToMap cm) sourceParamNames
-
+            Yaml.decodeFileThrow (replaceFileName configFile genesisFile)
 
 readConwayGenesis :: MonadIO m => FilePath -> m (Either Text (GenesisConfig ConwayEra))
 readConwayGenesis configFile = do
@@ -223,23 +155,45 @@ readConwayGenesis configFile = do
                     parseGenesisResult <- liftIO $ Yaml.decodeFileEither (replaceFileName configFile genesisFile)
                     pure $ left
                         (\e ->
-                            "Could not decode the genesis configuration probably \
+                            "Could not decode the Conway genesis configuration probably \
                             \because of a mismatch between the configuration and \
                             \the current version of the underlying ledger library \
                             \in-use in Ogmios: " <> formatParseException e
                         )
                         parseGenesisResult
-  where
-    formatParseException :: Yaml.ParseException -> Text
-    formatParseException
-        = T.dropWhileEnd (== '.')
-        . T.replace "Error in $[" "invalid item ["
-        . T.replace "Error in $: " ""
-        . T.replace "Error in $: key" "field"
-        . T.replace "\n" " "
-        . T.replace "Aeson exception:\n" ""
-        . toText
-        . Yaml.prettyPrintParseException
+
+readDijkstraGenesis :: MonadIO m => FilePath -> m (Either Text (GenesisConfig DijkstraEra))
+readDijkstraGenesis configFile = do
+    parseConfigResult <- liftIO $ Yaml.decodeFileEither @Json.Value configFile
+    case parseConfigResult of
+        Left e -> do
+            pure $ Left $
+                "Invalid (non-JSON or non-YAML) or missing node's configuration file: " <> formatParseException e
+        Right nodeConfig ->
+            case nodeConfig ^? key "DijkstraGenesisFile" . _String of
+                Nothing ->
+                    pure $ Left "Missing 'DijkstraGenesisFile' from node's configuration."
+                Just (toString -> genesisFile) -> do
+                    parseGenesisResult <- liftIO $ Yaml.decodeFileEither (replaceFileName configFile genesisFile)
+                    pure $ left
+                        (\e ->
+                            "Could not decode the Dijkstra genesis configuration probably \
+                            \because of a mismatch between the configuration and \
+                            \the current version of the underlying ledger library \
+                            \in-use in Ogmios: " <> formatParseException e
+                        )
+                        parseGenesisResult
+
+formatParseException :: Yaml.ParseException -> Text
+formatParseException
+    = T.dropWhileEnd (== '.')
+    . T.replace "Error in $[" "invalid item ["
+    . T.replace "Error in $: " ""
+    . T.replace "Error in $: key" "field"
+    . T.replace "\n" " "
+    . T.replace "Aeson exception:\n" ""
+    . toText
+    . Yaml.prettyPrintParseException
 
 deriving newtype instance ToJSON EpochSlots
 deriving newtype instance ToJSON NetworkMagic

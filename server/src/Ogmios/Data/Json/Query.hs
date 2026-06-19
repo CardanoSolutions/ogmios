@@ -148,6 +148,9 @@ import Cardano.Ledger.Conway.Governance
     ( GovActionState (..)
     , Voter (..)
     )
+import Cardano.Ledger.Dijkstra.Genesis
+    ( DijkstraGenesis
+    )
 import Cardano.Ledger.Hashes
     ( unsafeMakeSafeHash
     )
@@ -282,8 +285,36 @@ import Cardano.Ledger.Shelley.LedgerState
 import Ouroboros.Consensus.Shelley.Protocol.TPraos
     ()
 
+import qualified Cardano.Chain.Genesis as Byron
+import qualified Cardano.Crypto.Hashing as CC
+import qualified Cardano.Ledger.Address as Ledger
+import qualified Cardano.Ledger.Allegra.Scripts as Ledger.Allegra
+import qualified Cardano.Ledger.Alonzo.Scripts as Ledger.Alonzo
+import qualified Cardano.Ledger.Api as Ledger
+import qualified Cardano.Ledger.Babbage.TxBody as Ledger.Babbage
+import qualified Cardano.Ledger.BaseTypes as Ledger
 import qualified Cardano.Ledger.Binary.Coders as Binary
 import qualified Cardano.Ledger.Binary.Decoding as Binary
+import qualified Cardano.Ledger.Coin as Ledger
+import qualified Cardano.Ledger.Conway.Governance as Ledger.Conway
+import qualified Cardano.Ledger.Core as Ledger
+import qualified Cardano.Ledger.Credential as Ledger
+import qualified Cardano.Ledger.Dijkstra.Scripts as Ledger.Dijkstra
+import qualified Cardano.Ledger.DRep as Ledger
+import qualified Cardano.Ledger.Hashes as Ledger
+import qualified Cardano.Ledger.Mary.Value as Ledger.Mary
+import qualified Cardano.Ledger.Plutus.Data as Ledger.Plutus
+import qualified Cardano.Ledger.Plutus.Language as Ledger.Plutus
+import qualified Cardano.Ledger.Shelley.API.Wallet as Sh.Api
+import qualified Cardano.Ledger.Shelley.LedgerState as Ledger
+import qualified Cardano.Ledger.Shelley.RewardProvenance as Sh
+import qualified Cardano.Ledger.Shelley.Scripts as Ledger.Shelley
+import qualified Cardano.Ledger.Shelley.UTxO as Sh
+import qualified Cardano.Ledger.State as Ledger
+import qualified Cardano.Ledger.TxIn as Ledger
+import qualified Cardano.Protocol.TPraos.API as TPraos
+import qualified Cardano.Protocol.TPraos.Rules.Prtcl as TPraos
+import qualified Cardano.Protocol.TPraos.Rules.Tickn as TPraos
 import qualified Codec.Binary.Bech32 as Bech32
 import qualified Codec.CBOR.Decoding as Cbor
 import qualified Codec.CBOR.Encoding as Cbor
@@ -299,41 +330,6 @@ import qualified Data.OMap.Strict as OMap
 import qualified Data.Sequence.Strict as StrictSeq
 import qualified Data.Set as Set
 import qualified Data.Text as T
-
-import qualified Cardano.Chain.Genesis as Byron
-import qualified Cardano.Crypto.Hashing as CC
-import qualified Cardano.Protocol.TPraos.API as TPraos
-import qualified Cardano.Protocol.TPraos.Rules.Prtcl as TPraos
-import qualified Ouroboros.Consensus.HardFork.Combinator.Ledger.Query as LSQ
-import qualified Ouroboros.Consensus.Ledger.Query as LSQ
-import qualified PlutusLedgerApi.Common as Plutus
-
-import qualified Cardano.Ledger.Address as Ledger
-import qualified Cardano.Ledger.Allegra.Scripts as Ledger.Allegra
-import qualified Cardano.Ledger.Alonzo.Scripts as Ledger.Alonzo
-import qualified Cardano.Ledger.Babbage.TxBody as Ledger.Babbage
-import qualified Cardano.Ledger.BaseTypes as Ledger
-import qualified Cardano.Ledger.Coin as Ledger
-import qualified Cardano.Ledger.Conway.Governance as Ledger.Conway
-import qualified Cardano.Ledger.Core as Ledger
-import qualified Cardano.Ledger.Credential as Ledger
-import qualified Cardano.Ledger.Dijkstra.Scripts as Ledger.Dijkstra
-import qualified Cardano.Ledger.DRep as Ledger
-import qualified Cardano.Ledger.Hashes as Ledger
-import qualified Cardano.Ledger.Mary.Value as Ledger.Mary
-import qualified Cardano.Ledger.Plutus.Data as Ledger.Plutus
-import qualified Cardano.Ledger.Plutus.Language as Ledger.Plutus
-import qualified Cardano.Ledger.Shelley.Scripts as Ledger.Shelley
-import qualified Cardano.Ledger.State as Ledger
-import qualified Cardano.Ledger.TxIn as Ledger
-
-import qualified Cardano.Ledger.Shelley.LedgerState as Ledger
-
-import qualified Cardano.Ledger.Shelley.API.Wallet as Sh.Api
-import qualified Cardano.Ledger.Shelley.RewardProvenance as Sh
-import qualified Cardano.Ledger.Shelley.UTxO as Sh
-
-import qualified Cardano.Ledger.Api as Ledger
 import qualified Ogmios.Data.Json.Allegra as Allegra
 import qualified Ogmios.Data.Json.Alonzo as Alonzo
 import qualified Ogmios.Data.Json.Babbage as Babbage
@@ -342,10 +338,10 @@ import qualified Ogmios.Data.Json.Conway as Conway
 import qualified Ogmios.Data.Json.Dijkstra as Dijkstra
 import qualified Ogmios.Data.Json.Mary as Mary
 import qualified Ogmios.Data.Json.Shelley as Shelley
-
-import qualified Cardano.Protocol.TPraos.Rules.Tickn as TPraos
+import qualified Ouroboros.Consensus.HardFork.Combinator.Ledger.Query as LSQ
+import qualified Ouroboros.Consensus.Ledger.Query as LSQ
 import qualified Ouroboros.Consensus.Shelley.Ledger.Query.Types as Consensus
-
+import qualified PlutusLedgerApi.Common as Plutus
 
 --
 -- Types
@@ -426,16 +422,18 @@ data SomeQuery (f :: Type -> Type) block where
         -> SomeQuery f block
 
 data AdHocQuery result where
-    GetByronGenesis   :: AdHocQuery (GenesisConfig ByronEra)
-    GetShelleyGenesis :: AdHocQuery (GenesisConfig ShelleyEra)
-    GetAlonzoGenesis  :: AdHocQuery (GenesisConfig AlonzoEra)
-    GetConwayGenesis  :: AdHocQuery (GenesisConfig ConwayEra)
+    GetByronGenesis    :: AdHocQuery (GenesisConfig ByronEra)
+    GetShelleyGenesis  :: AdHocQuery (GenesisConfig ShelleyEra)
+    GetAlonzoGenesis   :: AdHocQuery (GenesisConfig AlonzoEra)
+    GetConwayGenesis   :: AdHocQuery (GenesisConfig ConwayEra)
+    GetDijkstraGenesis :: AdHocQuery (GenesisConfig DijkstraEra)
 
 type family GenesisConfig (era :: Type) :: Type where
     GenesisConfig ByronEra = Byron.GenesisData
     GenesisConfig ShelleyEra = ShelleyGenesis
     GenesisConfig AlonzoEra = AlonzoGenesis
     GenesisConfig ConwayEra = ConwayGenesis
+    GenesisConfig DijkstraEra = DijkstraGenesis
 
 instance FromJSON (Query Proxy (CardanoBlock StandardCrypto)) where
     parseJSON json = Json.withObject "Query" (\obj -> do
@@ -491,7 +489,7 @@ instance FromJSON (Query Proxy (CardanoBlock StandardCrypto)) where
             "Network/blockHeight" ->
                 parseQueryNetworkBlockHeight id queryParams
             "Network/genesisConfiguration" ->
-                parseQueryNetworkGenesisConfiguration (Proxy, Proxy, Proxy, Proxy) queryParams
+                parseQueryNetworkGenesisConfiguration (Proxy, Proxy, Proxy, Proxy, Proxy) queryParams
             "Network/startTime" ->
                 parseQueryNetworkStartTime id queryParams
             "Network/tip" ->
@@ -1960,10 +1958,11 @@ parseQueryNetworkGenesisConfiguration
        , f (GenesisConfig ShelleyEra)
        , f (GenesisConfig AlonzoEra)
        , f (GenesisConfig ConwayEra)
+       , f (GenesisConfig DijkstraEra)
        )
     -> Json.Value
     -> Json.Parser (QueryInEra f (CardanoBlock crypto))
-parseQueryNetworkGenesisConfiguration (genByron, genShelley, genAlonzo, genConway) =
+parseQueryNetworkGenesisConfiguration (genByron, genShelley, genAlonzo, genConway, genDijkstra) =
     Json.withObject "genesisConfiguration" $ \obj -> do
         era <- obj .: "era"
         case T.toLower era of
@@ -1987,9 +1986,14 @@ parseQueryNetworkGenesisConfiguration (genByron, genShelley, genAlonzo, genConwa
                     GetConwayGenesis
                     Conway.encodeGenesis
                     (const genConway)
+            "dijkstra" -> do
+                pure $ const $ Just $ SomeAdHocQuery
+                    GetDijkstraGenesis
+                    Dijkstra.encodeGenesis
+                    (const genDijkstra)
             (_unknownEra :: Text) -> do
                 fail "Invalid era parameter. Only 'byron', 'shelley', \
-                     \'alonzo' and 'conway' have a genesis configuration."
+                     \'alonzo', 'conway' and 'dijkstra' have a genesis configuration."
 
 parseQueryLedgerStakePoolsPerformances
     :: forall crypto f. ()

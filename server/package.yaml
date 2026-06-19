@@ -152,6 +152,7 @@ tests:
     - cardano-ledger-babbage
     - cardano-ledger-binary
     - cardano-ledger-conway:testlib
+    - cardano-ledger-dijkstra
     - cardano-ledger-dijkstra:testlib
     - cardano-ledger-core
     - cardano-ledger-mary

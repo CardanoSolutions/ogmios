@@ -43,6 +43,7 @@ import Ogmios.App.Configuration
     , readAlonzoGenesis
     , readByronGenesis
     , readConwayGenesis
+    , readDijkstraGenesis
     , readShelleyGenesis
     )
 import Ogmios.App.Metrics
@@ -203,6 +204,7 @@ newWebSocketApp tr unliftIO = do
             , getShelleyGenesis = readShelleyGenesis nodeConfig
             , getAlonzoGenesis = readAlonzoGenesis nodeConfig
             , getConwayGenesis = readConwayGenesis nodeConfig
+            , getDijkstraGenesis = readDijkstraGenesis nodeConfig
             }
 
     let opts = Rpc.defaultOptions

@@ -12,8 +12,6 @@ import Cardano.Crypto.Hash.Class
     ( hashFromBytes
     , hashToBytes
     )
-import Cardano.Ledger.Alonzo.Genesis
-    ()
 import Cardano.Ledger.Api
     ( TransactionScriptFailure (..)
     )
@@ -157,6 +155,13 @@ import Type.Reflection
     ( typeRep
     )
 
+import Cardano.Ledger.Alonzo.Genesis
+    ()
+import Cardano.Ledger.Dijkstra.Genesis
+    ( DijkstraGenesis
+    )
+import Test.Cardano.Ledger.Dijkstra.Arbitrary
+    ()
 import Test.Consensus.Cardano.Generators
     ()
 import Test.Generators.Orphans
@@ -272,7 +277,6 @@ genTxUpToConway = oneof
     , GenTxBabbage <$> liftA2 ShelleyTx arbitrary arbitrary
     , GenTxConway <$> liftA2 ShelleyTx arbitrary arbitrary
     ]
-
 
 genMempoolSizeAndCapacity :: Gen MempoolSizeAndCapacity
 genMempoolSizeAndCapacity = MempoolSizeAndCapacity
@@ -631,7 +635,7 @@ genPParamsResult
     -> Gen (QueryResult crypto (Ledger.PParams era))
 genPParamsResult _ _ =
     maybe (error "genPParamsResult: unsupported era") identity
-        (genShelley <|> genAllegra <|> genMary <|> genAlonzo <|> genBabbage <|> genConway)
+        (genShelley <|> genAllegra <|> genMary <|> genAlonzo <|> genBabbage <|> genConway <|> genDijkstra)
   where
     genShelley =
         case testEquality (typeRep @era) (typeRep @ShelleyEra) of
@@ -687,6 +691,16 @@ genPParamsResult _ _ =
                     ]
             Nothing ->
                 Nothing
+    genDijkstra =
+        case testEquality (typeRep @era) (typeRep @DijkstraEra) of
+            Just Refl{} ->
+                Just $ frequency
+                    [ (1, Left <$> genMismatchEraInfo)
+                    , (10, Right <$> arbitrary)
+                    ]
+            Nothing ->
+                Nothing
+
 
 genConstitutionResult
     :: forall crypto era. (crypto ~ StandardCrypto, Typeable era)
@@ -712,10 +726,19 @@ genGovStateResult
     -> Proxy (QueryResult crypto (Ledger.GovState era))
     -> Gen (QueryResult crypto (Ledger.GovState era))
 genGovStateResult _ _ =
-    maybe (error "genGovStateResult: unsupported era") identity genConway
+    maybe (error "genGovStateResult: unsupported era") identity (genConway <|> genDijkstra)
   where
     genConway =
         case testEquality (typeRep @era) (typeRep @ConwayEra) of
+            Just Refl{} ->
+                Just $ frequency
+                    [ (1, Left <$> genMismatchEraInfo)
+                    , (10, Right <$> reasonablySized arbitrary)
+                    ]
+            Nothing ->
+                Nothing
+    genDijkstra =
+        case testEquality (typeRep @era) (typeRep @DijkstraEra) of
             Just Refl{} ->
                 Just $ frequency
                     [ (1, Left <$> genMismatchEraInfo)
@@ -730,7 +753,7 @@ genGovActionStateResult
     -> Proxy (QueryResult crypto (Seq (Ledger.GovActionState era)))
     -> Gen (QueryResult crypto (Seq (Ledger.GovActionState era)))
 genGovActionStateResult _ _ =
-    maybe (error "genGovActionStateResult: unsupported era") identity genConway
+    maybe (error "genGovActionStateResult: unsupported era") identity (genConway <|> genDijkstra)
   where
     genConway =
         case testEquality (typeRep @era) (typeRep @ConwayEra) of
@@ -741,6 +764,16 @@ genGovActionStateResult _ _ =
                     ]
             Nothing ->
                 Nothing
+    genDijkstra =
+        case testEquality (typeRep @era) (typeRep @DijkstraEra) of
+            Just Refl{} ->
+                Just $ frequency
+                    [ (1, Left <$> genMismatchEraInfo)
+                    , (10, Right <$> reasonablySized arbitrary)
+                    ]
+            Nothing ->
+                Nothing
+
 
 genCommitteeMembersStateResult
     :: forall crypto era. (crypto ~ StandardCrypto)
@@ -812,7 +845,7 @@ genUTxOResult
     -> Gen (QueryResult crypto (Sh.UTxO era))
 genUTxOResult _ _ =
     maybe (error "genUTxOResult: unsupported era") identity
-        (genShelley <|> genAllegra <|> genMary <|> genAlonzo <|> genBabbage <|> genConway)
+        (genShelley <|> genAllegra <|> genMary <|> genAlonzo <|> genBabbage <|> genConway <|> genDijkstra)
   where
     genShelley =
         case testEquality (typeRep @era) (typeRep @ShelleyEra) of
@@ -868,18 +901,32 @@ genUTxOResult _ _ =
                     ]
             Nothing ->
                 Nothing
+    genDijkstra =
+        case testEquality (typeRep @era) (typeRep @DijkstraEra) of
+            Just Refl{} ->
+                Just $ frequency
+                    [ (1, Left <$> genMismatchEraInfo)
+                    , (10, Right <$> arbitrary)
+                    ]
+            Nothing ->
+                Nothing
 
+-- TODO: generator for Dijkstra's genesis config
+--
+-- Once available
 genGenesisConfig
     :: ( Gen (GenesisConfig ByronEra)
        , Gen (GenesisConfig ShelleyEra)
        , Gen (GenesisConfig AlonzoEra)
        , Gen (GenesisConfig ConwayEra)
+       , Gen (GenesisConfig DijkstraEra)
        )
 genGenesisConfig =
     ( error "TODO: genGenesisConfig@ByronEra"
     , genGenesisConfigShelley
     , genGenesisConfigAlonzo
     , genGenesisConfigConway
+    , genGenesisConfigDijkstra
     )
 
 genGenesisConfigShelley
@@ -895,6 +942,11 @@ genGenesisConfigConway
     :: Gen (GenesisConfig ConwayEra)
 genGenesisConfigConway =
     arbitrary
+
+genGenesisConfigDijkstra
+    :: Gen (DijkstraGenesis)
+genGenesisConfigDijkstra =
+    genericArbitrary
 
 genRewardsProvenanceResult
     :: forall crypto. (crypto ~ StandardCrypto)
