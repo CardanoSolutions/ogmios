@@ -27,7 +27,7 @@ jobs:
         compiler: [ ghc96 ]
         devx-version: [ 887b833d89db35168fbd4f10afb6f93d26d70f9a ]
 
-    runs-on: ${{ matrix.os == 'linux' && matrix.arch == 'aarch64' && 'buildjet-16vcpu-ubuntu-2204-arm' || 'ubuntu-22.04' }}
+    runs-on: ${{ matrix.os == 'linux' && matrix.arch == 'aarch64' && 'ubuntu-22.04-arm' || 'ubuntu-22.04' }}
 
     steps:
     - name: 📥 Checkout repository
