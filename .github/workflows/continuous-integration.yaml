@@ -31,7 +31,7 @@ jobs:
 
     steps:
     - name: 📥 Checkout repository
-      uses: actions/checkout@v3
+      uses: actions/checkout@v5
       with:
         submodules: true
 
@@ -44,14 +44,14 @@ jobs:
         echo "version=$VERSION" >> $GITHUB_OUTPUT
 
     - name: Install Nix with good defaults
-      uses: cachix/install-nix-action@v22
+      uses: cachix/install-nix-action@v31
       with:
         extra_nix_config: |
           trusted-public-keys = cache.nixos.org-1:6NCHdD59X431o0gWypbMrAURkbJ16ZPMQFGspcDShjY= hydra.iohk.io:f/Ea+s+dFdN+3Y/G+FDgSq+a5NEWhJGzdjvKNGv0/EQ=
           substituters = https://cache.iog.io/ https://cache.nixos.org/
         nix_path: nixpkgs=channel:nixos-unstable
 
-    - uses: cachix/cachix-action@v14
+    - uses: cachix/cachix-action@v17
       with:
         name: cardano-ogmios
         authToken: '${{ secrets.CACHIX_AUTH_TOKEN }}'
@@ -69,7 +69,7 @@ jobs:
         nix develop github:input-output-hk/devx/${{ matrix.devx-version}}#${{ matrix.compiler }}-static-minimal-iog --no-write-lock-file --refresh --command bash -c "cat /nix/store/hviyb5sciblcyr5fc3vsqcwmfh1nz69w-cabal.project.local >> cabal.project.local && cabal update && cabal freeze"
 
     - name: 💾 Download Cache
-      uses: actions/cache/restore@v4
+      uses: actions/cache/restore@v5
       with:
         path: |
           ~/.cabal-static/packages
@@ -87,7 +87,7 @@ jobs:
         GIT_SHA: ${{ github.sha }}
 
     - name: 💾 Save Cache
-      uses: actions/cache/save@v4
+      uses: actions/cache/save@v5
       with:
         path: |
           ~/.cabal-static/packages
@@ -149,7 +149,7 @@ jobs:
         CABAL: ${{ steps.version.outputs.version }}
 
     - name: 📎 Upload Artifact
-      uses: actions/upload-artifact@v4
+      uses: actions/upload-artifact@v7
       with:
         name: ogmios-${{ github.sha }}-${{ matrix.arch }}-${{ matrix.os }}
         path: |
@@ -172,7 +172,7 @@ jobs:
     runs-on: ${{ matrix.os }}
     steps:
     - name: 📥 Checkout repository
-      uses: actions/checkout@v3.5.3
+      uses: actions/checkout@v5
       with:
         submodules: true
 
@@ -232,7 +232,7 @@ jobs:
     runs-on: ${{ matrix.os == 'linux' && 'ubuntu-22.04' }}
     steps:
     - name: 📥 Checkout repository
-      uses: actions/checkout@v3
+      uses: actions/checkout@v5
       with:
         submodules: true
 
@@ -243,7 +243,7 @@ jobs:
         echo "::set-output name=value::$(/bin/date -u "+%Y%m%d-%H%M%S")"
 
     - name: 🧰 Setup Node.js
-      uses: actions/setup-node@v3.7.0
+      uses: actions/setup-node@v5
       with:
         node-version: lts/jod
 
@@ -255,14 +255,14 @@ jobs:
         yarn lint
 
     - name: 📥 Download
-      uses: actions/download-artifact@v4
+      uses: actions/download-artifact@v7
       with:
         name: ogmios-${{ github.sha }}-${{ matrix.arch }}-${{ matrix.os }}
         path: server
 
     - name: 💾 Cache cardano-node DB
       id: cache
-      uses: actions/cache@v4
+      uses: actions/cache@v5
       with:
         path: ${{ runner.temp }}/db-${{ matrix.network }}
         key: cardano-node-ogmios-${{ matrix.network }}-${{ steps.date-time.outputs.value }}
@@ -316,10 +316,10 @@ jobs:
         target: [linux,macos,win.exe]
     steps:
     - name: 📥 Checkout repository
-      uses: actions/checkout@v3.5.3
+      uses: actions/checkout@v5
 
     - name: 🧰 Setup Node.js
-      uses: actions/setup-node@v3.7.0
+      uses: actions/setup-node@v5
       with:
         node-version: lts/jod
 
@@ -330,7 +330,7 @@ jobs:
         yarn repl:pkg
 
     - name: 📎 Upload REPL exe
-      uses: actions/upload-artifact@v4
+      uses: actions/upload-artifact@v7
       with:
         name: cardano-ogmios-repl-${{ matrix.target }}-${{ github.sha }}
         path: clients/TypeScript/packages/repl/build/cardano-ogmios-repl-${{ matrix.target }}
@@ -357,10 +357,10 @@ jobs:
         package: [ schema, client, repl ]
     steps:
     - name: 📥 Checkout repository
-      uses: actions/checkout@v3.5.3
+      uses: actions/checkout@v5
 
     - name: 🧰 Setup Node.js
-      uses: actions/setup-node@v3.7.0
+      uses: actions/setup-node@v5
       with:
         node-version: lts/jod
 
@@ -371,7 +371,7 @@ jobs:
         ./scripts/pack.sh
 
     - name: 📎 Upload npm packages
-      uses: actions/upload-artifact@v4
+      uses: actions/upload-artifact@v7
       with:
         name: cardano-ogmios-clients-ts-packages
         path: |
@@ -381,7 +381,7 @@ jobs:
 
     - name: 📤 Publish client package to npm registry
       if: ${{ startsWith(github.ref, 'refs/tags') }}
-      uses: JS-DevTools/npm-publish@v2
+      uses: JS-DevTools/npm-publish@v4
       with:
         package: clients/TypeScript/packages/${{ matrix.package }}/package.json
         strategy: upgrade
@@ -409,12 +409,12 @@ jobs:
         arch: [ x86_64 ]
     steps:
     - name: 📥 Checkout repository
-      uses: actions/checkout@v3
+      uses: actions/checkout@v5
       with:
         submodules: true
 
     - name: 🧰 Set up Docker Buildx
-      uses: docker/setup-buildx-action@v3
+      uses: docker/setup-buildx-action@v4
 
     - name: 🧐 hadolint
       uses: brpaz/hadolint-action@v1.5.0
@@ -425,7 +425,7 @@ jobs:
 
     - name: 🐳 Login to DockerHub
       if: ${{ github.event_name == 'push' }}
-      uses: docker/login-action@v1
+      uses: docker/login-action@v4
       with:
         username: ${{ secrets.DOCKERHUB_USERNAME }}
         password: ${{ secrets.DOCKERHUB_ACCESS_TOKEN }}
@@ -442,7 +442,7 @@ jobs:
         echo "tag=${GITHUB_REF/refs\/tags\//}" >> $GITHUB_OUTPUT
 
     - name: 📥 Download
-      uses: actions/download-artifact@v4
+      uses: actions/download-artifact@v7
       with:
         name: ogmios-${{ github.sha }}-${{ matrix.arch }}-${{ matrix.os }}
         path: server
@@ -450,7 +450,7 @@ jobs:
     - name: "📸  :latest"
       id: build
       if: ${{ github.event_name == 'push' && matrix.network == 'mainnet' && github.ref == 'refs/heads/master' }}
-      uses: docker/build-push-action@v4
+      uses: docker/build-push-action@v7
       with:
         build-args: |
           NETWORK=${{ matrix.network }}
@@ -465,7 +465,7 @@ jobs:
 
     - name: "📸  :latest-${{ matrix.network }}"
       if: ${{ github.event_name == 'push' && github.ref == 'refs/heads/master' }}
-      uses: docker/build-push-action@v4
+      uses: docker/build-push-action@v7
       with:
         build-args: |
           NETWORK=${{ matrix.network }}
@@ -480,7 +480,7 @@ jobs:
 
     - name: "🏷️  :v*.*.*"
       if: ${{ github.event_name == 'push' && startsWith(github.ref, 'refs/tags') && matrix.network == 'mainnet' }}
-      uses: docker/build-push-action@v4
+      uses: docker/build-push-action@v7
       with:
         build-args: |
           NETWORK=${{ matrix.network }}
@@ -495,7 +495,7 @@ jobs:
 
     - name: "🏷️  :v*.*.*-${{ matrix.network }}"
       if: ${{ github.event_name == 'push' && startsWith(github.ref, 'refs/tags') }}
-      uses: docker/build-push-action@v4
+      uses: docker/build-push-action@v7
       with:
         build-args: |
           NETWORK=${{ matrix.network }}
@@ -518,12 +518,12 @@ jobs:
         arch: [ x86_64, aarch64 ]
     steps:
     - name: 📥 Checkout repository
-      uses: actions/checkout@v3
+      uses: actions/checkout@v5
       with:
         submodules: true
 
     - name: 🧰 Set up Docker Buildx
-      uses: docker/setup-buildx-action@v3
+      uses: docker/setup-buildx-action@v4
 
     - name: 🧐 hadolint
       uses: brpaz/hadolint-action@v1.5.0
@@ -534,7 +534,7 @@ jobs:
 
     - name: 🐳 Login to DockerHub
       if: ${{ github.event_name == 'push' }}
-      uses: docker/login-action@v1
+      uses: docker/login-action@v4
       with:
         username: ${{ secrets.DOCKERHUB_USERNAME }}
         password: ${{ secrets.DOCKERHUB_ACCESS_TOKEN }}
@@ -552,7 +552,7 @@ jobs:
 
     - name: 📝 Docker metadata
       id: meta
-      uses: docker/metadata-action@v5
+      uses: docker/metadata-action@v6
       with:
         images: ${{ steps.base-variables.outputs.image }}
         tags: |
@@ -560,7 +560,7 @@ jobs:
           type=semver,pattern=v{{version}}
 
     - name: 📥 Download
-      uses: actions/download-artifact@v4
+      uses: actions/download-artifact@v7
       with:
         name: ogmios-${{ github.sha }}-${{ matrix.arch }}-${{ matrix.os }}
         path: server
@@ -568,7 +568,7 @@ jobs:
     - name: 📸  Build image
       id: build
       if: ${{ github.event_name == 'push' }}
-      uses: docker/build-push-action@v4
+      uses: docker/build-push-action@v7
       with:
         context: .
         target: ${{ matrix.target }}
@@ -586,7 +586,7 @@ jobs:
 
     - name: 💾  Upload digest
       if: ${{ github.event_name == 'push' }}
-      uses: actions/upload-artifact@v4
+      uses: actions/upload-artifact@v7
       with:
         name: digests-${{ matrix.arch == 'x86_64' && 'amd64' || 'arm64' }}
         path: /tmp/digests/*
@@ -601,19 +601,19 @@ jobs:
         target: [ ogmios ]
     steps:
       - name: 📥 Download digests (amd)
-        uses: actions/download-artifact@v4
+        uses: actions/download-artifact@v7
         with:
           name: digests-amd64
           path: /tmp/digests
 
       - name: 📥 Download digests (arm)
-        uses: actions/download-artifact@v4
+        uses: actions/download-artifact@v7
         with:
           name: digests-arm64
           path: /tmp/digests
 
       - name: 🧰  Set up Docker Buildx
-        uses: docker/setup-buildx-action@v3
+        uses: docker/setup-buildx-action@v4
 
       - name: 📝 Base Variables
         id: base-variables
@@ -622,7 +622,7 @@ jobs:
 
       - name: 📝 Docker metadata
         id: meta
-        uses: docker/metadata-action@v5
+        uses: docker/metadata-action@v6
         with:
           images: ${{ steps.base-variables.outputs.image }}
           tags: |
@@ -631,7 +631,7 @@ jobs:
 
       - name: 🐳 Login to DockerHub
         if: ${{ github.event_name == 'push' }}
-        uses: docker/login-action@v3
+        uses: docker/login-action@v4
         with:
           username: ${{ secrets.DOCKERHUB_USERNAME }}
           password: ${{ secrets.DOCKERHUB_ACCESS_TOKEN }}

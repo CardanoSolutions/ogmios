@@ -23,7 +23,7 @@ jobs:
     steps:
 
     - name: 📥 Checkout repository
-      uses: actions/checkout@v3.5.3
+      uses: actions/checkout@v5
 
     - name: ⌚ Get Date/Time
       id: date-time
@@ -33,7 +33,7 @@ jobs:
 
     - name: 💾 Cache cardano-node DB
       id: cache
-      uses: actions/cache@v4
+      uses: actions/cache@v5
       with:
         path: ${{ runner.temp }}/db-${{ matrix.network }}
         key: cardano-node-ogmios-${{ matrix.network }}-${{ steps.date-time.outputs.timestamp }}
