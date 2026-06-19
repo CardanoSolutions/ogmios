@@ -6,8 +6,9 @@ module Ogmios.Data.Ledger.PredicateFailure.Allegra where
 
 import Ogmios.Prelude
 
-import qualified Data.Set.NonEmpty as NESet
-
+import Cardano.Ledger.BaseTypes
+    ( Mismatch (..)
+    )
 import Ogmios.Data.Ledger.PredicateFailure
     ( DiscriminatedEntities (..)
     , MultiEraPredicateFailure (..)
@@ -20,23 +21,16 @@ import Ogmios.Data.Ledger.PredicateFailure.Shelley
     )
 
 import qualified Cardano.Ledger.Allegra.Rules as Al
-import Cardano.Ledger.BaseTypes
-    ( Mismatch (..)
-    )
 import qualified Cardano.Ledger.Shelley.Rules as Sh
+import qualified Data.Set.NonEmpty as NESet
+import qualified Ogmios.Data.Ledger.PredicateFailure.Shelley as Shelley
 
 encodeLedgerFailure
     :: Sh.ShelleyLedgerPredFailure AllegraEra
     -> MultiEraPredicateFailure
-encodeLedgerFailure = \case
-    Sh.UtxowFailure e  ->
-        encodeUtxowFailure (encodeUtxoFailure ShelleyBasedEraAllegra) e
-    Sh.DelegsFailure e ->
-        encodeDelegsFailure e
-    Sh.ShelleyWithdrawalsMissingAccounts _withdrawals ->
-        IncompleteWithdrawals mempty
-    Sh.ShelleyIncompleteWithdrawals _withdrawals ->
-        IncompleteWithdrawals mempty
+encodeLedgerFailure = Shelley.encodeLedgerFailureInEra
+    (encodeUtxowFailure (encodeUtxoFailure ShelleyBasedEraAllegra))
+    encodeDelegsFailure
 
 encodeUtxoFailure
     :: forall era.

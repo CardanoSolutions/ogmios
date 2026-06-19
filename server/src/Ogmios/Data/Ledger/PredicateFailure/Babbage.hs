@@ -9,9 +9,6 @@ import Ogmios.Prelude
 import Cardano.Ledger.BaseTypes
     ( Mismatch (..)
     )
-
-import qualified Data.Set.NonEmpty as NESet
-
 import Cardano.Ledger.Core
     ( EraRule
     )
@@ -26,23 +23,18 @@ import Ogmios.Data.Ledger.PredicateFailure.Shelley
     ( encodeDelegsFailure
     )
 
-import qualified Ogmios.Data.Ledger.PredicateFailure.Alonzo as Alonzo
-
 import qualified Cardano.Ledger.Babbage.Rules as Ba
 import qualified Cardano.Ledger.Shelley.Rules as Sh
+import qualified Data.Set.NonEmpty as NESet
+import qualified Ogmios.Data.Ledger.PredicateFailure.Alonzo as Alonzo
+import qualified Ogmios.Data.Ledger.PredicateFailure.Shelley as Shelley
 
 encodeLedgerFailure
     :: Sh.ShelleyLedgerPredFailure BabbageEra
     -> MultiEraPredicateFailure
-encodeLedgerFailure = \case
-    Sh.UtxowFailure e  ->
-        encodeUtxowFailure AlonzoBasedEraBabbage (Alonzo.encodeUtxosFailure AlonzoBasedEraBabbage) e
-    Sh.DelegsFailure e ->
-        encodeDelegsFailure e
-    Sh.ShelleyWithdrawalsMissingAccounts _withdrawals ->
-        IncompleteWithdrawals mempty
-    Sh.ShelleyIncompleteWithdrawals _withdrawals ->
-        IncompleteWithdrawals mempty
+encodeLedgerFailure = Shelley.encodeLedgerFailureInEra
+    (let era = AlonzoBasedEraBabbage in encodeUtxowFailure era (Alonzo.encodeUtxosFailure era))
+    encodeDelegsFailure
 
 encodeUtxowFailure
     :: forall era.

@@ -7,8 +7,6 @@ module Ogmios.Data.Ledger.PredicateFailure.Shelley where
 
 import Ogmios.Prelude
 
-import qualified Data.Set.NonEmpty as NESet
-
 import Cardano.Ledger.BaseTypes
     ( Mismatch (..)
     )
@@ -29,20 +27,33 @@ import Ogmios.Data.Ledger.PredicateFailure
     , ValueInAnyEra (..)
     )
 
+import qualified Cardano.Ledger.Api as Ledger
 import qualified Cardano.Ledger.Shelley.Rules as Sh
+import qualified Data.Map as Map
+import qualified Data.Map.NonEmpty as NEMap
+import qualified Data.Set.NonEmpty as NESet
+
+encodeLedgerFailureInEra
+    :: forall era. ()
+    => (PredicateFailure (EraRule "UTXOW" era) -> MultiEraPredicateFailure)
+    -> (PredicateFailure (EraRule "DELEGS" era) -> MultiEraPredicateFailure)
+    -> Sh.ShelleyLedgerPredFailure era
+    -> MultiEraPredicateFailure
+encodeLedgerFailureInEra encodeUtxowFailureInEra encodeDelegsFailureInEra = \case
+    Sh.UtxowFailure e  ->
+        encodeUtxowFailureInEra  e
+    Sh.DelegsFailure e ->
+        encodeDelegsFailureInEra e
+    Sh.ShelleyWithdrawalsMissingAccounts (Ledger.unWithdrawals -> withdrawals) ->
+        IncompleteWithdrawals withdrawals
+    Sh.ShelleyIncompleteWithdrawals withdrawals ->
+        IncompleteWithdrawals $ Map.map (\Mismatch {mismatchExpected} -> mismatchExpected) (NEMap.toMap withdrawals)
 
 encodeLedgerFailure
     :: Sh.ShelleyLedgerPredFailure ShelleyEra
     -> MultiEraPredicateFailure
-encodeLedgerFailure = \case
-    Sh.UtxowFailure e  ->
-        encodeUtxowFailure encodeUtxoFailure e
-    Sh.DelegsFailure e ->
-        encodeDelegsFailure e
-    Sh.ShelleyWithdrawalsMissingAccounts _withdrawals ->
-        IncompleteWithdrawals mempty
-    Sh.ShelleyIncompleteWithdrawals _withdrawals ->
-        IncompleteWithdrawals mempty
+encodeLedgerFailure =
+    encodeLedgerFailureInEra (encodeUtxowFailure encodeUtxoFailure) encodeDelegsFailure
 
 encodeUtxowFailure
     :: forall era. ()

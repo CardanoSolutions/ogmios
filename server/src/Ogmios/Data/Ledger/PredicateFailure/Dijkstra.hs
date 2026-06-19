@@ -9,9 +9,6 @@ import Ogmios.Prelude
 import Cardano.Ledger.BaseTypes
     ( Mismatch (..)
     )
-import Cardano.Ledger.Keys
-    ( HasKeyRole (coerceKeyRole)
-    )
 import Data.Maybe.Strict
     ( StrictMaybe (..)
     )
@@ -36,27 +33,28 @@ import Cardano.Ledger.Address
 
 import qualified Cardano.Ledger.Api as Ledger
 import qualified Cardano.Ledger.Conway.Rules as Cn
-import qualified Cardano.Ledger.Dijkstra.Rules as Dn
+import qualified Cardano.Ledger.Dijkstra.Rules as Di
 
 import qualified Data.List.NonEmpty as NE
 import qualified Data.Map as Map
 import qualified Data.Map.NonEmpty as NEMap
 import qualified Data.Set as Set
 import qualified Data.Set.NonEmpty as NESet
+import qualified Ogmios.Data.Ledger.PredicateFailure.Conway as Conway
 
 ----------
 -- MEMPOOL
 ----------
 
 encodeMempoolFailure
-    :: Dn.DijkstraMempoolPredFailure DijkstraEra
+    :: Di.DijkstraMempoolPredFailure DijkstraEra
     -> MultiEraPredicateFailure
 encodeMempoolFailure = \case
-    Dn.LedgerFailure e ->
+    Di.LedgerFailure e ->
         encodeLedgerFailure e
-    Dn.MempoolFailure mempoolError ->
+    Di.MempoolFailure mempoolError ->
         UnexpectedMempoolError { mempoolError }
-    Dn.AllInputsAreSpent ->
+    Di.AllInputsAreSpent ->
         UnexpectedMempoolError
             { mempoolError = "All inputs are spent. Transaction has probably already been included" }
 
@@ -65,28 +63,28 @@ encodeMempoolFailure = \case
 ----------
 
 encodeLedgerFailure
-    :: Dn.DijkstraLedgerPredFailure DijkstraEra
+    :: Di.DijkstraLedgerPredFailure DijkstraEra
     -> MultiEraPredicateFailure
 encodeLedgerFailure = \case
-    Dn.DijkstraUtxowFailure e ->
+    Di.DijkstraUtxowFailure e ->
         encodeUtxowFailure e
-    Dn.DijkstraCertsFailure e ->
+    Di.DijkstraCertsFailure e ->
         encodeCertsFailure e
-    Dn.DijkstraGovFailure e ->
+    Di.DijkstraGovFailure e ->
         encodeGovFailure e
-    Dn.DijkstraWdrlNotDelegatedToDRep ((Set.fromList . toList) -> marginalizedCredentials) ->
+    Di.DijkstraWdrlNotDelegatedToDRep ((Set.fromList . toList) -> marginalizedCredentials) ->
         ForbiddenWithdrawal { marginalizedCredentials }
-    Dn.DijkstraIncompleteWithdrawals _withdrawals ->
-        IncompleteWithdrawals mempty
-    Dn.DijkstraWithdrawalsMissingAccounts _withdrawals ->
-        IncompleteWithdrawals mempty
-    Dn.DijkstraTreasuryValueMismatch (Mismatch providedWithdrawal computedWithdrawal) ->
+    Di.DijkstraWithdrawalsMissingAccounts (Ledger.unWithdrawals -> withdrawals) ->
+        IncompleteWithdrawals withdrawals
+    Di.DijkstraIncompleteWithdrawals withdrawals ->
+        IncompleteWithdrawals $ Map.map (\Mismatch {mismatchExpected} -> mismatchExpected) (NEMap.toMap withdrawals)
+    Di.DijkstraTreasuryValueMismatch (Mismatch providedWithdrawal computedWithdrawal) ->
         TreasuryWithdrawalMismatch { providedWithdrawal, computedWithdrawal }
-    Dn.DijkstraTxRefScriptsSizeTooBig (Mismatch (toInteger -> measuredSize) (toInteger -> maximumSize)) ->
+    Di.DijkstraTxRefScriptsSizeTooBig (Mismatch (toInteger -> measuredSize) (toInteger -> maximumSize)) ->
         ReferenceScriptsTooLarge { measuredSize, maximumSize }
-    Dn.DijkstraSubLedgersFailure e ->
+    Di.DijkstraSubLedgersFailure e ->
         encodeSubLedgersFailure e
-    Dn.DijkstraSpendingOutputFromSameTx _txIds ->
+    Di.DijkstraSpendingOutputFromSameTx _txIds ->
         SpendingOutputFromSubTransaction
 
 --------
@@ -94,41 +92,41 @@ encodeLedgerFailure = \case
 --------
 
 encodeGovFailure
-    :: Dn.DijkstraGovPredFailure DijkstraEra
+    :: Di.DijkstraGovPredFailure DijkstraEra
     -> MultiEraPredicateFailure
 encodeGovFailure = \case
-    Dn.GovActionsDoNotExist (toList -> fromList -> governanceActions) ->
+    Di.GovActionsDoNotExist (toList -> fromList -> governanceActions) ->
         UnknownGovernanceActions { governanceActions }
-    Dn.MalformedProposal _govAction ->
+    Di.MalformedProposal _govAction ->
         InvalidProtocolParametersUpdate
-    Dn.ProposalProcedureNetworkIdMismatch rewardAccount expectedNetwork ->
+    Di.ProposalProcedureNetworkIdMismatch rewardAccount expectedNetwork ->
         NetworkMismatch
             { expectedNetwork
             , invalidEntities =
                 DiscriminatedRewardAccounts (Set.singleton rewardAccount)
             }
-    Dn.TreasuryWithdrawalsNetworkIdMismatch rewardAccounts expectedNetwork ->
+    Di.TreasuryWithdrawalsNetworkIdMismatch rewardAccounts expectedNetwork ->
         NetworkMismatch
             { expectedNetwork
             , invalidEntities =
                 DiscriminatedRewardAccounts (NESet.toSet rewardAccounts)
             }
-    Dn.ProposalDepositIncorrect (Mismatch providedDeposit (SJust -> expectedDeposit)) ->
+    Di.ProposalDepositIncorrect (Mismatch providedDeposit (SJust -> expectedDeposit)) ->
         GovernanceProposalDepositMismatch
             { providedDeposit
             , expectedDeposit
             }
-    Dn.DisallowedVoters (toList -> voters) ->
+    Di.DisallowedVoters (toList -> voters) ->
         UnauthorizedVotes voters
-    Dn.ConflictingCommitteeUpdate conflictingMembers ->
+    Di.ConflictingCommitteeUpdate conflictingMembers ->
         ConflictingCommitteeUpdate
             { conflictingMembers = NESet.toSet conflictingMembers
             }
-    Dn.ExpirationEpochTooSmall members ->
+    Di.ExpirationEpochTooSmall members ->
         InvalidCommitteeUpdate
             { alreadyRetiredMembers = Map.keysSet (NEMap.toMap members)
             }
-    Dn.InvalidPrevGovActionId proposal ->
+    Di.InvalidPrevGovActionId proposal ->
         InvalidPreviousGovernanceAction $
             case Ledger.pProcGovAction proposal of
                 Ledger.ParameterChange actionId _ _guardrail ->
@@ -165,25 +163,25 @@ encodeGovFailure = \case
                     []
                 Ledger.InfoAction ->
                     []
-    Dn.VotingOnExpiredGovAction (toList -> voters) ->
+    Di.VotingOnExpiredGovAction (toList -> voters) ->
         VotingOnExpiredActions voters
-    Dn.ProposalCantFollow _ (Mismatch proposedVersion currentVersion) ->
+    Di.ProposalCantFollow _ (Mismatch proposedVersion currentVersion) ->
         InvalidHardForkVersionBump { proposedVersion, currentVersion }
-    Dn.InvalidGuardrailsScriptHash providedHash expectedHash ->
+    Di.InvalidGuardrailsScriptHash providedHash expectedHash ->
         ConstitutionGuardrailsHashMismatch { providedHash, expectedHash }
-    Dn.DisallowedProposalDuringBootstrap _ ->
+    Di.DisallowedProposalDuringBootstrap _ ->
         UnauthorizedGovernanceAction
-    Dn.DisallowedVotesDuringBootstrap votes ->
+    Di.DisallowedVotesDuringBootstrap votes ->
         UnauthorizedVotes (toList votes)
-    Dn.VotersDoNotExist voters ->
+    Di.VotersDoNotExist voters ->
         UnknownVoters (toList voters)
-    Dn.ZeroTreasuryWithdrawals _ ->
+    Di.ZeroTreasuryWithdrawals _ ->
         EmptyTreasuryWithdrawal
-    Dn.ProposalReturnAccountDoesNotExist (Ledger.AccountAddress _ (Ledger.AccountId unknownCredential)) ->
+    Di.ProposalReturnAccountDoesNotExist (Ledger.AccountAddress _ (Ledger.AccountId unknownCredential)) ->
         StakeCredentialNotRegistered { unknownCredential }
-    Dn.TreasuryWithdrawalReturnAccountsDoNotExist (NE.head -> Ledger.AccountAddress _ (Ledger.AccountId unknownCredential)) ->
+    Di.TreasuryWithdrawalReturnAccountsDoNotExist (NE.head -> Ledger.AccountAddress _ (Ledger.AccountId unknownCredential)) ->
         StakeCredentialNotRegistered { unknownCredential }
-    Dn.UnelectedCommitteeVoters _voters ->
+    Di.UnelectedCommitteeVoters _voters ->
         UnauthorizedVotes []
 
 ---------
@@ -194,8 +192,8 @@ encodeCertsFailure
     :: Cn.ConwayCertsPredFailure DijkstraEra
     -> MultiEraPredicateFailure
 encodeCertsFailure = \case
-    Cn.WithdrawalsNotInRewardsCERTS _credentials ->
-        IncompleteWithdrawals mempty
+    Cn.WithdrawalsNotInRewardsCERTS (Ledger.unWithdrawals -> withdrawals) ->
+        IncompleteWithdrawals withdrawals
     Cn.CertFailure e ->
         encodeCertFailure e
 
@@ -213,39 +211,24 @@ encodeCertFailure = \case
 encodeDelegFailure
     :: Cn.ConwayDelegPredFailure DijkstraEra
     -> MultiEraPredicateFailure
-encodeDelegFailure = \case
-    Cn.IncorrectDepositDELEG providedDeposit ->
-        DepositMismatch { providedDeposit, expectedDeposit = SNothing }
-    Cn.StakeKeyRegisteredDELEG knownCredential ->
-        StakeCredentialAlreadyRegistered { knownCredential }
-    Cn.StakeKeyNotRegisteredDELEG unknownCredential ->
-        StakeCredentialNotRegistered { unknownCredential }
-    Cn.StakeKeyHasNonZeroAccountBalanceDELEG rewardAccountBalance ->
-        RewardAccountNotEmpty { rewardAccountBalance }
-    Cn.DepositIncorrectDELEG _deposit ->
-        InvalidProtocolParametersUpdate
-    Cn.RefundIncorrectDELEG _refund ->
-        InvalidProtocolParametersUpdate
-    Cn.DelegateeDRepNotRegisteredDELEG (coerceKeyRole -> unknownCredential) ->
-        StakeCredentialNotRegistered { unknownCredential }
-    Cn.DelegateeStakePoolNotRegisteredDELEG poolId ->
-        UnknownStakePool poolId
+encodeDelegFailure =
+    Conway.encodeDelegFailure
 
 encodeGovCertFailure
-    :: Dn.DijkstraGovCertPredFailure DijkstraEra
+    :: Di.DijkstraGovCertPredFailure DijkstraEra
     -> MultiEraPredicateFailure
 encodeGovCertFailure = \case
-    Dn.DijkstraDRepAlreadyRegistered knownDelegateRepresentative ->
+    Di.DijkstraDRepAlreadyRegistered knownDelegateRepresentative ->
         DRepAlreadyRegistered { knownDelegateRepresentative }
-    Dn.DijkstraDRepNotRegistered unknownDelegateRepresentative ->
+    Di.DijkstraDRepNotRegistered unknownDelegateRepresentative ->
         DRepNotRegistered { unknownDelegateRepresentative }
-    Dn.DijkstraDRepIncorrectDeposit (Mismatch providedDeposit (SJust -> expectedDeposit)) ->
+    Di.DijkstraDRepIncorrectDeposit (Mismatch providedDeposit (SJust -> expectedDeposit)) ->
         DepositMismatch { providedDeposit, expectedDeposit }
-    Dn.DijkstraCommitteeHasPreviouslyResigned unknownConstitutionalCommitteeMember ->
+    Di.DijkstraCommitteeHasPreviouslyResigned unknownConstitutionalCommitteeMember ->
         UnknownConstitutionalCommitteeMember { unknownConstitutionalCommitteeMember }
-    Dn.DijkstraDRepIncorrectRefund (Mismatch providedDeposit (SJust -> expectedDeposit)) ->
+    Di.DijkstraDRepIncorrectRefund (Mismatch providedDeposit (SJust -> expectedDeposit)) ->
         DepositMismatch { providedDeposit, expectedDeposit }
-    Dn.DijkstraCommitteeIsUnknown unknownConstitutionalCommitteeMember ->
+    Di.DijkstraCommitteeIsUnknown unknownConstitutionalCommitteeMember ->
         UnknownConstitutionalCommitteeMember { unknownConstitutionalCommitteeMember }
 
 ---------
@@ -253,48 +236,48 @@ encodeGovCertFailure = \case
 ---------
 
 encodeUtxowFailure
-    :: Dn.DijkstraUtxowPredFailure DijkstraEra
+    :: Di.DijkstraUtxowPredFailure DijkstraEra
     -> MultiEraPredicateFailure
 encodeUtxowFailure = \case
-    Dn.ScriptIntegrityHashMismatch (Mismatch providedIntegrityHash computedIntegrityHash) _computedBodyHash ->
+    Di.ScriptIntegrityHashMismatch (Mismatch providedIntegrityHash computedIntegrityHash) _computedBodyHash ->
         ScriptIntegrityHashMismatch { providedIntegrityHash, computedIntegrityHash }
-    Dn.UtxoFailure e ->
+    Di.UtxoFailure e ->
         encodeUtxoFailure e
-    Dn.MissingRedeemers redeemers ->
+    Di.MissingRedeemers redeemers ->
         let missingRedeemers = ScriptPurposeItemInAnyEra . (era,) . fst <$> redeemers
          in MissingRedeemers { missingRedeemers = toList missingRedeemers }
-    Dn.MissingRequiredDatums missingDatums _providedDatums ->
+    Di.MissingRequiredDatums missingDatums _providedDatums ->
         MissingDatums { missingDatums = NESet.toSet missingDatums }
-    Dn.NotAllowedSupplementalDatums extraneousDatums _acceptableDatums ->
+    Di.NotAllowedSupplementalDatums extraneousDatums _acceptableDatums ->
         ExtraneousDatums { extraneousDatums = NESet.toSet extraneousDatums }
-    Dn.ExtraRedeemers redeemers ->
+    Di.ExtraRedeemers redeemers ->
         let extraneousRedeemers = ScriptPurposeIndexInAnyEra . (era,) <$> redeemers
          in ExtraneousRedeemers { extraneousRedeemers = toList extraneousRedeemers }
-    Dn.PPViewHashesDontMatch (Mismatch providedIntegrityHash computedIntegrityHash) ->
+    Di.PPViewHashesDontMatch (Mismatch providedIntegrityHash computedIntegrityHash) ->
         ScriptIntegrityHashMismatch { providedIntegrityHash, computedIntegrityHash }
-    Dn.UnspendableUTxONoDatumHash orphanScriptInputs ->
+    Di.UnspendableUTxONoDatumHash orphanScriptInputs ->
         OrphanScriptInputs { orphanScriptInputs = NESet.toSet orphanScriptInputs }
-    Dn.InvalidWitnessesUTXOW wits ->
+    Di.InvalidWitnessesUTXOW wits ->
         InvalidSignatures (toList wits)
-    Dn.MissingVKeyWitnessesUTXOW keys ->
+    Di.MissingVKeyWitnessesUTXOW keys ->
         MissingSignatures (NESet.toSet keys)
-    Dn.MissingScriptWitnessesUTXOW scripts ->
+    Di.MissingScriptWitnessesUTXOW scripts ->
         MissingScriptWitnesses (NESet.toSet scripts)
-    Dn.ScriptWitnessNotValidatingUTXOW scripts ->
+    Di.ScriptWitnessNotValidatingUTXOW scripts ->
         FailingScript (NESet.toSet scripts)
-    Dn.MissingTxBodyMetadataHash hash ->
+    Di.MissingTxBodyMetadataHash hash ->
         MissingMetadataHash hash
-    Dn.MissingTxMetadata hash ->
+    Di.MissingTxMetadata hash ->
         MissingMetadata hash
-    Dn.ConflictingMetadataHash (Mismatch providedAuxiliaryDataHash computedAuxiliaryDataHash) ->
+    Di.ConflictingMetadataHash (Mismatch providedAuxiliaryDataHash computedAuxiliaryDataHash) ->
         MetadataHashMismatch { providedAuxiliaryDataHash, computedAuxiliaryDataHash }
-    Dn.InvalidMetadata ->
+    Di.InvalidMetadata ->
         InvalidMetadata
-    Dn.ExtraneousScriptWitnessesUTXOW scripts ->
+    Di.ExtraneousScriptWitnessesUTXOW scripts ->
         ExtraneousScriptWitnesses (NESet.toSet scripts)
-    Dn.MalformedScriptWitnesses scripts ->
+    Di.MalformedScriptWitnesses scripts ->
         MalformedScripts (NESet.toSet scripts)
-    Dn.MalformedReferenceScripts scripts ->
+    Di.MalformedReferenceScripts scripts ->
         MalformedScripts (NESet.toSet scripts)
   where
     era = AlonzoBasedEraDijkstra
@@ -304,64 +287,64 @@ encodeUtxowFailure = \case
 --------
 
 encodeUtxoFailure
-    :: Dn.DijkstraUtxoPredFailure DijkstraEra
+    :: Di.DijkstraUtxoPredFailure DijkstraEra
     -> MultiEraPredicateFailure
 encodeUtxoFailure = \case
-    Dn.UtxosFailure e ->
+    Di.UtxosFailure e ->
         encodeUtxosFailure e
-    Dn.BadInputsUTxO inputs ->
+    Di.BadInputsUTxO inputs ->
         UnknownUtxoReference (NESet.toSet inputs)
-    Dn.OutsideValidityIntervalUTxO validityInterval currentSlot ->
+    Di.OutsideValidityIntervalUTxO validityInterval currentSlot ->
         TransactionOutsideValidityInterval { validityInterval, currentSlot }
-    Dn.OutputTooBigUTxO outs ->
+    Di.OutputTooBigUTxO outs ->
         let culpritOutputs = (\(_, _, out) -> TxOutInAnyEra (era, out)) <$> outs in
         ValueSizeAboveLimit (toList culpritOutputs)
-    Dn.MaxTxSizeUTxO (Mismatch measuredSize maximumSize) ->
+    Di.MaxTxSizeUTxO (Mismatch measuredSize maximumSize) ->
         TransactionTooLarge { measuredSize = fromIntegral measuredSize, maximumSize = fromIntegral maximumSize }
-    Dn.InputSetEmptyUTxO ->
+    Di.InputSetEmptyUTxO ->
         EmptyInputSet
-    Dn.FeeTooSmallUTxO (Mismatch suppliedFee minimumRequiredFee) ->
+    Di.FeeTooSmallUTxO (Mismatch suppliedFee minimumRequiredFee) ->
         TransactionFeeTooSmall { minimumRequiredFee, suppliedFee }
-    Dn.ValueNotConservedUTxO (Mismatch consumed produced) ->
+    Di.ValueNotConservedUTxO (Mismatch consumed produced) ->
         let valueConsumed = ValueInAnyEra (era, consumed) in
         let valueProduced = ValueInAnyEra (era, produced) in
         ValueNotConserved { valueConsumed, valueProduced }
-    Dn.WrongNetwork expectedNetwork invalidAddrs ->
+    Di.WrongNetwork expectedNetwork invalidAddrs ->
         let invalidEntities = DiscriminatedAddresses (NESet.toSet invalidAddrs) in
         NetworkMismatch { expectedNetwork, invalidEntities }
-    Dn.WrongNetworkWithdrawal expectedNetwork invalidAccts ->
+    Di.WrongNetworkWithdrawal expectedNetwork invalidAccts ->
         let invalidEntities = DiscriminatedRewardAccounts (NESet.toSet invalidAccts) in
         NetworkMismatch { expectedNetwork, invalidEntities }
-    Dn.OutputTooSmallUTxO outs ->
+    Di.OutputTooSmallUTxO outs ->
         let insufficientlyFundedOutputs =
                 (\out -> (TxOutInAnyEra (era, out), Nothing)) <$> outs
          in InsufficientAdaInOutput { insufficientlyFundedOutputs = toList insufficientlyFundedOutputs }
-    Dn.OutputBootAddrAttrsTooBig outs ->
+    Di.OutputBootAddrAttrsTooBig outs ->
         let culpritOutputs = (\out -> TxOutInAnyEra (era, out)) <$> outs in
         BootstrapAddressAttributesTooLarge { culpritOutputs = toList culpritOutputs }
-    Dn.InsufficientCollateral providedCollateral minimumRequiredCollateral ->
+    Di.InsufficientCollateral providedCollateral minimumRequiredCollateral ->
         InsufficientCollateral { providedCollateral, minimumRequiredCollateral }
-    Dn.ScriptsNotPaidUTxO utxo ->
+    Di.ScriptsNotPaidUTxO utxo ->
         CollateralInputLockedByScript (Map.keys $ NEMap.toMap utxo)
-    Dn.WrongNetworkInTxBody (Mismatch _providedNetwork expectedNetwork) ->
+    Di.WrongNetworkInTxBody (Mismatch _providedNetwork expectedNetwork) ->
         let invalidEntities = DiscriminatedTransaction in
         NetworkMismatch { expectedNetwork, invalidEntities }
-    Dn.OutsideForecast slot ->
+    Di.OutsideForecast slot ->
         SlotOutsideForeseeableFuture { slot }
-    Dn.CollateralContainsNonADA value ->
+    Di.CollateralContainsNonADA value ->
         let valueInAnyEra = ValueInAnyEra (era, value) in
         NonAdaValueAsCollateral valueInAnyEra
-    Dn.NoCollateralInputs{} ->
+    Di.NoCollateralInputs{} ->
         MissingCollateralInputs
-    Dn.TooManyCollateralInputs (Mismatch countedCollateralInputs maximumCollateralInputs) ->
+    Di.TooManyCollateralInputs (Mismatch countedCollateralInputs maximumCollateralInputs) ->
         TooManyCollateralInputs { maximumCollateralInputs = fromIntegral maximumCollateralInputs, countedCollateralInputs = fromIntegral countedCollateralInputs }
-    Dn.ExUnitsTooBigUTxO (Mismatch providedExUnits maximumExUnits) ->
+    Di.ExUnitsTooBigUTxO (Mismatch providedExUnits maximumExUnits) ->
         ExecutionUnitsTooLarge { maximumExUnits, providedExUnits }
-    Dn.IncorrectTotalCollateralField computedTotalCollateral declaredTotalCollateral ->
+    Di.IncorrectTotalCollateralField computedTotalCollateral declaredTotalCollateral ->
         TotalCollateralMismatch { computedTotalCollateral, declaredTotalCollateral }
-    Dn.BabbageNonDisjointRefInputs xs ->
+    Di.BabbageNonDisjointRefInputs xs ->
         ConflictingInputsAndReferences xs
-    Dn.BabbageOutputTooSmallUTxO outs ->
+    Di.BabbageOutputTooSmallUTxO outs ->
         let insufficientlyFundedOutputs =
                 (\(out, minAda) ->
                     ( TxOutInAnyEra (era, out)
@@ -369,7 +352,7 @@ encodeUtxoFailure = \case
                     )
                 ) <$> outs
          in InsufficientAdaInOutput { insufficientlyFundedOutputs = toList insufficientlyFundedOutputs }
-    Dn.PtrPresentInCollateralReturn out ->
+    Di.PtrPresentInCollateralReturn out ->
         PointerAddressInCollateralReturn { pointerAddressOutput = TxOutInAnyEra (era, out) }
   where
     era = ShelleyBasedEraDijkstra
@@ -392,47 +375,47 @@ encodeUtxosFailure = \case
 --------------
 
 encodeSubLedgersFailure
-    :: Dn.DijkstraSubLedgersPredFailure DijkstraEra
+    :: Di.DijkstraSubLedgersPredFailure DijkstraEra
     -> MultiEraPredicateFailure
-encodeSubLedgersFailure (Dn.SubLedgerFailure e) =
+encodeSubLedgersFailure (Di.SubLedgerFailure e) =
     encodeSubLedgerFailure e
 
 encodeSubLedgerFailure
-    :: Dn.DijkstraSubLedgerPredFailure DijkstraEra
+    :: Di.DijkstraSubLedgerPredFailure DijkstraEra
     -> MultiEraPredicateFailure
 encodeSubLedgerFailure = \case
-    Dn.SubUtxowFailure e ->
+    Di.SubUtxowFailure e ->
         encodeSubUtxowFailure e
-    Dn.SubCertsFailure e ->
+    Di.SubCertsFailure e ->
         encodeSubCertsFailure e
-    Dn.SubGovFailure e ->
+    Di.SubGovFailure e ->
         encodeSubGovFailure e
-    Dn.SubWdrlNotDelegatedToDRep ((Set.fromList . toList) -> marginalizedCredentials) ->
+    Di.SubWdrlNotDelegatedToDRep ((Set.fromList . toList) -> marginalizedCredentials) ->
         ForbiddenWithdrawal { marginalizedCredentials }
-    Dn.SubTreasuryValueMismatch (Mismatch providedWithdrawal computedWithdrawal) ->
+    Di.SubTreasuryValueMismatch (Mismatch providedWithdrawal computedWithdrawal) ->
         TreasuryWithdrawalMismatch { providedWithdrawal, computedWithdrawal }
 
 encodeSubGovFailure
-    :: Dn.DijkstraSubGovPredFailure DijkstraEra
+    :: Di.DijkstraSubGovPredFailure DijkstraEra
     -> MultiEraPredicateFailure
-encodeSubGovFailure (Dn.DijkstraSubGovPredFailure f) =
+encodeSubGovFailure (Di.DijkstraSubGovPredFailure f) =
     encodeGovFailure f
 
 encodeSubCertsFailure
-    :: Dn.DijkstraSubCertsPredFailure DijkstraEra
+    :: Di.DijkstraSubCertsPredFailure DijkstraEra
     -> MultiEraPredicateFailure
-encodeSubCertsFailure (Dn.SubCertFailure f) =
+encodeSubCertsFailure (Di.SubCertFailure f) =
     encodeSubCertFailure f
 
 encodeSubCertFailure
-    :: Dn.DijkstraSubCertPredFailure DijkstraEra
+    :: Di.DijkstraSubCertPredFailure DijkstraEra
     -> MultiEraPredicateFailure
 encodeSubCertFailure = \case
-    Dn.SubDelegFailure (Dn.DijkstraSubDelegPredFailure f) ->
+    Di.SubDelegFailure (Di.DijkstraSubDelegPredFailure f) ->
         encodeDelegFailure f
-    Dn.SubPoolFailure (Dn.DijkstraSubPoolPredFailure f) ->
+    Di.SubPoolFailure (Di.DijkstraSubPoolPredFailure f) ->
         encodePoolFailure f
-    Dn.SubGovCertFailure (Dn.DijkstraSubGovCertPredFailure f) ->
+    Di.SubGovCertFailure (Di.DijkstraSubGovCertPredFailure f) ->
         encodeGovCertFailure f
 
 -----------
@@ -440,48 +423,48 @@ encodeSubCertFailure = \case
 -----------
 
 encodeSubUtxowFailure
-    :: Dn.DijkstraSubUtxowPredFailure DijkstraEra
+    :: Di.DijkstraSubUtxowPredFailure DijkstraEra
     -> MultiEraPredicateFailure
 encodeSubUtxowFailure = \case
-    Dn.SubUtxoFailure e ->
+    Di.SubUtxoFailure e ->
         encodeSubUtxoFailure e
-    Dn.SubInvalidWitnessesUTXOW wits ->
+    Di.SubInvalidWitnessesUTXOW wits ->
         InvalidSignatures (toList wits)
-    Dn.SubMissingVKeyWitnessesUTXOW keys ->
+    Di.SubMissingVKeyWitnessesUTXOW keys ->
         MissingSignatures (NESet.toSet keys)
-    Dn.SubMissingScriptWitnessesUTXOW scripts ->
+    Di.SubMissingScriptWitnessesUTXOW scripts ->
         MissingScriptWitnesses (NESet.toSet scripts)
-    Dn.SubScriptWitnessNotValidatingUTXOW scripts ->
+    Di.SubScriptWitnessNotValidatingUTXOW scripts ->
         FailingScript (NESet.toSet scripts)
-    Dn.SubMissingTxBodyMetadataHash hash ->
+    Di.SubMissingTxBodyMetadataHash hash ->
         MissingMetadataHash hash
-    Dn.SubMissingTxMetadata hash ->
+    Di.SubMissingTxMetadata hash ->
         MissingMetadata hash
-    Dn.SubConflictingMetadataHash (Mismatch providedAuxiliaryDataHash computedAuxiliaryDataHash) ->
+    Di.SubConflictingMetadataHash (Mismatch providedAuxiliaryDataHash computedAuxiliaryDataHash) ->
         MetadataHashMismatch { providedAuxiliaryDataHash, computedAuxiliaryDataHash }
-    Dn.SubInvalidMetadata ->
+    Di.SubInvalidMetadata ->
         InvalidMetadata
-    Dn.SubExtraneousScriptWitnessesUTXOW scripts ->
+    Di.SubExtraneousScriptWitnessesUTXOW scripts ->
         ExtraneousScriptWitnesses (NESet.toSet scripts)
-    Dn.SubMissingRedeemers redeemers ->
+    Di.SubMissingRedeemers redeemers ->
         let missingRedeemers = ScriptPurposeItemInAnyEra . (era,) . fst <$> redeemers
          in MissingRedeemers { missingRedeemers = toList missingRedeemers }
-    Dn.SubMissingRequiredDatums missingDatums _providedDatums ->
+    Di.SubMissingRequiredDatums missingDatums _providedDatums ->
         MissingDatums { missingDatums = NESet.toSet missingDatums }
-    Dn.SubNotAllowedSupplementalDatums extraneousDatums _acceptableDatums ->
+    Di.SubNotAllowedSupplementalDatums extraneousDatums _acceptableDatums ->
         ExtraneousDatums { extraneousDatums = NESet.toSet extraneousDatums }
-    Dn.SubPPViewHashesDontMatch (Mismatch providedIntegrityHash computedIntegrityHash) ->
+    Di.SubPPViewHashesDontMatch (Mismatch providedIntegrityHash computedIntegrityHash) ->
         ScriptIntegrityHashMismatch { providedIntegrityHash, computedIntegrityHash }
-    Dn.SubUnspendableUTxONoDatumHash orphanScriptInputs ->
+    Di.SubUnspendableUTxONoDatumHash orphanScriptInputs ->
         OrphanScriptInputs { orphanScriptInputs = NESet.toSet orphanScriptInputs }
-    Dn.SubExtraRedeemers redeemers ->
+    Di.SubExtraRedeemers redeemers ->
         let extraneousRedeemers = ScriptPurposeIndexInAnyEra . (era,) <$> redeemers
          in ExtraneousRedeemers { extraneousRedeemers = toList extraneousRedeemers }
-    Dn.SubMalformedScriptWitnesses scripts ->
+    Di.SubMalformedScriptWitnesses scripts ->
         MalformedScripts (NESet.toSet scripts)
-    Dn.SubMalformedReferenceScripts scripts ->
+    Di.SubMalformedReferenceScripts scripts ->
         MalformedScripts (NESet.toSet scripts)
-    Dn.SubScriptIntegrityHashMismatch (Mismatch providedIntegrityHash computedIntegrityHash) _computedBodyHash ->
+    Di.SubScriptIntegrityHashMismatch (Mismatch providedIntegrityHash computedIntegrityHash) _computedBodyHash ->
         ScriptIntegrityHashMismatch { providedIntegrityHash, computedIntegrityHash }
   where
     era = AlonzoBasedEraDijkstra
@@ -491,39 +474,39 @@ encodeSubUtxowFailure = \case
 ----------
 
 encodeSubUtxoFailure
-    :: Dn.DijkstraSubUtxoPredFailure DijkstraEra
+    :: Di.DijkstraSubUtxoPredFailure DijkstraEra
     -> MultiEraPredicateFailure
 encodeSubUtxoFailure = \case
-    Dn.SubBadInputsUTxO inputs ->
+    Di.SubBadInputsUTxO inputs ->
         UnknownUtxoReference (NESet.toSet inputs)
-    Dn.SubOutsideValidityIntervalUTxO validityInterval currentSlot ->
+    Di.SubOutsideValidityIntervalUTxO validityInterval currentSlot ->
         TransactionOutsideValidityInterval { validityInterval, currentSlot }
-    Dn.SubMaxTxSizeUTxO (Mismatch measuredSize maximumSize) ->
+    Di.SubMaxTxSizeUTxO (Mismatch measuredSize maximumSize) ->
         TransactionTooLarge { measuredSize = fromIntegral measuredSize, maximumSize = fromIntegral maximumSize }
-    Dn.SubInputSetEmptyUTxO ->
+    Di.SubInputSetEmptyUTxO ->
         EmptyInputSet
-    Dn.SubWrongNetwork expectedNetwork invalidAddrs ->
+    Di.SubWrongNetwork expectedNetwork invalidAddrs ->
         let invalidEntities = DiscriminatedAddresses (NESet.toSet invalidAddrs) in
         NetworkMismatch { expectedNetwork, invalidEntities }
-    Dn.SubWrongNetworkWithdrawal expectedNetwork invalidAccts ->
+    Di.SubWrongNetworkWithdrawal expectedNetwork invalidAccts ->
         let invalidEntities = DiscriminatedRewardAccounts (NESet.toSet invalidAccts) in
         NetworkMismatch { expectedNetwork, invalidEntities }
-    Dn.SubOutputTooSmallUTxO outs ->
+    Di.SubOutputTooSmallUTxO outs ->
         let insufficientlyFundedOutputs =
                 (\out -> (TxOutInAnyEra (era, out), Nothing)) <$> outs
          in InsufficientAdaInOutput { insufficientlyFundedOutputs = toList insufficientlyFundedOutputs }
-    Dn.SubOutputBootAddrAttrsTooBig outs ->
+    Di.SubOutputBootAddrAttrsTooBig outs ->
         let culpritOutputs = (\out -> TxOutInAnyEra (era, out)) <$> outs in
         BootstrapAddressAttributesTooLarge { culpritOutputs = toList culpritOutputs }
-    Dn.SubOutputTooBigUTxO outs ->
+    Di.SubOutputTooBigUTxO outs ->
         let culpritOutputs = (\(_, _, out) -> TxOutInAnyEra (era, out)) <$> outs in
         ValueSizeAboveLimit (toList culpritOutputs)
-    Dn.SubWrongNetworkInTxBody (Mismatch _providedNetwork expectedNetwork) ->
+    Di.SubWrongNetworkInTxBody (Mismatch _providedNetwork expectedNetwork) ->
         let invalidEntities = DiscriminatedTransaction in
         NetworkMismatch { expectedNetwork, invalidEntities }
-    Dn.SubOutsideForecast slot ->
+    Di.SubOutsideForecast slot ->
         SlotOutsideForeseeableFuture { slot }
-    Dn.SubBabbageOutputTooSmallUTxO outs ->
+    Di.SubBabbageOutputTooSmallUTxO outs ->
         let insufficientlyFundedOutputs =
                 (\(out, minAda) ->
                     ( TxOutInAnyEra (era, out)

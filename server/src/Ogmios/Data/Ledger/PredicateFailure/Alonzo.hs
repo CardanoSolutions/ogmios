@@ -6,11 +6,11 @@ module Ogmios.Data.Ledger.PredicateFailure.Alonzo where
 
 import Ogmios.Prelude
 
-import qualified Data.Map.NonEmpty as NEMap
-import qualified Data.Set.NonEmpty as NESet
-
 import Cardano.Ledger.Alonzo.Plutus.Evaluate
     ( CollectError (..)
+    )
+import Cardano.Ledger.BaseTypes
+    ( Mismatch (..)
     )
 import Cardano.Ledger.Core
     ( EraRule
@@ -36,29 +36,18 @@ import Relude.Unsafe
     )
 
 import qualified Cardano.Ledger.Alonzo.Rules as Al
-import Cardano.Ledger.BaseTypes
-    ( Mismatch (..)
-    )
 import qualified Cardano.Ledger.Shelley.Rules as Sh
 import qualified Data.Map as Map
+import qualified Data.Map.NonEmpty as NEMap
+import qualified Data.Set.NonEmpty as NESet
 import qualified Ogmios.Data.Ledger.PredicateFailure.Shelley as Shelley
 
 encodeLedgerFailure
-    :: forall. ()
-    => Sh.ShelleyLedgerPredFailure AlonzoEra
+    :: Sh.ShelleyLedgerPredFailure AlonzoEra
     -> MultiEraPredicateFailure
-encodeLedgerFailure = \case
-    Sh.UtxowFailure e  ->
-        encodeUtxowFailure
-            AlonzoBasedEraAlonzo
-            (let era = AlonzoBasedEraAlonzo in encodeUtxoFailure era (encodeUtxosFailure era))
-            e
-    Sh.DelegsFailure e ->
-        encodeDelegsFailure e
-    Sh.ShelleyWithdrawalsMissingAccounts _withdrawals ->
-        IncompleteWithdrawals mempty
-    Sh.ShelleyIncompleteWithdrawals _withdrawals ->
-        IncompleteWithdrawals mempty
+encodeLedgerFailure = Shelley.encodeLedgerFailureInEra
+    (let era = AlonzoBasedEraAlonzo in encodeUtxowFailure era (encodeUtxoFailure era (encodeUtxosFailure era)))
+    encodeDelegsFailure
 
 encodeUtxowFailure
     :: forall era.

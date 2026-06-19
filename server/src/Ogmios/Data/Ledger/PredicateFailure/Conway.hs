@@ -52,10 +52,10 @@ encodeLedgerFailure = \case
         encodeCertsFailure e
     Cn.ConwayGovFailure e ->
         encodeGovFailure e
-    Cn.ConwayWithdrawalsMissingAccounts _withdrawals ->
-        IncompleteWithdrawals mempty
-    Cn.ConwayIncompleteWithdrawals _withdrawals ->
-        IncompleteWithdrawals mempty
+    Cn.ConwayWithdrawalsMissingAccounts (Ledger.unWithdrawals -> withdrawals) ->
+        IncompleteWithdrawals withdrawals
+    Cn.ConwayIncompleteWithdrawals withdrawals ->
+        IncompleteWithdrawals $ Map.map (\Mismatch {mismatchExpected} -> mismatchExpected) (NEMap.toMap withdrawals)
     Cn.ConwayWdrlNotDelegatedToDRep ((Set.fromList . toList) -> marginalizedCredentials) ->
         ForbiddenWithdrawal { marginalizedCredentials }
     Cn.ConwayTreasuryValueMismatch (Mismatch providedWithdrawal computedWithdrawal) ->
@@ -179,7 +179,7 @@ encodeCertFailure = \case
         encodeGovCertFailure e
 
 encodeDelegFailure
-    :: Cn.ConwayDelegPredFailure ConwayEra
+    :: Cn.ConwayDelegPredFailure era
     -> MultiEraPredicateFailure
 encodeDelegFailure = \case
     -- NOTE: The discarded coin value here refers to the deposit as set in the
@@ -203,7 +203,7 @@ encodeDelegFailure = \case
         UnknownStakePool poolId
 
 encodeGovCertFailure
-    :: Cn.ConwayGovCertPredFailure ConwayEra
+    :: Cn.ConwayGovCertPredFailure era
     -> MultiEraPredicateFailure
 encodeGovCertFailure = \case
     Cn.ConwayDRepAlreadyRegistered knownDelegateRepresentative ->
