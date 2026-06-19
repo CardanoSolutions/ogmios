@@ -26,9 +26,9 @@ import Ouroboros.Consensus.Shelley.Ledger.Block
     ( ShelleyBlock (..)
     )
 
-import Ouroboros.Consensus.Shelley.Protocol.Praos
-    ()
 import Cardano.Ledger.HKD
+    ()
+import Ouroboros.Consensus.Shelley.Protocol.Praos
     ()
 
 import qualified Data.Map.Strict as Map
