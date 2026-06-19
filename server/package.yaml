@@ -56,6 +56,7 @@ library:
     - cardano-ledger-binary
     - cardano-ledger-byron
     - cardano-ledger-conway
+    - cardano-ledger-dijkstra
     - cardano-ledger-core
     - cardano-ledger-mary
     - cardano-ledger-shelley
@@ -151,6 +152,7 @@ tests:
     - cardano-ledger-babbage
     - cardano-ledger-binary
     - cardano-ledger-conway:testlib
+    - cardano-ledger-dijkstra:testlib
     - cardano-ledger-core
     - cardano-ledger-mary
     - cardano-ledger-shelley

@@ -1,6 +1,6 @@
 cabal-version: 3.0
 
--- This file has been generated from package.yaml by hpack version 0.38.3.
+-- This file has been generated from package.yaml by hpack version 0.39.5.
 --
 -- see: https://github.com/sol/hpack
 
@@ -160,8 +160,8 @@ library
     , cardano-ledger-binary
     , cardano-ledger-byron
     , cardano-ledger-conway
-    , cardano-ledger-dijkstra
     , cardano-ledger-core
+    , cardano-ledger-dijkstra
     , cardano-ledger-mary
     , cardano-ledger-shelley
     , cardano-protocol-tpraos
@@ -356,9 +356,7 @@ test-suite unit
     , cardano-ledger-babbage
     , cardano-ledger-binary
     , cardano-ledger-conway:testlib
-    , cardano-data
     , cardano-ledger-core
-    , cardano-ledger-dijkstra
     , cardano-ledger-dijkstra:testlib
     , cardano-ledger-mary
     , cardano-ledger-shelley
