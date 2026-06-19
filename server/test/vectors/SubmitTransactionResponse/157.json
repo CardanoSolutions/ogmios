@@ -1,1 +1,1 @@
-{"jsonrpc":"2.0","method":"submitTransaction","error":{"code":3997,"message":"A transaction was rejected due to custom rules that prevented it from entering the mempool. A justification is given as 'data.error'.","data":{"error":"🕸@𲌂띍"}},"id":"6ABBg4VbDPNh"}
+{"jsonrpc":"2.0","method":"submitTransaction","error":{"code":3997,"message":"A transaction was rejected due to custom rules that prevented it from entering the mempool. A justification is given as 'data.error'.","data":{"error":"b"}},"id":"6ABBg4VbDPNh"}
