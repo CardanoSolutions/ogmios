@@ -14,7 +14,6 @@ category:            Web
 
 extra-source-files:
 - static/*
-- static/assets/*
 
 dependencies:
 - base >= 4.7 && < 5
