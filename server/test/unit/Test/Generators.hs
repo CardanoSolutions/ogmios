@@ -266,6 +266,14 @@ genTx = oneof
     , GenTxDijkstra <$> liftA2 ShelleyTx arbitrary arbitrary
     ]
 
+genTxUpToConway :: Gen (GenTx Block)
+genTxUpToConway = oneof
+    [ GenTxAlonzo <$> liftA2 ShelleyTx arbitrary arbitrary
+    , GenTxBabbage <$> liftA2 ShelleyTx arbitrary arbitrary
+    , GenTxConway <$> liftA2 ShelleyTx arbitrary arbitrary
+    ]
+
+
 genMempoolSizeAndCapacity :: Gen MempoolSizeAndCapacity
 genMempoolSizeAndCapacity = MempoolSizeAndCapacity
     <$> arbitrary

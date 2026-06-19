@@ -4515,6 +4515,24 @@
           , "message": { "type": "string" }
           }
         }
+      , { "title": "SubmitTransactionFailure<StakePoolVRFKeyAlreadyRegistered>"
+        , "description": "Stake pool can (no longer) re-use an already used VRF key. Yet this transaction contains a pool which declares a VRF key that is already in use."
+        , "type": "object"
+        , "required": [ "code", "message", "data" ]
+        , "additionalProperties": false
+        , "properties":
+          { "code": { "type": "integer", "enum": [ 3171 ] }
+          , "message": { "type": "string" }
+          , "data":
+            { "type": "object"
+            , "required": [ "poolId", "alreadyRegisteredVrfKey" ]
+            , "properties":
+              { "poolId": { "$ref": "cardano.json#/definitions/StakePoolId" }
+              , "alreadyRegisteredVrfKey": { "$ref": "cardano.json#/definitions/Digest<Blake2b, 256>" }
+              }
+            }
+          }
+        }
       , { "title": "SubmitTransactionFailure<UnexpectedMempoolError>"
         , "description": "A transaction was rejected due to custom rules that prevented it from entering the mempool. A justification is given as 'data.error'."
         , "type": "object"
@@ -4523,7 +4541,13 @@
         , "properties":
           { "code": { "type": "integer", "enum": [ 3997 ] }
           , "message": { "type": "string" }
-          , "data": { "error": { "type": "string" } }
+          , "data":
+            { "type": "object"
+            , "required": ["error"]
+            , "additionalProperties": false
+            , "properties":
+              { "error": { "type": "string" } }
+            }
           }
         }
       , { "title": "SubmitTransactionFailure<UnrecognizedCertificateType>"

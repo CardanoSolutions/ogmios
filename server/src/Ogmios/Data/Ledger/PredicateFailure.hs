@@ -613,6 +613,7 @@ predicateFailurePriority = \case
     ValueSizeAboveLimit{} -> 2
     UnknownConstitutionalCommitteeMember{} -> 2
     UnknownVoters{} -> 2
+    StakePoolVRFKeyAlreadyRegistered{} -> 2
 
     InvalidStakePoolRetirementEpoch{} -> 3
     StakePoolCostTooLow{} -> 3

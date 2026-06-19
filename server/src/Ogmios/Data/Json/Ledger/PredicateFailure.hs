@@ -20,9 +20,9 @@ import Ogmios.Data.Ledger.PredicateFailure
     )
 
 import qualified Cardano.Ledger.DRep as Ledger
+import qualified Cardano.Ledger.Hashes as Ledger
 import qualified Codec.Json.Rpc as Rpc
 import qualified Data.Aeson.Encoding as Json
-
 import qualified Ogmios.Data.Json.Allegra as Allegra
 import qualified Ogmios.Data.Json.Alonzo as Alonzo
 import qualified Ogmios.Data.Json.Babbage as Babbage
@@ -995,6 +995,18 @@ encodePredicateFailure reject = \case
             \outputs produced by a sub-transaction within the same top-level transaction, as \
             \this would create a circular dependency."
             Nothing
+
+    StakePoolVRFKeyAlreadyRegistered { poolId, alreadyRegisteredVrfKey } ->
+        reject (predicateFailureCode 71)
+            "Stake pool can (no longer) re-use an already used VRF key. Yet this \
+            \transaction contains a pool which declares a VRF key that is already in use. \
+            \The field 'data.poolId' indicates the offending pool, while the field \
+            \'data.alreadyRegisteredVrfKey' designates the known vrf key."
+            (pure $ encodeObject
+                ( "poolId" .= Shelley.encodePoolId poolId <>
+                  "alreadyRegisteredVrfKey" .= Shelley.encodeHash (Ledger.unVRFVerKeyHash alreadyRegisteredVrfKey)
+                )
+            )
 
     -- NOTE: This should match the encoding also used for 'EvaluateTransactionResponse' in
     -- Data.Protocol.TxSubmission; hence the code.
