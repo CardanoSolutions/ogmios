@@ -16,8 +16,8 @@ module Ogmios.Data.Ledger where
 import Ogmios.Prelude
 
 import Cardano.Ledger.Address
-    ( Addr (..)
-    , RewardAccount (..)
+    ( AccountAddress
+    , Addr (..)
     )
 import Cardano.Ledger.Alonzo.Plutus.Context
     ( ContextError
@@ -45,8 +45,8 @@ import qualified Prelude
 
 data DiscriminatedEntities
     = DiscriminatedAddresses (Set Addr)
-    | DiscriminatedRewardAccounts (Set RewardAccount)
-    | DiscriminatedPoolRegistrationCertificate (KeyHash 'StakePool)
+    | DiscriminatedRewardAccounts (Set AccountAddress)
+    | DiscriminatedPoolRegistrationCertificate (KeyHash StakePool)
     | DiscriminatedTransaction
     deriving (Show, Ord, Eq)
 
@@ -92,10 +92,12 @@ scriptPurposeInMostRecentEra
     -> PlutusPurpose AsIx (MostRecentEra (CardanoBlock crypto))
 scriptPurposeInMostRecentEra = \case
     ScriptPurposeIndexInAnyEra (AlonzoBasedEraAlonzo, ix) ->
-        upgradePlutusPurposeAsIx (upgradePlutusPurposeAsIx ix)
+        upgradePlutusPurposeAsIx (upgradePlutusPurposeAsIx (upgradePlutusPurposeAsIx ix))
     ScriptPurposeIndexInAnyEra (AlonzoBasedEraBabbage, ix) ->
-        upgradePlutusPurposeAsIx ix
+        upgradePlutusPurposeAsIx (upgradePlutusPurposeAsIx ix)
     ScriptPurposeIndexInAnyEra (AlonzoBasedEraConway, ix) ->
+        upgradePlutusPurposeAsIx ix
+    ScriptPurposeIndexInAnyEra (AlonzoBasedEraDijkstra, ix) ->
         ix
 
 data ContextErrorInAnyEra =
@@ -112,4 +114,6 @@ instance Show ContextErrorInAnyEra where
         ContextErrorInAnyEra (AlonzoBasedEraBabbage, e) ->
             show e
         ContextErrorInAnyEra (AlonzoBasedEraConway, e) ->
+            show e
+        ContextErrorInAnyEra (AlonzoBasedEraDijkstra, e) ->
             show e

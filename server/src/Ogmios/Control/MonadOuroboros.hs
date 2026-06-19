@@ -17,6 +17,7 @@ import qualified Control.Monad.Class.MonadThrow as Ouroboros
 -- clients both require 'MonadThrow')
 type MonadOuroboros m =
         ( Ouroboros.MonadThrow m
+        , Ouroboros.MonadEvaluate m
         , Ouroboros.MonadAsync m
         , Ouroboros.MonadST m
         )

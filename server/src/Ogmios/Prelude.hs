@@ -55,6 +55,7 @@ module Ogmios.Prelude
     , CardanoEras
     , CardanoBlock
     , ConwayEra
+    , DijkstraEra
     , Era
     , MaryEra
     , Praos
@@ -171,6 +172,7 @@ import Ouroboros.Consensus.Shelley.Eras
     , AlonzoEra
     , BabbageEra
     , ConwayEra
+    , DijkstraEra
     , MaryEra
     , ShelleyEra
     )
@@ -276,28 +278,31 @@ type family (:\:) (any :: k) (excluded :: k) :: Constraint where
     _ :\: _ = ()
 
 type family EraProto era :: Type where
-    EraProto ShelleyEra = TPraos StandardCrypto
-    EraProto AllegraEra = TPraos StandardCrypto
-    EraProto MaryEra    = TPraos StandardCrypto
-    EraProto AlonzoEra  = TPraos StandardCrypto
-    EraProto BabbageEra = Praos StandardCrypto
-    EraProto ConwayEra  = Praos StandardCrypto
+    EraProto ShelleyEra  = TPraos StandardCrypto
+    EraProto AllegraEra  = TPraos StandardCrypto
+    EraProto MaryEra     = TPraos StandardCrypto
+    EraProto AlonzoEra   = TPraos StandardCrypto
+    EraProto BabbageEra  = Praos StandardCrypto
+    EraProto ConwayEra   = Praos StandardCrypto
+    EraProto DijkstraEra = Praos StandardCrypto
 
 data ShelleyBasedEra era where
-    ShelleyBasedEraShelley :: ShelleyBasedEra ShelleyEra
-    ShelleyBasedEraAllegra :: ShelleyBasedEra AllegraEra
-    ShelleyBasedEraMary    :: ShelleyBasedEra MaryEra
-    ShelleyBasedEraAlonzo  :: ShelleyBasedEra AlonzoEra
-    ShelleyBasedEraBabbage :: ShelleyBasedEra BabbageEra
-    ShelleyBasedEraConway  :: ShelleyBasedEra ConwayEra
+    ShelleyBasedEraShelley  :: ShelleyBasedEra ShelleyEra
+    ShelleyBasedEraAllegra  :: ShelleyBasedEra AllegraEra
+    ShelleyBasedEraMary     :: ShelleyBasedEra MaryEra
+    ShelleyBasedEraAlonzo   :: ShelleyBasedEra AlonzoEra
+    ShelleyBasedEraBabbage  :: ShelleyBasedEra BabbageEra
+    ShelleyBasedEraConway   :: ShelleyBasedEra ConwayEra
+    ShelleyBasedEraDijkstra :: ShelleyBasedEra DijkstraEra
 deriving instance Show (ShelleyBasedEra era)
 deriving instance Eq (ShelleyBasedEra era)
 deriving instance Ord (ShelleyBasedEra era)
 
 data AlonzoBasedEra era where
-    AlonzoBasedEraAlonzo  :: AlonzoBasedEra AlonzoEra
-    AlonzoBasedEraBabbage :: AlonzoBasedEra BabbageEra
-    AlonzoBasedEraConway  :: AlonzoBasedEra ConwayEra
+    AlonzoBasedEraAlonzo   :: AlonzoBasedEra AlonzoEra
+    AlonzoBasedEraBabbage  :: AlonzoBasedEra BabbageEra
+    AlonzoBasedEraConway   :: AlonzoBasedEra ConwayEra
+    AlonzoBasedEraDijkstra :: AlonzoBasedEra DijkstraEra
 deriving instance Show (AlonzoBasedEra era)
 deriving instance Eq (AlonzoBasedEra era)
 deriving instance Ord (AlonzoBasedEra era)
@@ -310,6 +315,7 @@ instance ToShelleyBasedEra AlonzoBasedEra where
         AlonzoBasedEraAlonzo -> ShelleyBasedEraAlonzo
         AlonzoBasedEraBabbage -> ShelleyBasedEraBabbage
         AlonzoBasedEraConway -> ShelleyBasedEraConway
+        AlonzoBasedEraDijkstra -> ShelleyBasedEraDijkstra
 
 class IsAlonzoBasedEra era where
     alonzoBasedEra :: AlonzoBasedEra era
@@ -323,6 +329,9 @@ instance IsAlonzoBasedEra BabbageEra where
 instance IsAlonzoBasedEra ConwayEra where
     alonzoBasedEra = AlonzoBasedEraConway
 
+instance IsAlonzoBasedEra DijkstraEra where
+    alonzoBasedEra = AlonzoBasedEraDijkstra
+
 data SomeShelleyEra =
     forall era. SomeShelleyEra (ShelleyBasedEra era)
 
@@ -330,12 +339,13 @@ deriving instance Show SomeShelleyEra
 
 instance ToJSON SomeShelleyEra where
     toJSON = \case
-        SomeShelleyEra ShelleyBasedEraShelley -> toJSON @Text "shelley"
-        SomeShelleyEra ShelleyBasedEraAllegra -> toJSON @Text "allegra"
-        SomeShelleyEra ShelleyBasedEraMary    -> toJSON @Text "mary"
-        SomeShelleyEra ShelleyBasedEraAlonzo  -> toJSON @Text "alonzo"
-        SomeShelleyEra ShelleyBasedEraBabbage -> toJSON @Text "babbage"
-        SomeShelleyEra ShelleyBasedEraConway  -> toJSON @Text "conway"
+        SomeShelleyEra ShelleyBasedEraShelley  -> toJSON @Text "shelley"
+        SomeShelleyEra ShelleyBasedEraAllegra  -> toJSON @Text "allegra"
+        SomeShelleyEra ShelleyBasedEraMary     -> toJSON @Text "mary"
+        SomeShelleyEra ShelleyBasedEraAlonzo   -> toJSON @Text "alonzo"
+        SomeShelleyEra ShelleyBasedEraBabbage  -> toJSON @Text "babbage"
+        SomeShelleyEra ShelleyBasedEraConway   -> toJSON @Text "conway"
+        SomeShelleyEra ShelleyBasedEraDijkstra -> toJSON @Text "dijkstra"
 
 class IsShelleyBasedEra era where
     shelleyBasedEra :: ShelleyBasedEra era
@@ -358,6 +368,9 @@ instance IsShelleyBasedEra BabbageEra where
 instance IsShelleyBasedEra ConwayEra where
     shelleyBasedEra = ShelleyBasedEraConway
 
+instance IsShelleyBasedEra DijkstraEra where
+    shelleyBasedEra = ShelleyBasedEraDijkstra
+
 type family BlockCrypto block :: Type where
     BlockCrypto (CardanoBlock crypto) = crypto
 
@@ -366,13 +379,14 @@ fromEraIndex
     :: EraIndex (CardanoEras StandardCrypto)
     -> Maybe SomeShelleyEra
 fromEraIndex = \case
-    EraIndex                   Z{}       -> Nothing
-    EraIndex                (S Z{})      -> Just (SomeShelleyEra ShelleyBasedEraShelley)
-    EraIndex             (S (S Z{}))     -> Just (SomeShelleyEra ShelleyBasedEraAllegra)
-    EraIndex          (S (S (S Z{})))    -> Just (SomeShelleyEra ShelleyBasedEraMary)
-    EraIndex       (S (S (S (S Z{}))))   -> Just (SomeShelleyEra ShelleyBasedEraAlonzo)
-    EraIndex    (S (S (S (S (S Z{})))))  -> Just (SomeShelleyEra ShelleyBasedEraBabbage)
-    EraIndex (S (S (S (S (S (S Z{})))))) -> Just (SomeShelleyEra ShelleyBasedEraConway)
+    EraIndex                      Z{}        -> Nothing
+    EraIndex                   (S Z{})       -> Just (SomeShelleyEra ShelleyBasedEraShelley)
+    EraIndex                (S (S Z{}))      -> Just (SomeShelleyEra ShelleyBasedEraAllegra)
+    EraIndex             (S (S (S Z{})))     -> Just (SomeShelleyEra ShelleyBasedEraMary)
+    EraIndex          (S (S (S (S Z{}))))    -> Just (SomeShelleyEra ShelleyBasedEraAlonzo)
+    EraIndex       (S (S (S (S (S Z{})))))   -> Just (SomeShelleyEra ShelleyBasedEraBabbage)
+    EraIndex    (S (S (S (S (S (S Z{}))))))  -> Just (SomeShelleyEra ShelleyBasedEraConway)
+    EraIndex (S (S (S (S (S (S (S Z{}))))))) -> Just (SomeShelleyEra ShelleyBasedEraDijkstra)
 
 -- | Encode an object into a CBOR binary bytestring, based on the era encoder.
 encodeCbor

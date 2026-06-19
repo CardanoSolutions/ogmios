@@ -23,7 +23,7 @@ module Ogmios.Data.Ledger.PredicateFailure
     , Language (..)
     , Network (..)
     , ProtVer (..)
-    , RewardAccount (..)
+    , AccountAddress
     , ScriptHash (..)
     , ScriptIntegrityHash
     , ScriptPurposeItemInAnyEra (..)
@@ -41,9 +41,12 @@ module Ogmios.Data.Ledger.PredicateFailure
 
 import Ogmios.Prelude
 
+import Cardano.Crypto.Hash
+    ( Hash
+    )
 import Cardano.Ledger.Address
-    ( Addr (..)
-    , RewardAccount (..)
+    ( AccountAddress
+    , Addr (..)
     )
 import Cardano.Ledger.Allegra.Scripts
     ( ValidityInterval (..)
@@ -81,12 +84,13 @@ import Cardano.Ledger.Credential
     )
 import Cardano.Ledger.Hashes
     ( DataHash
+    , KeyRoleVRF (StakePoolVRF)
     , ScriptHash (..)
     , TxAuxDataHash
+    , VRFVerKeyHash
     )
 import Cardano.Ledger.Keys
-    ( Hash
-    , KeyHash (..)
+    ( KeyHash (..)
     , KeyRole (..)
     , VKey (..)
     )
@@ -118,12 +122,12 @@ data MultiEraPredicateFailure
 
     -- All transaction key witnesses must comprised of valid signatures
     = InvalidSignatures
-        { culpritVerificationKeys :: [VKey 'Witness]
+        { culpritVerificationKeys :: [VKey Witness]
         }
 
     -- All required verification key witnesses must be provided.
     | MissingSignatures
-        { missingSignatures :: Set (KeyHash 'Witness)
+        { missingSignatures :: Set (KeyHash Witness)
         }
 
     -- All required script must be provided as witnesses.
@@ -371,12 +375,12 @@ data MultiEraPredicateFailure
 
     -- Committee members that are both added and removed in the same update.
     | ConflictingCommitteeUpdate
-        { conflictingMembers :: Set (Credential 'ColdCommitteeRole)
+        { conflictingMembers :: Set (Credential ColdCommitteeRole)
         }
 
     -- Committee members set to retire in the past. \
     | InvalidCommitteeUpdate
-        { alreadyRetiredMembers :: Set (Credential 'ColdCommitteeRole)
+        { alreadyRetiredMembers :: Set (Credential ColdCommitteeRole)
         }
 
     -- A governance action (except the first) must reference the immediately
@@ -428,12 +432,12 @@ data MultiEraPredicateFailure
 
     -- Stake pool must exist / be registered when delegating to it.
     | UnknownStakePool
-        { poolId :: KeyHash 'StakePool
+        { poolId :: KeyHash StakePool
         }
 
     -- When present, withdrawals must withdraw rewards entirely
     | IncompleteWithdrawals
-        { withdrawals :: Map RewardAccount Coin
+        { withdrawals :: Map AccountAddress Coin
         }
 
     ---------------------------------------------------------------------------
@@ -458,8 +462,14 @@ data MultiEraPredicateFailure
 
     -- Stake pool metadata hash must be smaller than 32 bytes
     | StakePoolMetadataHashTooLarge
-        { poolId :: KeyHash 'StakePool
+        { poolId :: KeyHash StakePool
         , computedMetadataHashSize :: Int
+        }
+
+    -- Trying to re-register an already seen VRF key
+    | StakePoolVRFKeyAlreadyRegistered
+        { poolId :: KeyHash StakePool
+        , alreadyRegisteredVrfKey :: VRFVerKeyHash StakePoolVRF
         }
 
     ---------------------------------------------------------------------------
@@ -468,12 +478,12 @@ data MultiEraPredicateFailure
 
     -- One cannot register a stake credential twice
     | StakeCredentialAlreadyRegistered
-        { knownCredential :: Credential 'Staking
+        { knownCredential :: Credential Staking
         }
 
     -- Stake credential must be registered for delegation
     | StakeCredentialNotRegistered
-        { unknownCredential :: Credential 'Staking
+        { unknownCredential :: Credential Staking
         }
 
     -- Reward account must be empty when de-registering stake keys
@@ -483,7 +493,7 @@ data MultiEraPredicateFailure
 
     -- Trying to withdraw from credentials that aren't delegated to a DRep
     | ForbiddenWithdrawal
-        { marginalizedCredentials :: Set (KeyHash 'Staking)
+        { marginalizedCredentials :: Set (KeyHash Staking)
         }
 
     -- Trying to withdraw from the treasury an amount different from the one
@@ -513,18 +523,18 @@ data MultiEraPredicateFailure
 
     -- One cannot register as a DRep twice
     | DRepAlreadyRegistered
-        { knownDelegateRepresentative :: Credential 'DRepRole
+        { knownDelegateRepresentative :: Credential DRepRole
         }
 
     -- Delegate representative must be registered for delegation
     | DRepNotRegistered
-        { unknownDelegateRepresentative :: Credential 'DRepRole
+        { unknownDelegateRepresentative :: Credential DRepRole
         }
 
     -- Committee member must be registered and active in order to (a) declare
     -- hot key or (b) resign.
     | UnknownConstitutionalCommitteeMember
-        { unknownConstitutionalCommitteeMember :: Credential 'ColdCommitteeRole
+        { unknownConstitutionalCommitteeMember :: Credential ColdCommitteeRole
         }
 
     ---------------------------------------------------------------------------
@@ -545,6 +555,15 @@ data MultiEraPredicateFailure
     -- modeled.
     | UnrecognizedCertificateType
 
+    ---------------------------------------------------------------------------
+    -- Rule → Dijkstra-specific
+    ---------------------------------------------------------------------------
+
+    -- A collateral return output contains a pointer address, which is not
+    -- allowed in Dijkstra.
+    | PointerAddressInCollateralReturn
+        { pointerAddressOutput :: TxOutInAnyEra
+        }
 
 -- | Return the most relevant ledger rule from a list of errors. What does 'most
 -- relevant' means -> some errors can actually be responsible for other errors
@@ -589,6 +608,7 @@ predicateFailurePriority = \case
     ValueSizeAboveLimit{} -> 2
     UnknownConstitutionalCommitteeMember{} -> 2
     UnknownVoters{} -> 2
+    StakePoolVRFKeyAlreadyRegistered{} -> 2
 
     InvalidStakePoolRetirementEpoch{} -> 3
     StakePoolCostTooLow{} -> 3
@@ -655,3 +675,5 @@ predicateFailurePriority = \case
 
     ValueNotConserved{} -> 20
     ValidationTagMismatch{} -> 20
+
+    PointerAddressInCollateralReturn{} -> 2

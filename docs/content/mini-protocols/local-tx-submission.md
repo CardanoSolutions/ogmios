@@ -352,6 +352,10 @@ components:
       $ref: "/ogmios.json#/definitions/SubmitTransactionFailure/oneOf/68"
     3168/EmptyTreasuryWithdrawal:
       $ref: "/ogmios.json#/definitions/SubmitTransactionFailure/oneOf/69"
+    3169/PointerAddressInCollateralReturn:
+      $ref: "/ogmios.json#/definitions/SubmitTransactionFailure/oneOf/70"
+    3170/StakePoolVRFKeyAlreadyRegistered:
+      $ref: "/ogmios.json#/definitions/SubmitTransactionFailure/oneOf/71"
     3997/UnexpectedMempoolError:
       $ref: "/ogmios.json#/definitions/SubmitTransactionFailure/oneOf/70"
     3998/UnrecognizedCertificateType:

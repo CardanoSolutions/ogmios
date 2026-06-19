@@ -22,15 +22,17 @@ module Ogmios.Data.EraTranslation
 import Ogmios.Prelude
 
 import Cardano.Ledger.Babbage.Tx
-    ( AlonzoTx (..)
-    )
+    ()
+
 import Cardano.Ledger.Babbage.TxOut
     ( BabbageTxOut (..)
     )
 import Cardano.Ledger.Core
     ( PreviousEra
+    , Tx
+    , TxLevel (TopTx)
     , translateEraThroughCBOR
-    , upgradeTxBody
+    , upgradeTxOut
     )
 import Cardano.Ledger.Shelley.UTxO
     ( UTxO (..)
@@ -40,9 +42,6 @@ import Control.Arrow
     )
 import Control.Monad.Trans.Except
     ( runExcept
-    )
-import Data.Maybe.Strict
-    ( StrictMaybe (..)
     )
 import Ouroboros.Consensus.Cardano.Block
     ( GenTx (..)
@@ -54,7 +53,6 @@ import Ouroboros.Consensus.Shelley.Ledger.Mempool
     ( GenTx (..)
     )
 
-import qualified Cardano.Ledger.Alonzo.Tx as Alonzo
 import qualified Cardano.Ledger.Babbage.TxBody as Babbage
 import qualified Cardano.Ledger.Conway.Core as Conway
 
@@ -76,6 +74,10 @@ instance Upgrade BabbageTxOut ConwayEra where
     type Upgraded BabbageTxOut = BabbageTxOut
     upgrade = force . Conway.upgradeTxOut
 
+instance Upgrade BabbageTxOut DijkstraEra where
+    type Upgraded BabbageTxOut = BabbageTxOut
+    upgrade = force . upgradeTxOut
+
 ----------
 -- UTxO
 ----------
@@ -84,21 +86,23 @@ instance Upgrade UTxO ConwayEra where
     type Upgraded UTxO = UTxO
     upgrade = force . UTxO . fmap upgrade . unUTxO
 
+instance Upgrade UTxO DijkstraEra where
+    type Upgraded UTxO = UTxO
+    upgrade = force . UTxO . fmap upgrade . unUTxO
+
 ----------
 -- Tx
 ----------
 
-instance Upgrade AlonzoTx ConwayEra where
-    type Upgraded AlonzoTx = AlonzoTx
-    upgrade tx = force $ unsafeFromRight $ do
-        body <- left show $ upgradeTxBody (Alonzo.body tx)
-        left show $ runExcept $ do
-            wits <- translateEraThroughCBOR "witness" $ Alonzo.wits tx
-            auxiliaryData <- case Alonzo.auxiliaryData tx of
-              SNothing -> pure SNothing
-              SJust auxData -> SJust <$> translateEraThroughCBOR "auxiliaryData" auxData
-            let isValid = Alonzo.isValid tx
-            pure $ AlonzoTx{body,wits,auxiliaryData,isValid}
+instance Upgrade (Tx TopTx) ConwayEra where
+    type Upgraded (Tx TopTx) = Tx TopTx
+    upgrade tx = force $ unsafeFromRight $
+        left show $ runExcept $ translateEraThroughCBOR "Tx" tx
+
+instance Upgrade (Tx TopTx) DijkstraEra where
+    type Upgraded (Tx TopTx) = Tx TopTx
+    upgrade tx = force $ unsafeFromRight $
+        left show $ runExcept $ translateEraThroughCBOR "Tx" tx
 
 ----------
 -- GenTx
@@ -121,8 +125,11 @@ upgradeGenTx = \case
         upgradeGenTx $ GenTxBabbage $ ShelleyTx hash txBabbage
     GenTxBabbage (ShelleyTx hash txBabbage) -> do
         txConway <- left show $ runExcept $ translateEraThroughCBOR @ConwayEra "BabbageTx" txBabbage
-        pure $ GenTxConway $ ShelleyTx hash txConway
-    latest@(GenTxConway _)->
+        upgradeGenTx $ GenTxConway $ ShelleyTx hash txConway
+    GenTxConway (ShelleyTx hash txConway) -> do
+        txDijkstra <- left show $ runExcept $ translateEraThroughCBOR @DijkstraEra "ConwayTx" txConway
+        pure $ GenTxDijkstra $ ShelleyTx hash txDijkstra
+    latest@(GenTxDijkstra _)->
         Right latest
 
 unsafeFromRight :: (HasCallStack) => Either Text a -> a
@@ -131,39 +138,39 @@ unsafeFromRight = either error id
 -- Era-specific GADTs
 
 data MultiEraUTxO block where
-    UTxOInBabbageEra
-        :: UTxO BabbageEra
-        -> MultiEraUTxO block
-
     UTxOInConwayEra
         :: UTxO ConwayEra
         -> MultiEraUTxO block
 
+    UTxOInDijkstraEra
+        :: UTxO DijkstraEra
+        -> MultiEraUTxO block
+
 deriving instance
-    ( Eq (UTxO BabbageEra)
-    , Eq (UTxO ConwayEra)
+    ( Eq (UTxO ConwayEra)
+    , Eq (UTxO DijkstraEra)
     ) => Eq (MultiEraUTxO block)
 
 deriving instance
-    ( Show (UTxO BabbageEra)
-    , Show (UTxO ConwayEra)
+    ( Show (UTxO ConwayEra)
+    , Show (UTxO DijkstraEra)
     ) => Show (MultiEraUTxO block)
 
 data MultiEraTxOut block where
-    TxOutInBabbageEra
-        :: Babbage.BabbageTxOut BabbageEra
-        -> MultiEraTxOut block
-
     TxOutInConwayEra
         :: Babbage.BabbageTxOut ConwayEra
         -> MultiEraTxOut block
 
+    TxOutInDijkstraEra
+        :: Babbage.BabbageTxOut DijkstraEra
+        -> MultiEraTxOut block
+
 deriving instance
-    ( Eq (Babbage.BabbageTxOut BabbageEra)
-    , Eq (Babbage.BabbageTxOut ConwayEra)
+    ( Eq (Babbage.BabbageTxOut ConwayEra)
+    , Eq (Babbage.BabbageTxOut DijkstraEra)
     ) => Eq (MultiEraTxOut block)
 
 deriving instance
-    ( Show (Babbage.BabbageTxOut BabbageEra)
-    , Show (Babbage.BabbageTxOut ConwayEra)
+    ( Show (Babbage.BabbageTxOut ConwayEra)
+    , Show (Babbage.BabbageTxOut DijkstraEra)
     ) => Show (MultiEraTxOut block)

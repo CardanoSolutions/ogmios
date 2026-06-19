@@ -19,14 +19,15 @@ import Ogmios.Data.Ledger.PredicateFailure
     , TagMismatchDescription (..)
     )
 
+import qualified Cardano.Ledger.DRep as Ledger
+import qualified Cardano.Ledger.Hashes as Ledger
 import qualified Codec.Json.Rpc as Rpc
 import qualified Data.Aeson.Encoding as Json
-
-import qualified Cardano.Ledger.DRep as Ledger
 import qualified Ogmios.Data.Json.Allegra as Allegra
 import qualified Ogmios.Data.Json.Alonzo as Alonzo
 import qualified Ogmios.Data.Json.Babbage as Babbage
 import qualified Ogmios.Data.Json.Conway as Conway
+import qualified Ogmios.Data.Json.Dijkstra as Dijkstra
 import qualified Ogmios.Data.Json.Mary as Mary
 import qualified Ogmios.Data.Json.Shelley as Shelley
 
@@ -976,6 +977,29 @@ encodePredicateFailure reject = \case
             "Some proposals contain empty treasury withdrawals, which is pointless and a waste of resources."
             Nothing
 
+    PointerAddressInCollateralReturn { pointerAddressOutput } ->
+        reject (predicateFailureCode 69)
+            "The collateral return output contains a pointer address. Pointer addresses — \
+            \which encode a stake reference as (slot, transaction-index, certificate-index) — \
+            \are not permitted in collateral return outputs in the Dijkstra era. The field \
+            \'data.output' describes the offending collateral return output."
+            (pure $ encodeObject
+                ( "output" .= encodeTxOutInAnyEra pointerAddressOutput
+                )
+            )
+
+    StakePoolVRFKeyAlreadyRegistered { poolId, alreadyRegisteredVrfKey } ->
+        reject (predicateFailureCode 70)
+            "Stake pool can (no longer) re-use an already used VRF key. Yet this \
+            \transaction contains a pool which declares a VRF key that is already in use. \
+            \The field 'data.poolId' indicates the offending pool, while the field \
+            \'data.alreadyRegisteredVrfKey' designates the known vrf key."
+            (pure $ encodeObject
+                ( "poolId" .= Shelley.encodePoolId poolId <>
+                  "alreadyRegisteredVrfKey" .= Shelley.encodeHash (Ledger.unVRFVerKeyHash alreadyRegisteredVrfKey)
+                )
+            )
+
     -- NOTE: This should match the encoding also used for 'EvaluateTransactionResponse' in
     -- Data.Protocol.TxSubmission; hence the code.
     UnableToCreateScriptContext { translationError } ->
@@ -1024,9 +1048,11 @@ encodeTxOutInAnyEra = encodeObject . \case
     TxOutInAnyEra (ShelleyBasedEraAlonzo, out) ->
         Alonzo.encodeTxOut out
     TxOutInAnyEra (ShelleyBasedEraBabbage, out) ->
-        Babbage.encodeTxOut includeAllCbor out
+        Babbage.encodeTxOut (Alonzo.encodeScript includeAllCbor) out
     TxOutInAnyEra (ShelleyBasedEraConway, out) ->
-        Babbage.encodeTxOut includeAllCbor out
+        Babbage.encodeTxOut (Alonzo.encodeScript includeAllCbor) out
+    TxOutInAnyEra (ShelleyBasedEraDijkstra, out) ->
+        Babbage.encodeTxOut (Dijkstra.encodeScript includeAllCbor) out
 
 encodeValueInAnyEra :: ValueInAnyEra -> Json
 encodeValueInAnyEra = \case
@@ -1042,6 +1068,8 @@ encodeValueInAnyEra = \case
         Mary.encodeValue value
     ValueInAnyEra (ShelleyBasedEraConway, value) ->
         Mary.encodeValue value
+    ValueInAnyEra (ShelleyBasedEraDijkstra, value) ->
+        Mary.encodeValue value
 
 encodeScriptPurposeItemInAnyEra
     :: ScriptPurposeItemInAnyEra
@@ -1052,7 +1080,9 @@ encodeScriptPurposeItemInAnyEra = \case
     ScriptPurposeItemInAnyEra (AlonzoBasedEraBabbage, purpose) ->
         Alonzo.encodeScriptPurposeItem purpose
     ScriptPurposeItemInAnyEra (AlonzoBasedEraConway, purpose) ->
-        SJust (Conway.encodeScriptPurposeItem purpose)
+        SJust (encodeObject $ Conway.encodeScriptPurposeItem Conway.encodeTxCert Conway.encodePParamsUpdate purpose)
+    ScriptPurposeItemInAnyEra (AlonzoBasedEraDijkstra, purpose) ->
+        SJust (Dijkstra.encodeScriptPurposeItem purpose)
 
 encodeScriptPurposeIndexInAnyEra
     :: ScriptPurposeIndexInAnyEra
@@ -1064,6 +1094,8 @@ encodeScriptPurposeIndexInAnyEra = \case
         Alonzo.encodeScriptPurposeIndex purpose
     ScriptPurposeIndexInAnyEra (AlonzoBasedEraConway, purpose) ->
         Conway.encodeScriptPurposeIndex purpose
+    ScriptPurposeIndexInAnyEra (AlonzoBasedEraDijkstra, purpose) ->
+        Dijkstra.encodeScriptPurposeIndex purpose
 
 encodeContextErrorInAnyEra
     :: ContextErrorInAnyEra
@@ -1074,7 +1106,9 @@ encodeContextErrorInAnyEra = \case
     ContextErrorInAnyEra (AlonzoBasedEraBabbage, err) ->
         Babbage.encodeContextError err
     ContextErrorInAnyEra (AlonzoBasedEraConway, err) ->
-        Conway.encodeContextError err
+        Conway.encodeContextError Conway.humanReadablePurpose err
+    ContextErrorInAnyEra (AlonzoBasedEraDijkstra, err) ->
+        Dijkstra.encodeContextError err
 
 encodeDiscriminatedEntities
     :: DiscriminatedEntities

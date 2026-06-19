@@ -1,1 +1,1 @@
-{"jsonrpc":"2.0","method":"findIntersection","error":{"code":1000,"message":"No intersection found.","data":{"tip":{"slot":47827,"id":"c895dfa13854f070c5d552237a741564b43a7e28956482524201a5a83f4dc135","height":3}}},"id":null}
+{"jsonrpc":"2.0","method":"findIntersection","error":{"code":1000,"message":"No intersection found.","data":{"tip":{"slot":47827,"id":"96e26d8f5de1b2e95f884cda4f6a5b016d7501a39dd9fba0a60de08a0cc702c9","height":3}}},"id":null}

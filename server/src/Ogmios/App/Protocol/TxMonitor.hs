@@ -202,7 +202,7 @@ mkTxMonitorClient defaultWithInternalError TxMonitorCodecs{..} queue yield nodeT
 
 inMultipleEras
     :: forall crypto constraint.
-        ( constraint ~ (MostRecentEra (CardanoBlock crypto) ~ ConwayEra)
+        ( constraint ~ (MostRecentEra (CardanoBlock crypto) ~ DijkstraEra)
         )
     => NodeToClientVersion
     -> Ledger.TxId
@@ -211,16 +211,19 @@ inMultipleEras nodeToClientV id =
     -- The list is ordered from the "most probable era", down to the least
     -- probable. This hopefully ensures that we do a minimum number of loops
     -- for the happy path.
-    GenTxIdBabbage (ShelleyTxId id) :
-        if nodeToClientV >= NodeToClientV_16 then
-            [ GenTxIdConway (ShelleyTxId id)
-            , GenTxIdAlonzo (ShelleyTxId id)
-            , GenTxIdMary (ShelleyTxId id)
-            ]
-        else
-            [ GenTxIdAlonzo (ShelleyTxId id)
-            , GenTxIdMary (ShelleyTxId id)
-            ]
+    if nodeToClientV > NodeToClientV_23 then
+        [ GenTxIdDijkstra (ShelleyTxId id)
+        , GenTxIdConway (ShelleyTxId id)
+        , GenTxIdBabbage (ShelleyTxId id)
+        , GenTxIdAlonzo (ShelleyTxId id)
+        , GenTxIdMary (ShelleyTxId id)
+        ]
+    else
+        [ GenTxIdConway (ShelleyTxId id)
+        , GenTxIdBabbage (ShelleyTxId id)
+        , GenTxIdAlonzo (ShelleyTxId id)
+        , GenTxIdMary (ShelleyTxId id)
+        ]
   where
     -- This line exists as a reminder. It will generate a compiler error
     -- when a new era becomes available. From there, one should update

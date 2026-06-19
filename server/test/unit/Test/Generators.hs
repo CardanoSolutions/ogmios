@@ -12,9 +12,6 @@ import Cardano.Crypto.Hash.Class
     ( hashFromBytes
     , hashToBytes
     )
-import Cardano.Ledger.Alonzo.Genesis
-    ( AlonzoGenesis (..)
-    )
 import Cardano.Ledger.Api
     ( TransactionScriptFailure (..)
     )
@@ -22,7 +19,7 @@ import Cardano.Ledger.Coin
     ( Coin (..)
     )
 import Cardano.Ledger.Core
-    ( EraSegWits (..)
+    ( EraBlockBody (..)
     )
 import Cardano.Ledger.Keys
     ( KeyRole (..)
@@ -33,11 +30,11 @@ import Cardano.Ledger.Plutus.Data
 import Cardano.Ledger.Plutus.TxInfo
     ( transExUnits
     )
-import Cardano.Ledger.Shelley.API.Mempool
-    ( ApplyTxError (..)
-    )
 import Cardano.Ledger.Shelley.UTxO
     ( UTxO (..)
+    )
+import Cardano.Ledger.State
+    ( ChainAccountState (..)
     )
 import Cardano.Network.Protocol.NodeToClient
     ( Block
@@ -60,12 +57,10 @@ import Data.Type.Equality
     , (:~:) (..)
     )
 import Ogmios.Data.Json.Query
-    ( AccountState (..)
-    , DRepSummary (..)
+    ( DRepSummary (..)
     , GenesisConfig
     , Interpreter
-    , PoolParams
-    , PoolRewardsInfo (..)
+    , PoolRewardsInfo' (..)
     , QueryResult
     , RewardAccountSummaries
     , RewardsProvenance (..)
@@ -107,7 +102,8 @@ import Ouroboros.Consensus.Shelley.Ledger.Block
     ( ShelleyBlock (..)
     )
 import Ouroboros.Consensus.Shelley.Ledger.Mempool
-    ( GenTx (..)
+    ( ApplyTxError (..)
+    , GenTx (..)
     , TxId (..)
     )
 import Ouroboros.Consensus.Shelley.Ledger.Query
@@ -159,6 +155,13 @@ import Type.Reflection
     ( typeRep
     )
 
+import Cardano.Ledger.Alonzo.Genesis
+    ()
+import Cardano.Ledger.Dijkstra.Genesis
+    ( DijkstraGenesis
+    )
+import Test.Cardano.Ledger.Dijkstra.Arbitrary
+    ()
 import Test.Consensus.Cardano.Generators
     ()
 import Test.Generators.Orphans
@@ -170,6 +173,7 @@ import qualified Data.Map as Map
 import qualified Ouroboros.Network.Point as Point
 
 import qualified Cardano.Ledger.Api.Governance as Ledger
+import qualified Cardano.Ledger.Dijkstra.Rules as Dijkstra
 import qualified Cardano.Ledger.Block as Ledger
 import qualified Cardano.Ledger.Core as Ledger
 import qualified Cardano.Ledger.DRep as Ledger
@@ -180,12 +184,10 @@ import qualified Cardano.Ledger.Shelley.API.Wallet as Sh.Api
 import qualified Cardano.Ledger.Shelley.UTxO as Sh
 import qualified Cardano.Ledger.TxIn as Ledger
 
--- FIXME
--- Needed with ouroboros-cardano-consensus==0.18.0.0. Otherwise, use the following:
 import qualified Ouroboros.Consensus.Shelley.Ledger.Query.Types as Consensus
 
-genBlock :: Gen Block
-genBlock = oneof
+genBlock :: Maybe (Gen Block) -> Gen Block
+genBlock dijkstraBlock = oneof $
     [ BlockByron <$> arbitrary
     , BlockShelley <$> genTPraosBlockFrom @ShelleyEra
     , BlockAllegra <$> genTPraosBlockFrom @AllegraEra
@@ -193,66 +195,85 @@ genBlock = oneof
     , BlockAlonzo <$> genTPraosBlockFrom @AlonzoEra
     , BlockBabbage <$> genPraosBlockFrom @BabbageEra
     , BlockConway <$> genPraosBlockFrom @ConwayEra
-    ]
-  where
-    genTPraosBlockFrom
-        :: forall era.
-            ( Arbitrary (Ledger.Tx era)
-            , EraSegWits era
-            )
-        => Gen (ShelleyBlock (TPraos StandardCrypto) era)
-    genTPraosBlockFrom =
-        frequency
-            [ (50
-              , ShelleyBlock
-                  <$> (Ledger.Block
-                        <$> arbitrary
-                        <*> (toTxSeq @era <$> arbitrary `suchThat` (not . null))
-                      )
-                  <*> arbitrary
-              )
-            , (1
-              , ShelleyBlock
-                  <$> (Ledger.Block <$> arbitrary <*> pure (toTxSeq @era mempty))
-                  <*> arbitrary
-              )
-            ]
+    -- TODO: enable Dijkstra Block generation
+    --
+    -- This shall be unnecessary as soon as the Node to client protocol
+    -- enables Dijkstra era through a specific version; at the moment, even
+    -- though the ledger has the proper types and decoders, the networking stack
+    -- will prevent Dijkstra blocks from flowing in.
+    ] ++ maybe [] pure dijkstraBlock
 
-    genPraosBlockFrom
-        :: forall era.
-            ( Arbitrary (Ledger.Tx era)
-            , EraSegWits era
-            )
-        => Gen (ShelleyBlock (Praos StandardCrypto) era)
-    genPraosBlockFrom =
-        frequency
-            [ (50
-              , ShelleyBlock
-                  <$> (Ledger.Block
-                        <$> arbitrary
-                        <*> (toTxSeq @era <$> arbitrary `suchThat` (not . null))
-                      )
-                  <*> arbitrary
-              )
-            , (1
-              , ShelleyBlock
-                  <$> (Ledger.Block <$> arbitrary <*> pure (toTxSeq @era mempty))
-                  <*> arbitrary
-              )
-            ]
+genDijkstraBlock :: Gen Block
+genDijkstraBlock =
+    BlockDijkstra <$> genPraosBlockFrom @DijkstraEra
+
+genTPraosBlockFrom
+    :: forall era.
+        ( Arbitrary (Ledger.Tx Ledger.TopTx era)
+        , EraBlockBody era
+        )
+    => Gen (ShelleyBlock (TPraos StandardCrypto) era)
+genTPraosBlockFrom =
+    frequency
+        [ (50
+          , ShelleyBlock
+              <$> (Ledger.Block
+                    <$> arbitrary
+                    <*> ((\txs -> mkBasicBlockBody & txSeqBlockBodyL .~ txs) <$> arbitrary `suchThat` (not . null))
+                  )
+              <*> arbitrary
+          )
+        , (1
+          , ShelleyBlock
+              <$> (Ledger.Block <$> arbitrary <*> pure (mkBasicBlockBody @era))
+              <*> arbitrary
+          )
+        ]
+
+genPraosBlockFrom
+    :: forall era.
+        ( Arbitrary (Ledger.Tx Ledger.TopTx era)
+        , EraBlockBody era
+        )
+    => Gen (ShelleyBlock (Praos StandardCrypto) era)
+genPraosBlockFrom =
+    frequency
+        [ (50
+          , ShelleyBlock
+              <$> (Ledger.Block
+                    <$> arbitrary
+                    <*> ((\txs -> mkBasicBlockBody & txSeqBlockBodyL .~ txs) <$> arbitrary `suchThat` (not . null))
+                  )
+              <*> arbitrary
+          )
+        , (1
+          , ShelleyBlock
+              <$> (Ledger.Block <$> arbitrary <*> pure (mkBasicBlockBody @era))
+              <*> arbitrary
+          )
+        ]
 
 genTxId :: Gen Ledger.TxId
 genTxId = arbitrary
 
 genGenTxId :: Gen (GenTxId Block)
 genGenTxId = oneof
-    [ GenTxIdConway . ShelleyTxId <$> genTxId
+    [ GenTxIdDijkstra . ShelleyTxId <$> genTxId
+    , GenTxIdConway . ShelleyTxId <$> genTxId
     , GenTxIdBabbage . ShelleyTxId <$> genTxId
     , GenTxIdAlonzo . ShelleyTxId <$> genTxId
     ]
 
 genTx :: Gen (GenTx Block)
 genTx = oneof
+    [ GenTxAlonzo <$> liftA2 ShelleyTx arbitrary arbitrary
+    , GenTxBabbage <$> liftA2 ShelleyTx arbitrary arbitrary
+    , GenTxConway <$> liftA2 ShelleyTx arbitrary arbitrary
+    , GenTxDijkstra <$> liftA2 ShelleyTx arbitrary arbitrary
+    ]
+
+genTxUpToConway :: Gen (GenTx Block)
+genTxUpToConway = oneof
     [ GenTxAlonzo <$> liftA2 ShelleyTx arbitrary arbitrary
     , GenTxBabbage <$> liftA2 ShelleyTx arbitrary arbitrary
     , GenTxConway <$> liftA2 ShelleyTx arbitrary arbitrary
@@ -303,13 +324,20 @@ genSubmitResult = frequency
 genHardForkApplyTxErr :: Gen (HardForkApplyTxErr (CardanoEras StandardCrypto))
 genHardForkApplyTxErr = frequency
     [ ( 1, HardForkApplyTxErrWrongEra <$> genMismatchEraInfo)
-    , ( 5, ApplyTxErrShelley . ApplyTxError . pure <$> arbitrary )
-    , ( 5, ApplyTxErrAllegra . ApplyTxError . pure <$> arbitrary )
-    , ( 5, ApplyTxErrMary . ApplyTxError . pure <$> arbitrary )
-    , ( 10, ApplyTxErrAlonzo . ApplyTxError . pure <$> arbitrary )
-    , ( 25, ApplyTxErrBabbage . ApplyTxError . pure <$> arbitrary )
-    , ( 25, ApplyTxErrConway . ApplyTxError . pure <$> arbitrary )
+    , ( 5, ApplyTxErrShelley . ShelleyApplyTxError . pure <$> arbitrary )
+    , ( 5, ApplyTxErrAllegra . AllegraApplyTxError . pure <$> arbitrary )
+    , ( 5, ApplyTxErrMary . MaryApplyTxError . pure <$> arbitrary )
+    , ( 10, ApplyTxErrAlonzo . AlonzoApplyTxError . pure <$> arbitrary )
+    , ( 25, ApplyTxErrBabbage . BabbageApplyTxError . pure <$> arbitrary )
+    , ( 25, ApplyTxErrConway . ConwayApplyTxError . pure <$> arbitrary )
+    , ( 25, ApplyTxErrDijkstra . DijkstraApplyTxError . pure <$> genDijkstraMempoolFailure )
     ]
+
+genDijkstraMempoolFailure :: Gen (Dijkstra.DijkstraMempoolPredFailure DijkstraEra)
+genDijkstraMempoolFailure =
+    arbitrary `suchThat` \case
+        Dijkstra.LedgerFailure Dijkstra.DijkstraSpendingOutputFromSameTx{} -> False
+        _ -> True
 
 genEvaluateTransactionResponse :: Gen (EvaluateTransactionResponse Block)
 genEvaluateTransactionResponse = frequency
@@ -338,6 +366,7 @@ genContextError = oneof
     [ ContextErrorInAnyEra . (AlonzoBasedEraAlonzo,) <$> arbitrary
     , ContextErrorInAnyEra . (AlonzoBasedEraBabbage,) <$> arbitrary
     , ContextErrorInAnyEra . (AlonzoBasedEraConway,) <$> arbitrary
+    , ContextErrorInAnyEra . (AlonzoBasedEraDijkstra,) <$> arbitrary
     ]
 
 genPreAlonzoEra :: Gen Text
@@ -362,6 +391,7 @@ genScriptFailure = oneof
     , inAlonzoEra $ MissingScript <$> arbitrary <*> arbitrary
     , inBabbageEra $ MissingScript <$> arbitrary <*> arbitrary
     , inConwayEra $ MissingScript <$> arbitrary <*> arbitrary
+    , inDijkstraEra $ MissingScript <$> arbitrary <*> arbitrary
 
     -- TODO: Also cover ValidationFailedV1 & ValidationFailedV2.
     -- This requires to also generate arbitrary instances for plutus' 'EvaluationError'
@@ -382,6 +412,11 @@ genScriptFailure = oneof
         :: Gen (TransactionScriptFailure ConwayEra)
         -> Gen TransactionScriptFailureInAnyEra
     inConwayEra = fmap (TransactionScriptFailureInAnyEra . (AlonzoBasedEraConway,))
+
+    inDijkstraEra
+        :: Gen (TransactionScriptFailure DijkstraEra)
+        -> Gen TransactionScriptFailureInAnyEra
+    inDijkstraEra = fmap (TransactionScriptFailureInAnyEra . (AlonzoBasedEraDijkstra,))
 
 genAcquireFailure :: Gen AcquireFailure
 genAcquireFailure = elements
@@ -445,8 +480,8 @@ genRewardsProvenance =
             )
 
 genPoolRewardsInfo
-    :: Gen PoolRewardsInfo
-genPoolRewardsInfo = PoolRewardsInfo
+    :: Gen PoolRewardsInfo'
+genPoolRewardsInfo = PoolRewardsInfo'
     <$> arbitrary
     <*> arbitrary
     <*> arbitrary
@@ -607,7 +642,7 @@ genPParamsResult
     -> Gen (QueryResult crypto (Ledger.PParams era))
 genPParamsResult _ _ =
     maybe (error "genPParamsResult: unsupported era") identity
-        (genShelley <|> genAllegra <|> genMary <|> genAlonzo <|> genBabbage <|> genConway)
+        (genShelley <|> genAllegra <|> genMary <|> genAlonzo <|> genBabbage <|> genConway <|> genDijkstra)
   where
     genShelley =
         case testEquality (typeRep @era) (typeRep @ShelleyEra) of
@@ -663,6 +698,16 @@ genPParamsResult _ _ =
                     ]
             Nothing ->
                 Nothing
+    genDijkstra =
+        case testEquality (typeRep @era) (typeRep @DijkstraEra) of
+            Just Refl{} ->
+                Just $ frequency
+                    [ (1, Left <$> genMismatchEraInfo)
+                    , (10, Right <$> arbitrary)
+                    ]
+            Nothing ->
+                Nothing
+
 
 genConstitutionResult
     :: forall crypto era. (crypto ~ StandardCrypto, Typeable era)
@@ -688,10 +733,19 @@ genGovStateResult
     -> Proxy (QueryResult crypto (Ledger.GovState era))
     -> Gen (QueryResult crypto (Ledger.GovState era))
 genGovStateResult _ _ =
-    maybe (error "genGovStateResult: unsupported era") identity genConway
+    maybe (error "genGovStateResult: unsupported era") identity (genConway <|> genDijkstra)
   where
     genConway =
         case testEquality (typeRep @era) (typeRep @ConwayEra) of
+            Just Refl{} ->
+                Just $ frequency
+                    [ (1, Left <$> genMismatchEraInfo)
+                    , (10, Right <$> reasonablySized arbitrary)
+                    ]
+            Nothing ->
+                Nothing
+    genDijkstra =
+        case testEquality (typeRep @era) (typeRep @DijkstraEra) of
             Just Refl{} ->
                 Just $ frequency
                     [ (1, Left <$> genMismatchEraInfo)
@@ -706,7 +760,7 @@ genGovActionStateResult
     -> Proxy (QueryResult crypto (Seq (Ledger.GovActionState era)))
     -> Gen (QueryResult crypto (Seq (Ledger.GovActionState era)))
 genGovActionStateResult _ _ =
-    maybe (error "genGovActionStateResult: unsupported era") identity genConway
+    maybe (error "genGovActionStateResult: unsupported era") identity (genConway <|> genDijkstra)
   where
     genConway =
         case testEquality (typeRep @era) (typeRep @ConwayEra) of
@@ -717,6 +771,16 @@ genGovActionStateResult _ _ =
                     ]
             Nothing ->
                 Nothing
+    genDijkstra =
+        case testEquality (typeRep @era) (typeRep @DijkstraEra) of
+            Just Refl{} ->
+                Just $ frequency
+                    [ (1, Left <$> genMismatchEraInfo)
+                    , (10, Right <$> reasonablySized arbitrary)
+                    ]
+            Nothing ->
+                Nothing
+
 
 genCommitteeMembersStateResult
     :: forall crypto era. (crypto ~ StandardCrypto)
@@ -788,7 +852,7 @@ genUTxOResult
     -> Gen (QueryResult crypto (Sh.UTxO era))
 genUTxOResult _ _ =
     maybe (error "genUTxOResult: unsupported era") identity
-        (genShelley <|> genAllegra <|> genMary <|> genAlonzo <|> genBabbage <|> genConway)
+        (genShelley <|> genAllegra <|> genMary <|> genAlonzo <|> genBabbage <|> genConway <|> genDijkstra)
   where
     genShelley =
         case testEquality (typeRep @era) (typeRep @ShelleyEra) of
@@ -844,18 +908,32 @@ genUTxOResult _ _ =
                     ]
             Nothing ->
                 Nothing
+    genDijkstra =
+        case testEquality (typeRep @era) (typeRep @DijkstraEra) of
+            Just Refl{} ->
+                Just $ frequency
+                    [ (1, Left <$> genMismatchEraInfo)
+                    , (10, Right <$> arbitrary)
+                    ]
+            Nothing ->
+                Nothing
 
+-- TODO: generator for Dijkstra's genesis config
+--
+-- Once available
 genGenesisConfig
     :: ( Gen (GenesisConfig ByronEra)
        , Gen (GenesisConfig ShelleyEra)
        , Gen (GenesisConfig AlonzoEra)
        , Gen (GenesisConfig ConwayEra)
+       , Gen (GenesisConfig DijkstraEra)
        )
 genGenesisConfig =
     ( error "TODO: genGenesisConfig@ByronEra"
     , genGenesisConfigShelley
     , genGenesisConfigAlonzo
     , genGenesisConfigConway
+    , genGenesisConfigDijkstra
     )
 
 genGenesisConfigShelley
@@ -865,21 +943,17 @@ genGenesisConfigShelley =
 
 genGenesisConfigAlonzo
     :: Gen (GenesisConfig AlonzoEra)
-genGenesisConfigAlonzo =
-    AlonzoGenesis
-        <$> arbitrary
-        <*> arbitrary
-        <*> arbitrary
-        <*> arbitrary
-        <*> arbitrary
-        <*> arbitrary
-        <*> arbitrary
-        <*> arbitrary
+genGenesisConfigAlonzo = arbitrary
 
 genGenesisConfigConway
     :: Gen (GenesisConfig ConwayEra)
 genGenesisConfigConway =
     arbitrary
+
+genGenesisConfigDijkstra
+    :: Gen (DijkstraGenesis)
+genGenesisConfigDijkstra =
+    genericArbitrary
 
 genRewardsProvenanceResult
     :: forall crypto. (crypto ~ StandardCrypto)
@@ -899,21 +973,21 @@ genStakePoolsPerformancesResult _ = frequency
     , (10, Right <$> genStakePoolsPerformances)
     ]
 
-genAccountStateResult
+genChainAccountStateResult
     :: forall crypto. (crypto ~ StandardCrypto)
-    => Proxy (QueryResult crypto AccountState)
-    -> Gen (QueryResult crypto AccountState)
-genAccountStateResult _ = frequency
+    => Proxy (QueryResult crypto ChainAccountState)
+    -> Gen (QueryResult crypto ChainAccountState)
+genChainAccountStateResult _ = frequency
     [ (1, Left <$> genMismatchEraInfo)
-    , (10, Right <$> genAccountState)
+    , (10, Right <$> genChainAccountState)
     ]
   where
-    genAccountState = AccountState <$> arbitrary <*> arbitrary
+    genChainAccountState = ChainAccountState <$> arbitrary <*> arbitrary
 
 genPoolParametersResult
     :: forall crypto. (crypto ~ StandardCrypto)
-    => Proxy (QueryResult crypto (Map (Ledger.KeyHash 'StakePool) (Maybe PoolParams, StrictMaybe Coin)))
-    -> Gen (QueryResult crypto (Map (Ledger.KeyHash 'StakePool) (Maybe PoolParams, StrictMaybe Coin)))
+    => Proxy (QueryResult crypto (Map (Ledger.KeyHash StakePool) (Maybe Ledger.StakePoolParams, StrictMaybe Coin)))
+    -> Gen (QueryResult crypto (Map (Ledger.KeyHash StakePool) (Maybe Ledger.StakePoolParams, StrictMaybe Coin)))
 genPoolParametersResult _ = frequency
     [ (1, Left <$> genMismatchEraInfo)
     , (10, Right <$> arbitrary)
@@ -921,8 +995,8 @@ genPoolParametersResult _ = frequency
 
 genPoolParametersResultNoStake
     :: forall crypto. (crypto ~ StandardCrypto)
-    => Proxy (QueryResult crypto (Map (Ledger.KeyHash 'StakePool) PoolParams))
-    -> Gen (QueryResult crypto (Map (Ledger.KeyHash 'StakePool) PoolParams))
+    => Proxy (QueryResult crypto (Map (Ledger.KeyHash StakePool) Ledger.StakePoolParams))
+    -> Gen (QueryResult crypto (Map (Ledger.KeyHash StakePool) Ledger.StakePoolParams))
 genPoolParametersResultNoStake _ = frequency
     [ (1, Left <$> genMismatchEraInfo)
     , (10, Right <$> arbitrary)
@@ -936,14 +1010,10 @@ genMirror = oneof
     , Just . Json.toJSON <$> arbitrary @Int
     ]
 
-genUtxoAlonzo
-    :: Gen (UTxO AlonzoEra)
-genUtxoAlonzo =
-    arbitrary
-
-genUtxoBabbage
-    :: Gen (UTxO BabbageEra)
-genUtxoBabbage =
+genUtxo
+    :: forall era. (Ledger.EraTxOut era, Arbitrary (Ledger.TxOut era))
+    => Gen (UTxO era)
+genUtxo =
     arbitrary
 
 genData

@@ -95,6 +95,7 @@ import Cardano.Network.Protocol.NodeToClient
     , Clients (..)
     , Error (..)
     , NodeToClientVersion
+    , NodeToClientVersionData (NodeToClientVersionData)
     , connectClient
     , mkClient
     )
@@ -128,9 +129,6 @@ import Ouroboros.Network.Block
     , Tip (..)
     , genesisPoint
     , getTipPoint
-    )
-import Ouroboros.Network.NodeToClient
-    ( NodeToClientVersionData (NodeToClientVersionData)
     )
 import Ouroboros.Network.Protocol.ChainSync.ClientPipelined
     ( ChainSyncClientPipelined (..)

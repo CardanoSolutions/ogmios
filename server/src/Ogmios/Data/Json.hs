@@ -47,7 +47,7 @@ import Ogmios.Data.Json.Prelude
 import Cardano.Ledger.Binary
     ( ToCBOR (..)
     )
-import Cardano.Ledger.Shelley.API
+import Ouroboros.Consensus.Shelley.Ledger.Mempool
     ( ApplyTxError (..)
     )
 import Cardano.Network.Protocol.NodeToClient
@@ -118,6 +118,7 @@ import qualified Ogmios.Data.Json.Alonzo as Alonzo
 import qualified Ogmios.Data.Json.Babbage as Babbage
 import qualified Ogmios.Data.Json.Byron as Byron
 import qualified Ogmios.Data.Json.Conway as Conway
+import qualified Ogmios.Data.Json.Dijkstra as Dijkstra
 import qualified Ogmios.Data.Json.Mary as Mary
 import qualified Ogmios.Data.Json.Shelley as Shelley
 
@@ -125,6 +126,7 @@ import qualified Ogmios.Data.Ledger.PredicateFailure.Allegra as Allegra
 import qualified Ogmios.Data.Ledger.PredicateFailure.Alonzo as Alonzo
 import qualified Ogmios.Data.Ledger.PredicateFailure.Babbage as Babbage
 import qualified Ogmios.Data.Ledger.PredicateFailure.Conway as Conway
+import qualified Ogmios.Data.Ledger.PredicateFailure.Dijkstra as Dijkstra
 import qualified Ogmios.Data.Ledger.PredicateFailure.Mary as Mary
 import qualified Ogmios.Data.Ledger.PredicateFailure.Shelley as Shelley
 
@@ -170,6 +172,8 @@ encodeBlock opts = \case
         Babbage.encodeBlock opts blk
     BlockConway blk ->
         Conway.encodeBlock opts blk
+    BlockDijkstra blk ->
+        Dijkstra.encodeBlock opts blk
 
 encodeSubmitTransactionError
     :: (Rpc.FaultCode -> String -> Maybe Json -> Json)
@@ -182,22 +186,25 @@ encodeSubmitTransactionError reject = \case
             \submit a transaction near an era boundary (i.e. at the moment of a hard-fork). \
             \Retrying should help."
             (pure $ encodeEraMismatch e)
-    ApplyTxErrConway (ApplyTxError xs) ->
+    ApplyTxErrDijkstra (DijkstraApplyTxError xs) ->
+        (encodePredicateFailure reject . pickPredicateFailure)
+            (Dijkstra.encodeMempoolFailure <$> xs)
+    ApplyTxErrConway (ConwayApplyTxError xs) ->
         (encodePredicateFailure reject . pickPredicateFailure)
             (Conway.encodeLedgerFailure <$> xs)
-    ApplyTxErrBabbage (ApplyTxError xs) ->
+    ApplyTxErrBabbage (BabbageApplyTxError xs) ->
         (encodePredicateFailure reject . pickPredicateFailure)
             (Babbage.encodeLedgerFailure <$> xs)
-    ApplyTxErrAlonzo (ApplyTxError xs) ->
+    ApplyTxErrAlonzo (AlonzoApplyTxError xs) ->
         (encodePredicateFailure reject . pickPredicateFailure)
             (Alonzo.encodeLedgerFailure <$> xs)
-    ApplyTxErrMary (ApplyTxError xs) ->
+    ApplyTxErrMary (MaryApplyTxError xs) ->
         (encodePredicateFailure reject . pickPredicateFailure)
             (Mary.encodeLedgerFailure <$> xs)
-    ApplyTxErrAllegra (ApplyTxError xs) ->
+    ApplyTxErrAllegra (AllegraApplyTxError xs) ->
         (encodePredicateFailure reject . pickPredicateFailure)
             (Allegra.encodeLedgerFailure <$> xs)
-    ApplyTxErrShelley (ApplyTxError xs) ->
+    ApplyTxErrShelley (ShelleyApplyTxError xs) ->
         (encodePredicateFailure reject . pickPredicateFailure)
             (Shelley.encodeLedgerFailure <$> xs)
     ApplyTxErrByron{} ->
@@ -223,6 +230,8 @@ encodeSerializedTransaction =
             toCBOR tx
         GenTxConway tx ->
             toCBOR tx
+        GenTxDijkstra tx ->
+            toCBOR tx
 
 encodeTip
     :: Tip (CardanoBlock crypto)
@@ -244,6 +253,8 @@ encodeTx
     -> GenTx (CardanoBlock crypto)
     -> Json
 encodeTx opts = \case
+    GenTxDijkstra (ShelleyTx _ x) ->
+        Dijkstra.encodeTx opts x
     GenTxConway (ShelleyTx _ x) ->
         Conway.encodeTx opts x
     GenTxBabbage (ShelleyTx _ x) ->
@@ -263,6 +274,8 @@ encodeGenTxId
     :: GenTxId (CardanoBlock crypto)
     -> Json
 encodeGenTxId = encodeObject . \case
+    GenTxIdDijkstra (ShelleyTxId x) ->
+        Shelley.encodeTxId x
     GenTxIdConway (ShelleyTxId x) ->
         Shelley.encodeTxId x
     GenTxIdBabbage (ShelleyTxId x) ->
@@ -303,12 +316,13 @@ encodeDeserialisationFailure reject errs =
     encodeDecoderErrorInEra size e era =
         let
             k = case era of
-                ShelleyBasedEraShelley -> "shelley"
-                ShelleyBasedEraAllegra -> "allegra"
-                ShelleyBasedEraMary    -> "mary"
-                ShelleyBasedEraAlonzo  -> "alonzo"
-                ShelleyBasedEraBabbage -> "babbage"
-                ShelleyBasedEraConway  -> "conway"
+                ShelleyBasedEraShelley  -> "shelley"
+                ShelleyBasedEraAllegra  -> "allegra"
+                ShelleyBasedEraMary     -> "mary"
+                ShelleyBasedEraAlonzo   -> "alonzo"
+                ShelleyBasedEraBabbage  -> "babbage"
+                ShelleyBasedEraConway   -> "conway"
+                ShelleyBasedEraDijkstra -> "dijkstra"
          in
             k .= encodeDecoderError size e
 
@@ -353,6 +367,7 @@ encodeDeserialisationFailure reject errs =
           . T.replace " AlonzoEra" ""
           . T.replace " BabbageEra" ""
           . T.replace " ConwayEra" ""
+          . T.replace " DijkstraEra" ""
           . T.replace "value of type ConwayTxBodyRaw" "transaction body"
           . T.replace "value of type BabbageTxBodyRaw" "transaction body"
           . T.replace "value of type AlonzoTxBodyRaw" "transaction body"

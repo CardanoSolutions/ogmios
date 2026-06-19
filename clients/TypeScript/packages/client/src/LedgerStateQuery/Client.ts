@@ -26,6 +26,7 @@ import {
   GenesisAlonzo,
   GenesisByron,
   GenesisConway,
+  GenesisDijkstra,
   GenesisShelley,
   GovernanceProposalReference,
   Origin,
@@ -56,6 +57,7 @@ export interface LedgerStateQueryClient {
   genesisConfiguration(era: 'shelley'): Promise<GenesisShelley>
   genesisConfiguration(era: 'alonzo'): Promise<GenesisAlonzo>
   genesisConfiguration(era: 'conway'): Promise<GenesisConway>
+  genesisConfiguration(era: 'dijkstra'): Promise<GenesisDijkstra>
   ledgerTip(): ReturnType<typeof ledgerTip>
   liveStakeDistribution(): ReturnType<typeof liveStakeDistribution>
   networkBlockHeight(): ReturnType<typeof networkBlockHeight>
@@ -146,6 +148,8 @@ export async function createLedgerStateQueryClient (
         case 'alonzo':
           return genesisConfiguration(context, era)
         case 'conway':
+          return genesisConfiguration(context, era)
+        case 'dijkstra':
           return genesisConfiguration(context, era)
         default: {
           // NOTE: This raises "Type 'string' is not assignable to type 'never'."

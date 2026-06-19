@@ -228,6 +228,7 @@ data CardanoEra
     | Alonzo
     | Babbage
     | Conway
+    | Dijkstra
     deriving stock (Generic, Show, Eq, Enum, Bounded)
 
 instance ToJSON CardanoEra where
@@ -239,6 +240,7 @@ instance ToJSON CardanoEra where
         Alonzo -> "alonzo"
         Babbage -> "babbage"
         Conway -> "conway"
+        Dijkstra -> "dijkstra"
 
 eraIndexToCardanoEra
     :: forall crypto. ()
@@ -251,4 +253,5 @@ eraIndexToCardanoEra = \case
     EraIndex          (S (S (S Z{})))    -> Mary
     EraIndex       (S (S (S (S Z{}))))   -> Alonzo
     EraIndex    (S (S (S (S (S Z{})))))  -> Babbage
-    EraIndex (S (S (S (S (S (S Z{})))))) -> Conway
+    EraIndex    (S (S (S (S (S (S Z{})))))) -> Conway
+    EraIndex (S (S (S (S (S (S (S Z{}))))))) -> Dijkstra

@@ -20,7 +20,7 @@ import qualified Cardano.Ledger.Address as Ledger
 import qualified Cardano.Ledger.Block as Ledger
 import qualified Cardano.Ledger.Core as Ledger
 
-import qualified Cardano.Ledger.Shelley.BlockChain as Sh
+import qualified Cardano.Ledger.Shelley.BlockBody as Sh
 import qualified Cardano.Ledger.Shelley.Scripts as Sh
 import qualified Cardano.Ledger.Shelley.Tx as Sh
 import qualified Cardano.Ledger.Shelley.TxWits as Sh
@@ -66,7 +66,7 @@ encodeBlock opts (ShelleyBlock (Ledger.Block blkHeader txs) headerHash) =
         <>
           "size" .= encodeSingleton "bytes" (encodeWord32 (TPraos.bsize hBody))
         <>
-          "transactions" .= encodeFoldable (encodeTx opts) (Sh.txSeqTxns' txs)
+          "transactions" .= encodeFoldable (encodeTx opts) (Sh.shelleyBlockBodyTxs txs)
         )
   where
     TPraos.BHeader hBody _ = blkHeader
@@ -116,22 +116,24 @@ encodeTimelock = encodeObject . \case
     Al.RequireTimeStart s ->
         "clause" .= encodeText "after" <>
         "slot" .= encodeSlotNo s
+    _ ->
+        error "impossible: found extra unexpected variant in an pre-Dijkstra native script?"
 
 encodeTx
     :: (MetadataFormat, IncludeCbor)
-    -> Sh.ShelleyTx AllegraEra
+    -> Sh.Tx Ledger.TopTx AllegraEra
     -> Json
 encodeTx (fmt, opts) x =
     encodeObject
-        ( Shelley.encodeTxId (Ledger.txIdTxBody @AllegraEra (Sh.body x))
+        ( Shelley.encodeTxId (Ledger.txIdTxBody @AllegraEra (x ^. Ledger.bodyTxL))
        <>
         "spends" .= encodeText "inputs"
        <>
-        encodeTxBody (Sh.body x) (strictMaybe mempty (Map.keys . snd) auxiliary)
+        encodeTxBody (x ^. Ledger.bodyTxL) (strictMaybe mempty (Map.keys . snd) auxiliary)
        <>
         "metadata" .=? OmitWhenNothing fst auxiliary
        <>
-        encodeWitnessSet opts (snd <$> auxiliary) (Sh.wits x)
+        encodeWitnessSet opts (snd <$> auxiliary) (x ^. Ledger.witsTxL)
        <>
         if includeTransactionCbor opts then
            "cbor" .= encodeByteStringBase16 (encodeCbor @AllegraEra x)
@@ -140,22 +142,22 @@ encodeTx (fmt, opts) x =
        )
   where
     auxiliary = do
-        hash <- Shelley.encodeAuxiliaryDataHash <$> Al.atbAuxDataHash (Sh.body x)
-        (labels, scripts) <- encodeAuxiliaryData (fmt, opts) <$> Sh.auxiliaryData x
+        hash <- Shelley.encodeAuxiliaryDataHash <$> Al.atbAuxDataHash (x ^. Ledger.bodyTxL)
+        (labels, scripts) <- encodeAuxiliaryData (fmt, opts) <$> (x ^. Ledger.auxDataTxL)
         pure
             ( encodeObject ("hash" .= hash <> "labels" .= labels)
             , scripts
             )
 
 encodeTxBody
-    :: Al.AllegraTxBody AllegraEra
+    :: Ledger.TxBody Ledger.TopTx AllegraEra
     -> [Ledger.ScriptHash]
     -> Series
 encodeTxBody (Al.AllegraTxBody inps outs dCerts wdrls fee validity updates _) requiredScripts =
     "inputs" .=
         encodeFoldable (encodeObject . Shelley.encodeTxIn) inps <>
-    "outputs" .=
-        encodeFoldable (encodeObject . Shelley.encodeTxOut) outs <>
+    "outputs" .=? OmitWhen null
+        (encodeFoldable  (encodeObject . Shelley.encodeTxOut)) outs <>
     "withdrawals" .=? OmitWhen (null . Ledger.unWithdrawals)
         Shelley.encodeWdrl wdrls <>
     "certificates" .=? OmitWhen null
@@ -164,7 +166,7 @@ encodeTxBody (Al.AllegraTxBody inps outs dCerts wdrls fee validity updates _) re
         (encodeFoldable Shelley.encodeScriptHash) requiredScripts <>
     "fee" .=
         encodeCoin fee <>
-    "validityInterval" .=
+    "validityInterval" .=? OmitWhen (\it -> isSNothing (Al.invalidBefore it) && isSNothing (Al.invalidHereafter it))
         encodeValidityInterval validity <>
     "proposals" .=? OmitWhen null
         (encodeList (encodeSingleton "action")) actions <>

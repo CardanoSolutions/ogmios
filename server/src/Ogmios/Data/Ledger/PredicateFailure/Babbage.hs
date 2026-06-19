@@ -6,6 +6,9 @@ module Ogmios.Data.Ledger.PredicateFailure.Babbage where
 
 import Ogmios.Prelude
 
+import Cardano.Ledger.BaseTypes
+    ( Mismatch (..)
+    )
 import Cardano.Ledger.Core
     ( EraRule
     )
@@ -20,19 +23,18 @@ import Ogmios.Data.Ledger.PredicateFailure.Shelley
     ( encodeDelegsFailure
     )
 
-import qualified Ogmios.Data.Ledger.PredicateFailure.Alonzo as Alonzo
-
 import qualified Cardano.Ledger.Babbage.Rules as Ba
 import qualified Cardano.Ledger.Shelley.Rules as Sh
+import qualified Data.Set.NonEmpty as NESet
+import qualified Ogmios.Data.Ledger.PredicateFailure.Alonzo as Alonzo
+import qualified Ogmios.Data.Ledger.PredicateFailure.Shelley as Shelley
 
 encodeLedgerFailure
     :: Sh.ShelleyLedgerPredFailure BabbageEra
     -> MultiEraPredicateFailure
-encodeLedgerFailure = \case
-    Sh.UtxowFailure e  ->
-        encodeUtxowFailure AlonzoBasedEraBabbage (Alonzo.encodeUtxosFailure AlonzoBasedEraBabbage) e
-    Sh.DelegsFailure e ->
-        encodeDelegsFailure e
+encodeLedgerFailure = Shelley.encodeLedgerFailureInEra
+    (let era = AlonzoBasedEraBabbage in encodeUtxowFailure era (Alonzo.encodeUtxosFailure era))
+    encodeDelegsFailure
 
 encodeUtxowFailure
     :: forall era.
@@ -45,9 +47,11 @@ encodeUtxowFailure
     -> MultiEraPredicateFailure
 encodeUtxowFailure era encodeUtxosFailure = \case
     Ba.MalformedReferenceScripts scripts ->
-        MalformedScripts scripts
+        MalformedScripts (NESet.toSet scripts)
     Ba.MalformedScriptWitnesses scripts ->
-        MalformedScripts scripts
+        MalformedScripts (NESet.toSet scripts)
+    Ba.ScriptIntegrityHashMismatch (Mismatch providedIntegrityHash computedIntegrityHash) _computedBodyHash ->
+        ScriptIntegrityHashMismatch { providedIntegrityHash, computedIntegrityHash }
     Ba.AlonzoInBabbageUtxowPredFailure e ->
         Alonzo.encodeUtxowFailure era (encodeUtxoFailure era encodeUtxosFailure) e
     Ba.UtxoFailure e ->
@@ -73,4 +77,4 @@ encodeUtxoFailure era encodeUtxosFailure = \case
                     , Just minAda
                     )
                 ) <$> outs
-         in InsufficientAdaInOutput { insufficientlyFundedOutputs }
+         in InsufficientAdaInOutput { insufficientlyFundedOutputs = toList insufficientlyFundedOutputs }

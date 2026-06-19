@@ -34,7 +34,7 @@ import Network.TypedProtocol.Codec
 import Ouroboros.Network.Driver.Simple
     ( TraceSendRecv (..)
     )
-import Ouroboros.Network.NodeToClient
+import Cardano.Network.NodeToClient
     ( ConnectionId (..)
     , LocalAddress
     , NodeToClientVersion

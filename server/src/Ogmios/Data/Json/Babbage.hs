@@ -18,10 +18,17 @@ import Cardano.Ledger.Api
 import Cardano.Ledger.Binary
     ( sizedValue
     )
+import Cardano.Ledger.Compactible
+    ( CompactForm
+    , Compactible (..)
+    )
 import Ouroboros.Consensus.Shelley.Ledger.Block
     ( ShelleyBlock (..)
     )
+
 import Ouroboros.Consensus.Shelley.Protocol.Praos
+    ()
+import Cardano.Ledger.HKD
     ()
 
 import qualified Data.Map.Strict as Map
@@ -36,11 +43,13 @@ import qualified Cardano.Ledger.Plutus.Data as Ledger
 import qualified Cardano.Ledger.Shelley.API as Sh
 import qualified Cardano.Ledger.Shelley.PParams as Sh
 
+import qualified Cardano.Ledger.Allegra.Scripts as Al
+
 import qualified Cardano.Ledger.Mary.Value as Ma
 
+import qualified Cardano.Ledger.Alonzo.BlockBody as Al
 import qualified Cardano.Ledger.Alonzo.PParams as Al
 import qualified Cardano.Ledger.Alonzo.Scripts as Al
-import qualified Cardano.Ledger.Alonzo.TxSeq as Al
 
 import qualified Cardano.Ledger.Babbage.Core as Ba
 import qualified Cardano.Ledger.Babbage.PParams as Ba
@@ -69,7 +78,7 @@ encodeBlock opts (ShelleyBlock (Ledger.Block blkHeader txs) headerHash) =
         <>
           encodeHeader blkHeader
         <>
-          "transactions" .= encodeFoldable (encodeTx opts) (Al.txSeqTxns txs)
+          "transactions" .= encodeFoldable (encodeTx opts) (Al.alonzoBlockBodyTxs txs)
         )
 
 encodeContextError
@@ -133,7 +142,7 @@ encodePParams
     => Ledger.PParams era
     -> Json
 encodePParams (Ledger.PParams x) =
-    encodePParamsHKD (\k encode v -> k .= encode v) identity x
+    encodePParamsHKD (\k enc v -> k .= enc v) (\k enc v -> k .= enc (fromCompact v)) identity x
 
 encodePParamsUpdate
     :: forall era.
@@ -163,7 +172,8 @@ encodePParamsUpdate (Ledger.PParamsUpdate x) =
                     encodeText "protocolParametersUpdate"
                <> "parameters" .=
                     encodePParamsHKD
-                        (\k encode v -> k .=? OmitWhenNothing encode v)
+                        (\k enc v -> k .=? OmitWhenNothing enc v)
+                        (\k enc v -> k .=? OmitWhenNothing (enc . fromCompact) v)
                         (const SNothing)
                         x'
                 )
@@ -174,7 +184,8 @@ encodePParamsUpdate (Ledger.PParamsUpdate x) =
                     encodeText "protocolParametersUpdate"
                <> "parameters" .=
                     encodePParamsHKD
-                        (\k encode v -> k .=? OmitWhenNothing encode v)
+                        (\k enc v -> k .=? OmitWhenNothing enc v)
+                        (\k enc v -> k .=? OmitWhenNothing (enc . fromCompact) v)
                         (const SNothing)
                         x'
                 )
@@ -193,7 +204,8 @@ encodeProposedPPUpdates (Sh.ProposedPPUpdates m) =
     encodeFoldable
         (\(Ledger.PParamsUpdate x) ->
             encodePParamsHKD
-                (\k encode v -> k .=? OmitWhenNothing encode v)
+                (\k enc v -> k .=? OmitWhenNothing enc v)
+                (\k enc v -> k .=? OmitWhenNothing (enc . fromCompact) v)
                 (const SNothing)
                 x
         )
@@ -201,23 +213,24 @@ encodeProposedPPUpdates (Sh.ProposedPPUpdates m) =
 
 encodePParamsHKD
     :: (forall a. Text -> (a -> Json) -> Sh.HKD f a -> Series)
+    -> (forall a. Compactible a => Text -> (a -> Json) -> Sh.HKD f (CompactForm a) -> Series)
     -> (Integer -> Sh.HKD f Integer)
     -> Ba.BabbagePParams f era
     -> Json
-encodePParamsHKD encode pure_ x =
+encodePParamsHKD encode encodeCompact pure_ x =
     encode "minFeeCoefficient"
-        (encodeInteger . unCoin) (Ba.bppMinFeeA x) <>
-    encode "minFeeConstant"
-        encodeCoin (Ba.bppMinFeeB x) <>
+        (encodeInteger . unCoin . fromCompact . Ba.unCoinPerByte) (Ba.bppTxFeePerByte x) <>
+    encodeCompact "minFeeConstant"
+        encodeCoin (Ba.bppTxFeeFixed x) <>
     encode "maxBlockBodySize"
         (encodeSingleton "bytes" . encodeWord32) (Ba.bppMaxBBSize x) <>
     encode "maxBlockHeaderSize"
         (encodeSingleton "bytes" . encodeWord16) (Ba.bppMaxBHSize x) <>
     encode "maxTransactionSize"
         (encodeSingleton "bytes" . encodeWord32) (Ba.bppMaxTxSize x) <>
-    encode "stakeCredentialDeposit"
+    encodeCompact "stakeCredentialDeposit"
         encodeCoin (Ba.bppKeyDeposit x) <>
-    encode "stakePoolDeposit"
+    encodeCompact "stakePoolDeposit"
         encodeCoin (Ba.bppPoolDeposit x) <>
     encode "stakePoolRetirementEpochBound"
         encodeEpochInterval (Ba.bppEMax x) <>
@@ -229,12 +242,12 @@ encodePParamsHKD encode pure_ x =
         encodeUnitInterval (Ba.bppRho x) <>
     encode "treasuryExpansion"
         encodeUnitInterval (Ba.bppTau x) <>
-    encode "minStakePoolCost"
+    encodeCompact "minStakePoolCost"
         encodeCoin (Ba.bppMinPoolCost x) <>
     encode "minUtxoDepositConstant"
         (encodeCoin . Coin) (pure_ 0) <>
     encode "minUtxoDepositCoefficient"
-        (encodeInteger . unCoin . Ba.unCoinPerByte) (Ba.bppCoinsPerUTxOByte x) <>
+        (encodeInteger . unCoin . fromCompact . Ba.unCoinPerByte) (Ba.bppCoinsPerUTxOByte x) <>
     encode "plutusCostModels"
         Alonzo.encodeCostModels (Ba.bppCostModels x) <>
     encode "scriptExecutionPrices"
@@ -244,30 +257,30 @@ encodePParamsHKD encode pure_ x =
     encode "maxExecutionUnitsPerBlock"
         (Alonzo.encodeExUnits . Al.unOrdExUnits) (Ba.bppMaxBlockExUnits x) <>
     encode "maxValueSize"
-        (encodeSingleton "bytes" . encodeNatural) (Ba.bppMaxValSize x) <>
+        (encodeSingleton "bytes" . encodeWord32) (Ba.bppMaxValSize x) <>
     encode "collateralPercentage"
-        encodeNatural (Ba.bppCollateralPercentage x) <>
+        encodeWord16 (Ba.bppCollateralPercentage x) <>
     encode "maxCollateralInputs"
-        encodeNatural (Ba.bppMaxCollateralInputs x) <>
+        encodeWord16 (Ba.bppMaxCollateralInputs x) <>
     encode "version"
         Shelley.encodeProtVer (Ba.bppProtocolVersion x)
     & encodeObject
 
 encodeTx
     :: (MetadataFormat, IncludeCbor)
-    -> Ba.AlonzoTx BabbageEra
+    -> Ledger.Tx Ledger.TopTx BabbageEra
     -> Json
 encodeTx (fmt, opts) x =
     encodeObject
-        ( Shelley.encodeTxId (Ledger.txIdTxBody @BabbageEra (Ba.body x))
+        ( Shelley.encodeTxId (Ledger.txIdTxBody @BabbageEra (x ^. Ledger.bodyTxL))
        <>
-        "spends" .= Alonzo.encodeIsValid (Ba.isValid x)
+        "spends" .= Alonzo.encodeIsValid (x ^. Ba.isValidTxL)
        <>
-        encodeTxBody opts (Ba.body x) (strictMaybe mempty (Map.keys . snd) auxiliary)
+        encodeTxBody opts (x ^. Ledger.bodyTxL) (strictMaybe mempty (Map.keys . snd) auxiliary)
        <>
         "metadata" .=? OmitWhenNothing fst auxiliary
        <>
-        Alonzo.encodeWitnessSet opts (snd <$> auxiliary) Alonzo.encodeScriptPurposeIndex (Ba.wits x)
+        Alonzo.encodeWitnessSet (snd <$> auxiliary) Alonzo.encodeScriptPurposeIndex (Alonzo.encodeScript opts) (x ^. Ledger.witsTxL)
        <>
         if includeTransactionCbor opts then
            "cbor" .= encodeByteStringBase16 (encodeCbor @BabbageEra x)
@@ -276,8 +289,8 @@ encodeTx (fmt, opts) x =
        )
   where
     auxiliary = do
-        hash <- Shelley.encodeAuxiliaryDataHash <$> Ba.btbAuxDataHash (Ba.body x)
-        (labels, scripts) <- Alonzo.encodeAuxiliaryData (fmt, opts) <$> Ba.auxiliaryData x
+        hash <- Shelley.encodeAuxiliaryDataHash <$> Ba.btbAuxDataHash (x ^. Ledger.bodyTxL)
+        (labels, scripts) <- Alonzo.encodeAuxiliaryData (fmt, opts) <$> x ^. Ledger.auxDataTxL
         pure
             ( encodeObject ("hash" .= hash <> "labels" .= labels)
             , scripts
@@ -285,7 +298,7 @@ encodeTx (fmt, opts) x =
 
 encodeTxBody
     :: IncludeCbor
-    -> Ba.BabbageTxBody BabbageEra
+    -> Ledger.TxBody Ledger.TopTx BabbageEra
     -> [Ledger.ScriptHash]
     -> Series
 encodeTxBody opts x scripts =
@@ -293,12 +306,12 @@ encodeTxBody opts x scripts =
         encodeFoldable (encodeObject . Shelley.encodeTxIn) (Ba.btbInputs x) <>
     "references" .=? OmitWhen null
         (encodeFoldable (encodeObject . Shelley.encodeTxIn)) (Ba.btbReferenceInputs x) <>
-    "outputs" .=
-        encodeFoldable (encodeObject . encodeTxOut opts . sizedValue) (Ba.btbOutputs x) <>
+    "outputs" .=? OmitWhen null
+        (encodeFoldable (encodeObject . encodeTxOut encodeScript . sizedValue)) (Ba.btbOutputs x) <>
     "collaterals" .=? OmitWhen null
         (encodeFoldable (encodeObject . Shelley.encodeTxIn)) (Ba.btbCollateral x) <>
     "collateralReturn" .=? OmitWhenNothing
-        (encodeObject . encodeTxOut opts . sizedValue) (Ba.btbCollateralReturn x) <>
+        (encodeObject . encodeTxOut encodeScript . sizedValue) (Ba.btbCollateralReturn x) <>
     "totalCollateral" .=? OmitWhenNothing
         encodeCoin (Ba.btbTotalCollateral x) <>
     "certificates" .=? OmitWhen null
@@ -317,13 +330,16 @@ encodeTxBody opts x scripts =
         Alonzo.encodeScriptIntegrityHash (Ba.btbScriptIntegrityHash x) <>
     "fee" .=
         encodeCoin (Ba.btbTxFee x) <>
-    "validityInterval" .=
+    "validityInterval" .=? OmitWhen (\it -> isSNothing (Al.invalidBefore it) && isSNothing (Al.invalidHereafter it))
         Allegra.encodeValidityInterval (Ba.btbValidityInterval x) <>
     "proposals" .=? OmitWhen null
         (encodeList (encodeSingleton "action")) actions <>
     "votes" .=? OmitWhen null
         (encodeList Shelley.encodeGenesisVote) votes
   where
+    encodeScript =
+        Alonzo.encodeScript opts
+
     (certs, mirs) =
         Shelley.encodeTxCerts (Ba.btbCerts x)
 
@@ -332,15 +348,13 @@ encodeTxBody opts x scripts =
 
 encodeTxOut
     :: forall era.
-        ( Ba.Script era ~ Al.AlonzoScript era
-        , Ba.Value era ~ Ma.MaryValue
-        , Ba.AlonzoEraScript era
-        , Ledger.NativeScript era ~ Timelock era
+        ( Ledger.Value era ~ Ma.MaryValue
+        , Ledger.EraScript era
         )
-    =>IncludeCbor
+    => (Ledger.Script era -> Json)
     -> Ba.BabbageTxOut era
     -> Series
-encodeTxOut opts (Ba.BabbageTxOut addr value datum script) =
+encodeTxOut encodeScript (Ba.BabbageTxOut addr value datum script) =
     "address" .=
         Shelley.encodeAddress addr <>
     "value" .=
@@ -354,7 +368,7 @@ encodeTxOut opts (Ba.BabbageTxOut addr value datum script) =
             "datum" .= Alonzo.encodeBinaryData bin
     ) <>
     "script" .=? OmitWhenNothing
-        (Alonzo.encodeScript opts) script
+        encodeScript script
 
 encodeUtxo
     :: forall era.
@@ -371,4 +385,5 @@ encodeUtxo =
     . Map.foldrWithKey (\i o -> (:) (encodeIO i o)) []
     . Sh.unUTxO
   where
-    encodeIO i o = encodeObject (Shelley.encodeTxIn i <> encodeTxOut includeAllCbor o)
+    encodeIO i o =
+        encodeObject (Shelley.encodeTxIn i <> encodeTxOut (Alonzo.encodeScript includeAllCbor) o)

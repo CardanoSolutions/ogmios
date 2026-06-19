@@ -13,12 +13,21 @@ import Cardano.Ledger.Api
     ( AsIx
     , PlutusPurpose
     )
+import Cardano.Ledger.Compactible
+    ( CompactForm
+    , Compactible (..)
+    )
 import Data.SatInt
     ( fromSatInt
     )
 import Ouroboros.Consensus.Shelley.Ledger.Block
     ( ShelleyBlock (..)
     )
+
+import Cardano.Ledger.HKD
+    ()
+import Cardano.Ledger.Plutus.Language
+    ()
 import Ouroboros.Consensus.Shelley.Protocol.TPraos
     ()
 
@@ -30,12 +39,12 @@ import qualified Cardano.Protocol.TPraos.BHeader as TPraos
 import qualified Cardano.Ledger.Api as Ledger
 import qualified Cardano.Ledger.Block as Ledger
 import qualified Cardano.Ledger.Core as Ledger
-import qualified Cardano.Ledger.Plutus.Language as Ledger
 
 import qualified Cardano.Ledger.Shelley.API as Sh
 import qualified Cardano.Ledger.Shelley.PParams as Sh
 import qualified Cardano.Ledger.Shelley.TxCert as Sh
 
+import qualified Cardano.Ledger.Alonzo.BlockBody as Al
 import qualified Cardano.Ledger.Alonzo.Core as Al hiding
     ( TranslationError
     )
@@ -46,7 +55,6 @@ import qualified Cardano.Ledger.Alonzo.Scripts as Al
 import qualified Cardano.Ledger.Alonzo.Tx as Al
 import qualified Cardano.Ledger.Alonzo.TxAuxData as Al
 import qualified Cardano.Ledger.Alonzo.TxBody as Al
-import qualified Cardano.Ledger.Alonzo.TxSeq as Al
 import qualified Cardano.Ledger.Alonzo.TxWits as Al
 
 import qualified Ogmios.Data.Json.Allegra as Allegra
@@ -74,14 +82,14 @@ encodeAuxiliaryData
 encodeAuxiliaryData opts (Al.AlonzoTxAuxData blob timelocks plutus) =
     ( Shelley.encodeMetadataBlob @era opts blob
     , foldr
-        (\(Al.TimelockScript -> script) -> Map.insert (Ledger.hashScript @era script) script)
+        (\(Al.NativeScript -> script) -> Map.insert (Ledger.hashScript @era script) script)
         (Map.foldrWithKey
             (\lang ->
                 flip $ foldr (\bytes ->
                     let script = maybe
                             (error ("mkBinaryPlutusScript: incompatible language and script: " <> show lang <> " for " <> show bytes))
                             Al.PlutusScript
-                            (Al.mkBinaryPlutusScript @era lang bytes)
+                            (Al.mkBinaryPlutusScript lang bytes)
                      in Map.insert (Ledger.hashScript @era script) script
                 )
             )
@@ -113,7 +121,7 @@ encodeBlock opts (ShelleyBlock (Ledger.Block blkHeader txs) headerHash) =
         <>
           "size" .= encodeSingleton "bytes" (encodeWord32 (TPraos.bsize hBody))
         <>
-          "transactions" .= encodeFoldable (encodeTx opts) (Al.txSeqTxns txs)
+          "transactions" .= encodeFoldable (encodeTx opts) (Al.alonzoBlockBodyTxs txs)
         )
   where
     TPraos.BHeader hBody _ = blkHeader
@@ -186,9 +194,10 @@ encodeGenesis x =
         ( "era" .= encodeText "alonzo"
        <> "updatableParameters" .= encodeObject
             ( "minUtxoDepositCoefficient" .=
-                (encodeInteger . (`div` 8) . unCoin . Al.unCoinPerWord) (Al.agCoinsPerUTxOWord x) <>
+                  (encodeInteger . (`div` 8) . unCoin . Al.unCoinPerWord) (Al.agCoinsPerUTxOWord x) <>
               "plutusCostModels" .=
-                  encodeCostModels (Al.agCostModels x) <>
+                  maybe (encodeObject mempty) encodeCostModels
+                      (Al.aecCostModels =<< Al.extraConfig x) <>
               "scriptExecutionPrices" .=
                   encodePrices (Al.agPrices x) <>
               "maxExecutionUnitsPerTransaction" .=
@@ -196,11 +205,11 @@ encodeGenesis x =
               "maxExecutionUnitsPerBlock" .=
                   encodeExUnits (Al.agMaxBlockExUnits x) <>
               "maxValueSize" .=
-                  (encodeSingleton "bytes" . encodeNatural) (Al.agMaxValSize x) <>
+                  (encodeSingleton "bytes" . encodeWord32) (Al.agMaxValSize x) <>
               "collateralPercentage" .=
-                  encodeNatural (Al.agCollateralPercentage x) <>
+                  encodeWord16 (Al.agCollateralPercentage x) <>
               "maxCollateralInputs" .=
-                    encodeNatural (Al.agMaxCollateralInputs x)
+                  encodeWord16 (Al.agMaxCollateralInputs x)
             )
         )
 
@@ -224,7 +233,7 @@ encodePParams
     => Ledger.PParams era
     -> Json
 encodePParams (Ledger.PParams x) =
-    encodePParamsHKD (\k encode v -> k .= encode v) identity x
+    encodePParamsHKD (\k enc v -> k .= enc v) (\k enc v -> k .= enc (fromCompact v)) identity x
 
 encodePParamsUpdate
     :: forall era.
@@ -254,7 +263,8 @@ encodePParamsUpdate (Ledger.PParamsUpdate x) =
                     encodeText "protocolParametersUpdate"
                <> "parameters" .=
                     encodePParamsHKD
-                        (\k encode v -> k .=? OmitWhenNothing encode v)
+                        (\k enc v -> k .=? OmitWhenNothing enc v)
+                        (\k enc v -> k .=? OmitWhenNothing (enc . fromCompact) v)
                         (const SNothing)
                         x'
                 )
@@ -265,7 +275,8 @@ encodePParamsUpdate (Ledger.PParamsUpdate x) =
                     encodeText "protocolParametersUpdate"
                <> "parameters" .=
                     encodePParamsHKD
-                        (\k encode v -> k .=? OmitWhenNothing encode v)
+                        (\k enc v -> k .=? OmitWhenNothing enc v)
+                        (\k enc v -> k .=? OmitWhenNothing (enc . fromCompact) v)
                         (const SNothing)
                         x'
                 )
@@ -284,7 +295,8 @@ encodeProposedPPUpdates (Sh.ProposedPPUpdates m) =
     encodeFoldable
         (\(Ledger.PParamsUpdate x) ->
             encodePParamsHKD
-                (\k encode v -> k .=? OmitWhenNothing encode v)
+                (\k enc v -> k .=? OmitWhenNothing enc v)
+                (\k enc v -> k .=? OmitWhenNothing (enc . fromCompact) v)
                 (const SNothing)
                 x
         )
@@ -292,23 +304,24 @@ encodeProposedPPUpdates (Sh.ProposedPPUpdates m) =
 
 encodePParamsHKD
     :: (forall a. Text -> (a -> Json) -> Sh.HKD f a -> Series)
+    -> (forall a. Compactible a => Text -> (a -> Json) -> Sh.HKD f (CompactForm a) -> Series)
     -> (Integer -> Sh.HKD f Integer)
     -> Al.AlonzoPParams f era
     -> Json
-encodePParamsHKD encode pure_ x =
+encodePParamsHKD encode encodeCompact pure_ x =
     encode "minFeeCoefficient"
-        (encodeInteger . unCoin) (Al.appMinFeeA x) <>
-    encode "minFeeConstant"
-        encodeCoin (Al.appMinFeeB x) <>
+        (encodeInteger . unCoin . fromCompact . Al.unCoinPerByte) (Al.appTxFeePerByte x) <>
+    encodeCompact "minFeeConstant"
+        encodeCoin (Al.appTxFeeFixed x) <>
     encode "maxBlockBodySize"
         (encodeSingleton "bytes" . encodeWord32) (Al.appMaxBBSize x) <>
     encode "maxBlockHeaderSize"
         (encodeSingleton "bytes" . encodeWord16) (Al.appMaxBHSize x) <>
     encode "maxTransactionSize"
         (encodeSingleton "bytes" . encodeWord32) (Al.appMaxTxSize x) <>
-    encode "stakeCredentialDeposit"
+    encodeCompact "stakeCredentialDeposit"
         encodeCoin (Al.appKeyDeposit x) <>
-    encode "stakePoolDeposit"
+    encodeCompact "stakePoolDeposit"
         encodeCoin (Al.appPoolDeposit x) <>
     encode "stakePoolRetirementEpochBound"
         encodeEpochInterval (Al.appEMax x) <>
@@ -324,7 +337,7 @@ encodePParamsHKD encode pure_ x =
         encodeUnitInterval (Al.appD x) <>
     encode "extraEntropy"
         Shelley.encodeNonce (Al.appExtraEntropy x) <>
-    encode "minStakePoolCost"
+    encodeCompact "minStakePoolCost"
         encodeCoin (Al.appMinPoolCost x) <>
     encode "minUtxoDepositConstant"
         (encodeCoin . Coin) (pure_ 0) <>
@@ -339,11 +352,11 @@ encodePParamsHKD encode pure_ x =
     encode "maxExecutionUnitsPerBlock"
         (encodeExUnits . Al.unOrdExUnits) (Al.appMaxBlockExUnits x) <>
     encode "maxValueSize"
-        (encodeSingleton "bytes" . encodeNatural) (Al.appMaxValSize x) <>
+        (encodeSingleton "bytes" . encodeWord32) (Al.appMaxValSize x) <>
     encode "collateralPercentage"
-        encodeNatural (Al.appCollateralPercentage x) <>
+        encodeWord16 (Al.appCollateralPercentage x) <>
     encode "maxCollateralInputs"
-        encodeNatural (Al.appMaxCollateralInputs x) <>
+        encodeWord16 (Al.appMaxCollateralInputs x) <>
     encode "version"
         Shelley.encodeProtVer (Al.appProtocolVersion x)
     & encodeObject
@@ -390,7 +403,7 @@ encodeScript
     -> Al.Script era
     -> Json
 encodeScript opts = encodeObject . \case
-    Al.TimelockScript nativeScript ->
+    Al.NativeScript nativeScript ->
         "language" .=
             encodeText "native" <>
         "json" .=
@@ -463,19 +476,19 @@ encodeScriptPurposeItem = fmap encodeObject . \case
 
 encodeTx
     :: (MetadataFormat, IncludeCbor)
-    -> Al.AlonzoTx AlonzoEra
+    -> Ledger.Tx Ledger.TopTx AlonzoEra
     -> Json
 encodeTx (fmt, opts) x =
     encodeObject
-        ( Shelley.encodeTxId (Ledger.txIdTxBody @AlonzoEra (Al.body x))
+        ( Shelley.encodeTxId (Ledger.txIdTxBody @AlonzoEra (x ^. Ledger.bodyTxL))
        <>
-        "spends" .= encodeIsValid (Al.isValid x)
+        "spends" .= encodeIsValid (x ^. Ledger.isValidTxL)
        <>
-        encodeTxBody (Al.body x) (strictMaybe mempty (Map.keys . snd) auxiliary)
+        encodeTxBody (x ^. Ledger.bodyTxL) (strictMaybe mempty (Map.keys . snd) auxiliary)
        <>
         "metadata" .=? OmitWhenNothing fst auxiliary
        <>
-        encodeWitnessSet opts (snd <$> auxiliary) encodeScriptPurposeIndex (Al.wits x)
+        encodeWitnessSet (snd <$> auxiliary) encodeScriptPurposeIndex (encodeScript opts) (x ^. Ledger.witsTxL)
        <>
         if includeTransactionCbor opts then
            "cbor" .= encodeByteStringBase16 (encodeCbor @AlonzoEra x)
@@ -484,15 +497,15 @@ encodeTx (fmt, opts) x =
        )
   where
     auxiliary = do
-        hash <- Shelley.encodeAuxiliaryDataHash <$> Al.atbAuxDataHash (Al.body x)
-        (labels, scripts) <- encodeAuxiliaryData (fmt, opts) <$> Al.auxiliaryData x
+        hash <- Shelley.encodeAuxiliaryDataHash <$> Al.atbAuxDataHash (x ^. Ledger.bodyTxL)
+        (labels, scripts) <- encodeAuxiliaryData (fmt, opts) <$> x ^. Ledger.auxDataTxL
         pure
             ( encodeObject ("hash" .= hash <> "labels" .= labels)
             , scripts
             )
 
 encodeTxBody
-    :: Al.AlonzoTxBody AlonzoEra
+    :: Ledger.TxBody Ledger.TopTx AlonzoEra
     -> [Ledger.ScriptHash]
     -> Series
 encodeTxBody x scripts =
@@ -559,14 +572,13 @@ encodeScriptIntegrityHash =
 encodeWitnessSet
     :: ( Ledger.Script era ~ Al.AlonzoScript era
        , Al.AlonzoEraScript era
-       , Ledger.NativeScript era ~ Timelock era
        )
-    => IncludeCbor
-    -> StrictMaybe (AuxiliaryScripts era)
+    => StrictMaybe (AuxiliaryScripts era)
     -> (PlutusPurpose AsIx era -> Json)
+    -> (Ledger.Script era -> Json)
     -> Al.AlonzoTxWits era
     -> Series
-encodeWitnessSet opts (fromSMaybe mempty -> auxScripts) encodeScriptPurposeIndexInEra x =
+encodeWitnessSet (fromSMaybe mempty -> auxScripts) encodeScriptPurposeIndexInEra encodeScriptInEra x =
     "signatories" .=
         encodeFoldable2
             Shelley.encodeBootstrapWitness
@@ -574,7 +586,7 @@ encodeWitnessSet opts (fromSMaybe mempty -> auxScripts) encodeScriptPurposeIndex
             (Al.txwitsBoot x)
             (Al.txwitsVKey x) <>
     "scripts" .=? OmitWhen null
-        (encodeMap Shelley.stringifyScriptHash (encodeScript opts))
+        (encodeMap Shelley.stringifyScriptHash encodeScriptInEra)
         (Al.txscripts x <> auxScripts) <>
     "datums" .=? OmitWhen null
         (encodeMap stringifyDataHash encodeData)
@@ -600,3 +612,4 @@ stringifyLanguage = \case
     Ledger.PlutusV1 -> "plutus:v1"
     Ledger.PlutusV2 -> "plutus:v2"
     Ledger.PlutusV3 -> "plutus:v3"
+    Ledger.PlutusV4 -> "plutus:v4"

@@ -47,6 +47,7 @@ instance  Show TransactionScriptFailureInAnyEra where
         TransactionScriptFailureInAnyEra (AlonzoBasedEraAlonzo, e) -> show e
         TransactionScriptFailureInAnyEra (AlonzoBasedEraBabbage, e) -> show e
         TransactionScriptFailureInAnyEra (AlonzoBasedEraConway, e) -> show e
+        TransactionScriptFailureInAnyEra (AlonzoBasedEraDijkstra, e) -> show e
 
 -- | Return the most relevant script failure from a list of errors.
 --

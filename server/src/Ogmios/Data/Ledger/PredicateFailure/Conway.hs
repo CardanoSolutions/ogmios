@@ -6,6 +6,9 @@ module Ogmios.Data.Ledger.PredicateFailure.Conway where
 
 import Ogmios.Prelude
 
+import Cardano.Ledger.BaseTypes
+    ( Mismatch (..)
+    )
 import Cardano.Ledger.Keys
     ( HasKeyRole (coerceKeyRole)
     )
@@ -28,15 +31,16 @@ import Ogmios.Data.Ledger.PredicateFailure.Shelley
     ( encodePoolFailure
     )
 
+import Cardano.Ledger.Address
+    ()
+
 import qualified Cardano.Ledger.Api as Ledger
-import qualified Cardano.Ledger.Api.UTxO as Ledger
-import Cardano.Ledger.BaseTypes
-    ( Mismatch (..)
-    )
 import qualified Cardano.Ledger.Conway.Rules as Cn
 import qualified Data.List.NonEmpty as NE
 import qualified Data.Map as Map
+import qualified Data.Map.NonEmpty as NEMap
 import qualified Data.Set as Set
+import qualified Data.Set.NonEmpty as NESet
 
 encodeLedgerFailure
     :: Cn.ConwayLedgerPredFailure ConwayEra
@@ -48,6 +52,10 @@ encodeLedgerFailure = \case
         encodeCertsFailure e
     Cn.ConwayGovFailure e ->
         encodeGovFailure e
+    Cn.ConwayWithdrawalsMissingAccounts (Ledger.unWithdrawals -> withdrawals) ->
+        IncompleteWithdrawals withdrawals
+    Cn.ConwayIncompleteWithdrawals withdrawals ->
+        IncompleteWithdrawals $ Map.map (\Mismatch {mismatchExpected} -> mismatchExpected) (NEMap.toMap withdrawals)
     Cn.ConwayWdrlNotDelegatedToDRep ((Set.fromList . toList) -> marginalizedCredentials) ->
         ForbiddenWithdrawal { marginalizedCredentials }
     Cn.ConwayTreasuryValueMismatch (Mismatch providedWithdrawal computedWithdrawal) ->
@@ -75,7 +83,7 @@ encodeGovFailure = \case
         NetworkMismatch
             { expectedNetwork
             , invalidEntities =
-                DiscriminatedRewardAccounts rewardAccounts
+                DiscriminatedRewardAccounts (NESet.toSet rewardAccounts)
             }
     Cn.ProposalDepositIncorrect (Mismatch providedDeposit (SJust -> expectedDeposit)) ->
         GovernanceProposalDepositMismatch
@@ -86,11 +94,11 @@ encodeGovFailure = \case
         UnauthorizedVotes voters
     Cn.ConflictingCommitteeUpdate conflictingMembers ->
         ConflictingCommitteeUpdate
-            { conflictingMembers
+            { conflictingMembers = NESet.toSet conflictingMembers
             }
     Cn.ExpirationEpochTooSmall members ->
         InvalidCommitteeUpdate
-            { alreadyRetiredMembers = Map.keysSet members
+            { alreadyRetiredMembers = Map.keysSet (NEMap.toMap members)
             }
     Cn.InvalidPrevGovActionId proposal ->
         InvalidPreviousGovernanceAction $
@@ -133,7 +141,7 @@ encodeGovFailure = \case
         VotingOnExpiredActions voters
     Cn.ProposalCantFollow _ (Mismatch proposedVersion currentVersion) ->
         InvalidHardForkVersionBump { proposedVersion, currentVersion }
-    Cn.InvalidPolicyHash providedHash expectedHash ->
+    Cn.InvalidGuardrailsScriptHash providedHash expectedHash ->
         ConstitutionGuardrailsHashMismatch { providedHash, expectedHash }
     Cn.DisallowedProposalDuringBootstrap _ ->
         UnauthorizedGovernanceAction
@@ -143,17 +151,19 @@ encodeGovFailure = \case
         UnknownVoters (toList voters)
     Cn.ZeroTreasuryWithdrawals _ ->
         EmptyTreasuryWithdrawal
-    Cn.ProposalReturnAccountDoesNotExist (Ledger.RewardAccount _ unknownCredential) ->
+    Cn.ProposalReturnAccountDoesNotExist (Ledger.AccountAddress _ (Ledger.AccountId unknownCredential)) ->
         StakeCredentialNotRegistered { unknownCredential }
-    Cn.TreasuryWithdrawalReturnAccountsDoNotExist (NE.head -> Ledger.RewardAccount _ unknownCredential) ->
+    Cn.TreasuryWithdrawalReturnAccountsDoNotExist (NE.head -> Ledger.AccountAddress _ (Ledger.AccountId unknownCredential)) ->
         StakeCredentialNotRegistered { unknownCredential }
+    Cn.UnelectedCommitteeVoters _voters ->
+        UnauthorizedVotes []
 
 encodeCertsFailure
     :: Cn.ConwayCertsPredFailure ConwayEra
     -> MultiEraPredicateFailure
 encodeCertsFailure = \case
-    Cn.WithdrawalsNotInRewardsCERTS credentials ->
-        IncompleteWithdrawals credentials
+    Cn.WithdrawalsNotInRewardsCERTS _credentials ->
+        IncompleteWithdrawals mempty
     Cn.CertFailure e ->
         encodeCertFailure e
 
@@ -169,7 +179,7 @@ encodeCertFailure = \case
         encodeGovCertFailure e
 
 encodeDelegFailure
-    :: Cn.ConwayDelegPredFailure ConwayEra
+    :: Cn.ConwayDelegPredFailure era
     -> MultiEraPredicateFailure
 encodeDelegFailure = \case
     -- NOTE: The discarded coin value here refers to the deposit as set in the
@@ -181,15 +191,19 @@ encodeDelegFailure = \case
         StakeCredentialAlreadyRegistered { knownCredential }
     Cn.StakeKeyNotRegisteredDELEG unknownCredential  ->
         StakeCredentialNotRegistered { unknownCredential }
-    Cn.StakeKeyHasNonZeroRewardAccountBalanceDELEG rewardAccountBalance ->
+    Cn.StakeKeyHasNonZeroAccountBalanceDELEG rewardAccountBalance ->
         RewardAccountNotEmpty { rewardAccountBalance }
+    Cn.DepositIncorrectDELEG _deposit ->
+        InvalidProtocolParametersUpdate
+    Cn.RefundIncorrectDELEG _refund ->
+        InvalidProtocolParametersUpdate
     Cn.DelegateeDRepNotRegisteredDELEG (coerceKeyRole -> unknownCredential) ->
         StakeCredentialNotRegistered { unknownCredential }
     Cn.DelegateeStakePoolNotRegisteredDELEG poolId ->
         UnknownStakePool poolId
 
 encodeGovCertFailure
-    :: Cn.ConwayGovCertPredFailure ConwayEra
+    :: Cn.ConwayGovCertPredFailure era
     -> MultiEraPredicateFailure
 encodeGovCertFailure = \case
     Cn.ConwayDRepAlreadyRegistered knownDelegateRepresentative ->
@@ -215,7 +229,7 @@ encodeUtxoFailure = \case
     Cn.UtxosFailure e ->
         encodeUtxosFailure e
     Cn.BadInputsUTxO inputs ->
-        UnknownUtxoReference inputs
+        UnknownUtxoReference (NESet.toSet inputs)
     Cn.OutsideValidityIntervalUTxO validityInterval currentSlot ->
         TransactionOutsideValidityInterval { validityInterval, currentSlot }
     Cn.OutputTooBigUTxO outs ->
@@ -224,9 +238,9 @@ encodeUtxoFailure = \case
         --
         -- It would be good to report those value back in the error.
         let culpritOutputs = (\(_, _, out) -> TxOutInAnyEra (era, out)) <$> outs in
-        ValueSizeAboveLimit culpritOutputs
+        ValueSizeAboveLimit (toList culpritOutputs)
     Cn.MaxTxSizeUTxO (Mismatch measuredSize maximumSize) ->
-        TransactionTooLarge { measuredSize, maximumSize }
+        TransactionTooLarge { measuredSize = fromIntegral measuredSize, maximumSize = fromIntegral maximumSize }
     Cn.InputSetEmptyUTxO ->
         EmptyInputSet
     Cn.FeeTooSmallUTxO (Mismatch suppliedFee minimumRequiredFee) ->
@@ -236,22 +250,22 @@ encodeUtxoFailure = \case
         let valueProduced = ValueInAnyEra (era, produced) in
         ValueNotConserved { valueConsumed, valueProduced }
     Cn.WrongNetwork expectedNetwork invalidAddrs ->
-        let invalidEntities = DiscriminatedAddresses invalidAddrs in
+        let invalidEntities = DiscriminatedAddresses (NESet.toSet invalidAddrs) in
         NetworkMismatch { expectedNetwork, invalidEntities }
     Cn.WrongNetworkWithdrawal expectedNetwork invalidAccts ->
-        let invalidEntities = DiscriminatedRewardAccounts invalidAccts in
+        let invalidEntities = DiscriminatedRewardAccounts (NESet.toSet invalidAccts) in
         NetworkMismatch { expectedNetwork, invalidEntities }
     Cn.OutputTooSmallUTxO outs ->
         let insufficientlyFundedOutputs =
                 (\out -> (TxOutInAnyEra (era, out), Nothing)) <$> outs
-         in InsufficientAdaInOutput { insufficientlyFundedOutputs }
+         in InsufficientAdaInOutput { insufficientlyFundedOutputs = toList insufficientlyFundedOutputs }
     Cn.OutputBootAddrAttrsTooBig outs ->
         let culpritOutputs = (\out -> TxOutInAnyEra (era, out)) <$> outs in
-        BootstrapAddressAttributesTooLarge { culpritOutputs }
+        BootstrapAddressAttributesTooLarge { culpritOutputs = toList culpritOutputs }
     Cn.InsufficientCollateral providedCollateral minimumRequiredCollateral ->
         InsufficientCollateral { providedCollateral, minimumRequiredCollateral }
     Cn.ScriptsNotPaidUTxO utxo ->
-        CollateralInputLockedByScript (Map.keys $ Ledger.unUTxO utxo)
+        CollateralInputLockedByScript (Map.keys $ NEMap.toMap utxo)
     Cn.WrongNetworkInTxBody (Mismatch _providedNetwork expectedNetwork) ->
         let invalidEntities = DiscriminatedTransaction in
         NetworkMismatch { expectedNetwork, invalidEntities }
@@ -263,7 +277,7 @@ encodeUtxoFailure = \case
     Cn.NoCollateralInputs{} ->
         MissingCollateralInputs
     Cn.TooManyCollateralInputs (Mismatch countedCollateralInputs maximumCollateralInputs) ->
-        TooManyCollateralInputs { maximumCollateralInputs, countedCollateralInputs }
+        TooManyCollateralInputs { maximumCollateralInputs = fromIntegral maximumCollateralInputs, countedCollateralInputs = fromIntegral countedCollateralInputs }
     Cn.ExUnitsTooBigUTxO (Mismatch providedExUnits maximumExUnits) ->
         ExecutionUnitsTooLarge { maximumExUnits, providedExUnits }
     Cn.IncorrectTotalCollateralField computedTotalCollateral declaredTotalCollateral ->
@@ -277,7 +291,7 @@ encodeUtxoFailure = \case
                     , Just minAda
                     )
                 ) <$> outs
-         in InsufficientAdaInOutput { insufficientlyFundedOutputs }
+         in InsufficientAdaInOutput { insufficientlyFundedOutputs = toList insufficientlyFundedOutputs }
   where
     era = ShelleyBasedEraConway
 
@@ -288,36 +302,38 @@ encodeUtxosFailure = \case
     Cn.ValidationTagMismatch validationTag mismatchReason ->
         ValidationTagMismatch { validationTag, mismatchReason }
     Cn.CollectErrors errors ->
-        pickPredicateFailure (encodeCollectErrors AlonzoBasedEraConway errors)
+        pickPredicateFailure (encodeCollectErrors AlonzoBasedEraConway (toList errors))
 
 encodeUtxowFailure
     :: Cn.ConwayUtxowPredFailure ConwayEra
     -> MultiEraPredicateFailure
 encodeUtxowFailure = \case
+    Cn.ScriptIntegrityHashMismatch (Mismatch providedIntegrityHash computedIntegrityHash) _computedBodyHash ->
+        ScriptIntegrityHashMismatch { providedIntegrityHash, computedIntegrityHash }
     Cn.UtxoFailure e ->
         encodeUtxoFailure e
     Cn.MissingRedeemers redeemers ->
         let missingRedeemers = ScriptPurposeItemInAnyEra . (era,) . fst <$> redeemers
-         in MissingRedeemers { missingRedeemers }
+         in MissingRedeemers { missingRedeemers = toList missingRedeemers }
     Cn.MissingRequiredDatums missingDatums _providedDatums ->
-        MissingDatums { missingDatums }
+        MissingDatums { missingDatums = NESet.toSet missingDatums }
     Cn.NotAllowedSupplementalDatums extraneousDatums _acceptableDatums ->
-        ExtraneousDatums { extraneousDatums }
+        ExtraneousDatums { extraneousDatums = NESet.toSet extraneousDatums }
     Cn.ExtraRedeemers redeemers ->
         let extraneousRedeemers = ScriptPurposeIndexInAnyEra . (era,) <$> redeemers
-         in ExtraneousRedeemers { extraneousRedeemers }
+         in ExtraneousRedeemers { extraneousRedeemers = toList extraneousRedeemers }
     Cn.PPViewHashesDontMatch (Mismatch providedIntegrityHash computedIntegrityHash) ->
         ScriptIntegrityHashMismatch { providedIntegrityHash, computedIntegrityHash }
     Cn.UnspendableUTxONoDatumHash orphanScriptInputs ->
-        OrphanScriptInputs { orphanScriptInputs }
+        OrphanScriptInputs { orphanScriptInputs = NESet.toSet orphanScriptInputs }
     Cn.InvalidWitnessesUTXOW wits ->
-        InvalidSignatures wits
+        InvalidSignatures (toList wits)
     Cn.MissingVKeyWitnessesUTXOW keys ->
-        MissingSignatures keys
+        MissingSignatures (NESet.toSet keys)
     Cn.MissingScriptWitnessesUTXOW scripts ->
-        MissingScriptWitnesses scripts
+        MissingScriptWitnesses (NESet.toSet scripts)
     Cn.ScriptWitnessNotValidatingUTXOW scripts ->
-        FailingScript scripts
+        FailingScript (NESet.toSet scripts)
     Cn.MissingTxBodyMetadataHash hash ->
         MissingMetadataHash hash
     Cn.MissingTxMetadata hash ->
@@ -327,10 +343,10 @@ encodeUtxowFailure = \case
     Cn.InvalidMetadata ->
         InvalidMetadata
     Cn.ExtraneousScriptWitnessesUTXOW scripts ->
-        ExtraneousScriptWitnesses scripts
+        ExtraneousScriptWitnesses (NESet.toSet scripts)
     Cn.MalformedScriptWitnesses scripts ->
-        MalformedScripts scripts
+        MalformedScripts (NESet.toSet scripts)
     Cn.MalformedReferenceScripts scripts ->
-        MalformedScripts scripts
+        MalformedScripts (NESet.toSet scripts)
   where
     era = AlonzoBasedEraConway

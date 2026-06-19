@@ -7,6 +7,23 @@ pre: "<b>6. </b>"
 math: true
 ---
 
+### [7.0.0] - UNRELEASED
+
+#### Added
+
+- Preliminary support for the DijkstraEra and PlutusV4
+
+#### Changed
+
+- Upgraded dependencies and compatibility to `cardano-node==11.0.1`.
+
+- Fixed Ogmios not returning a success error code when interrupted by the user (e.g. CTRL+C / SIGINT).
+
+- **⚠️ BREAKING-CHANGE ⚠️**: on `ProtocolParameters` and `ProposedProtocolParameters`, the field `maxReferenceScriptsSize` has been renamed to `maxReferenceScriptsSizePerTransaction` to disambiguate it from `maxReferenceScriptsSizePerBlock`.
+
+---
+---
+
 ### [6.14.0] - 2025-10-16
 
 #### Added
@@ -28,6 +45,9 @@ math: true
 
 - `queryLedgerState/proposedProtocolParameters` is no longer available in the underlying node and was already returning dummy data for a few versions. It's been removed.
 
+---
+---
+
 ### [6.13.0] - 2025-06-13
 
 #### Added
@@ -46,6 +66,9 @@ math: true
 
 N/A
 
+---
+---
+
 ### [6.12.0] - 2025-05-22
 
 #### Added
@@ -60,17 +83,26 @@ N/A
 
 - The `queryLedgerState/delegateRepresentatives` no longer discards registered DReps that have unregistered but whose stake is still available. This may happen when a DRep is already unregistered, but his stake distribution is still available because still needed to ratify votes on the next epoch boundary. As a consequence, some of the fields for the registered drep summaries are now optional instead of required."
 
+---
+---
+
 ### [6.11.2] - 2025-02-01
 
 #### Changed
 
 - Fix (sometimes) missing governance proposals returned from the `queryLedgerState/governanceProposals` (likely) due to unfinished incremental calculations on the ledger state. The proposals are now pulled from a different location in the ledger state which ensures they are complete.
 
+---
+---
+
 ### [6.11.1] - 2025-01-31
 
 #### Changed
 
 - Fix missing DReps with no stake not showing up through `queryLedgerState/delegateRepresentatives`.
+
+---
+---
 
 ### [6.11.0] - 2025-01-12
 
@@ -88,6 +120,9 @@ N/A
 
 - N/A
 
+---
+---
+
 ### [6.10.0] - 2024-12-14
 
 #### Added
@@ -103,6 +138,9 @@ N/A
 #### Removed
 
 - N/A
+
+---
+---
 
 ### [6.9.0] - 2024-11-08
 
@@ -121,6 +159,9 @@ N/A
 
 - N/A
 
+---
+---
+
 ### [6.8.0] - 2024-09-21
 
 #### Added
@@ -138,6 +179,9 @@ N/A
 
 - N/A
 
+---
+---
+
 ### [6.7.0] - 2024-09-13
 
 #### Added
@@ -151,6 +195,9 @@ N/A
 #### Removed
 
 - N/A
+
+---
+---
 
 ### [6.6.2] - 2024-09-10
 
@@ -166,6 +213,9 @@ N/A
 
 - N/A
 
+---
+---
+
 ### [6.6.1] - 2024-09-01
 
 #### Added
@@ -179,6 +229,9 @@ N/A
 #### Removed
 
 - N/A
+
+---
+---
 
 ### [6.6.0] - 2024-08-15
 
@@ -218,7 +271,7 @@ N/A
 - New ledger-state query: `queryLedgerState/treasuryAndReserves` to retrieve the current Ada values of the treasury and reserves.
 
 - New protocol parameters in Conway:
-  - `maximumReferenceScriptsSize` which indicates the maximum total number of bytes of scripts referenced by a transaction.
+  - `maxReferenceScriptsSize` which indicates the maximum total number of bytes of scripts referenced by a transaction.
   - `minFeeReferenceScripts` with three sub fields: `range`, `base` and `multiplier` that now intervenes in the minimum fee calculation. Note that, starting in the Conway era, the min fee calculation is given by the following formula:
 
 $$

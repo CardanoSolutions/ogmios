@@ -1,6 +1,6 @@
 cabal-version: 3.0
 
--- This file has been generated from package.yaml by hpack version 0.38.2.
+-- This file has been generated from package.yaml by hpack version 0.39.5.
 --
 -- see: https://github.com/sol/hpack
 
@@ -65,6 +65,7 @@ library
       Ogmios.Data.Json.Babbage
       Ogmios.Data.Json.Byron
       Ogmios.Data.Json.Conway
+      Ogmios.Data.Json.Dijkstra
       Ogmios.Data.Json.Ledger.PredicateFailure
       Ogmios.Data.Json.Ledger.ScriptFailure
       Ogmios.Data.Json.Mary
@@ -78,6 +79,7 @@ library
       Ogmios.Data.Ledger.PredicateFailure.Alonzo
       Ogmios.Data.Ledger.PredicateFailure.Babbage
       Ogmios.Data.Ledger.PredicateFailure.Conway
+      Ogmios.Data.Ledger.PredicateFailure.Dijkstra
       Ogmios.Data.Ledger.PredicateFailure.Mary
       Ogmios.Data.Ledger.PredicateFailure.Shelley
       Ogmios.Data.Ledger.Rewards
@@ -159,6 +161,7 @@ library
     , cardano-ledger-byron
     , cardano-ledger-conway
     , cardano-ledger-core
+    , cardano-ledger-dijkstra
     , cardano-ledger-mary
     , cardano-ledger-shelley
     , cardano-protocol-tpraos
@@ -188,13 +191,12 @@ library
     , mtl
     , optparse-applicative
     , ouroboros-consensus
-    , ouroboros-consensus-cardano
-    , ouroboros-consensus-protocol
-    , ouroboros-network
-    , ouroboros-network-api
-    , ouroboros-network-framework
+    , ouroboros-consensus:cardano
+    , ouroboros-consensus:protocol
     , ouroboros-network-ogmios
-    , ouroboros-network-protocols
+    , ouroboros-network:api
+    , ouroboros-network:framework
+    , ouroboros-network:protocols
     , plutus-core
     , plutus-ledger-api
     , prettyprinter
@@ -283,6 +285,7 @@ test-suite unit
   type: exitcode-stdio-1.0
   main-is: Spec.hs
   other-modules:
+      Ogmios.App.ConfigurationSpec
       Ogmios.App.Protocol.ChainSyncSpec
       Ogmios.App.Protocol.TxMonitorSpec
       Ogmios.App.Protocol.TxSubmissionSpec
@@ -355,6 +358,8 @@ test-suite unit
     , cardano-ledger-binary
     , cardano-ledger-conway:testlib
     , cardano-ledger-core
+    , cardano-ledger-dijkstra
+    , cardano-ledger-dijkstra:testlib
     , cardano-ledger-mary
     , cardano-ledger-shelley
     , cardano-slotting
@@ -370,12 +375,12 @@ test-suite unit
     , lens-aeson
     , ogmios
     , ouroboros-consensus
-    , ouroboros-consensus-cardano
-    , ouroboros-consensus-cardano:unstable-cardano-testlib
-    , ouroboros-network-api
-    , ouroboros-network-framework
+    , ouroboros-consensus:cardano
+    , ouroboros-consensus:unstable-cardano-testlib
     , ouroboros-network-ogmios
-    , ouroboros-network-protocols
+    , ouroboros-network:api
+    , ouroboros-network:framework
+    , ouroboros-network:protocols
     , random
     , strict-sop-core
     , template-haskell

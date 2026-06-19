@@ -76,7 +76,7 @@ instance ToJSON (Tip (CardanoBlock crypto)) where
     toEncoding = encodeTip
 
 -- Only used for logging & health
-instance ToJSON (Point (CardanoBlock crypto)) where
+instance {-# OVERLAPPING #-} ToJSON (Point (CardanoBlock crypto)) where
     toJSON = inefficientEncodingToValue . encodePoint
     toEncoding = encodePoint
 
@@ -91,7 +91,7 @@ instance FromJSON (MultiEraDecoder (GenTx (CardanoBlock StandardCrypto))) where
 instance FromJSON (MultiEraUTxO (CardanoBlock crypto)) where
     parseJSON = decodeUtxo
 
-instance FromJSON (Point (CardanoBlock crypto)) where
+instance {-# OVERLAPPING #-} FromJSON (Point (CardanoBlock crypto)) where
     parseJSON = decodePoint
 
 instance FromJSON (Tip (CardanoBlock crypto)) where
@@ -103,3 +103,5 @@ instance FromJSON (Tip (CardanoBlock crypto)) where
 
 deriving newtype instance Monoid (UTxO AlonzoEra)
 deriving newtype instance Monoid (UTxO BabbageEra)
+deriving newtype instance Monoid (UTxO ConwayEra)
+deriving newtype instance Monoid (UTxO DijkstraEra)

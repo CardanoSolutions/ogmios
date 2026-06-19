@@ -22,6 +22,7 @@ import Ogmios.Prelude
 import Cardano.Network.Protocol.NodeToClient
     ( Block
     , Clients (..)
+    , NodeToClientVersionData (..)
     , SerializedTransaction
     , SubmitTransactionError
     , connectClient
@@ -42,6 +43,7 @@ import Ogmios.App.Configuration
     , readAlonzoGenesis
     , readByronGenesis
     , readConwayGenesis
+    , readDijkstraGenesis
     , readShelleyGenesis
     )
 import Ogmios.App.Metrics
@@ -157,9 +159,6 @@ import Ogmios.Data.Protocol.TxSubmission
     , TxSubmissionMessage (..)
     , mkTxSubmissionCodecs
     )
-import Ouroboros.Network.NodeToClient.Version
-    ( NodeToClientVersionData (NodeToClientVersionData)
-    )
 import Ouroboros.Network.Protocol.ChainSync.ClientPipelined
     ( ChainSyncClientPipelined (..)
     )
@@ -205,6 +204,7 @@ newWebSocketApp tr unliftIO = do
             , getShelleyGenesis = readShelleyGenesis nodeConfig
             , getAlonzoGenesis = readAlonzoGenesis nodeConfig
             , getConwayGenesis = readConwayGenesis nodeConfig
+            , getDijkstraGenesis = readDijkstraGenesis nodeConfig
             }
 
     let opts = Rpc.defaultOptions

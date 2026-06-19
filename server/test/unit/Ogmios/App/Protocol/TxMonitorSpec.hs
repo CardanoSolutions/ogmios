@@ -27,7 +27,8 @@ import Data.List
     , (!!)
     )
 import Network.TypedProtocol.Codec
-    ( Codec (..)
+    ( Codec
+    , CodecF (..)
     , SomeMessage (..)
     , runDecoder
     )
@@ -115,8 +116,8 @@ import Test.Generators
     ( genMempoolMeasures
     , genMempoolSizeAndCapacity
     , genMirror
-    , genTx
     , genTxId
+    , genTxUpToConway
     , generateWith
     , reasonablySized
     )
@@ -379,12 +380,13 @@ maxCapacity :: Int
 maxCapacity = 10
 
 plausibleTxs :: [GenTx Block]
-plausibleTxs = generateWith (vectorOf (2 * maxCapacity) genTx) 42
+plausibleTxs = generateWith (vectorOf (2 * maxCapacity) genTxUpToConway) 42
 
 plausibleTxsIds :: [Ledger.TxId]
 plausibleTxsIds = unGenTxId . txId <$> plausibleTxs
   where
     unGenTxId = \case
+        GenTxIdDijkstra (ShelleyTxId x) -> x
         GenTxIdConway (ShelleyTxId x)  -> x
         GenTxIdBabbage (ShelleyTxId x) -> x
         GenTxIdAlonzo (ShelleyTxId x)  -> x

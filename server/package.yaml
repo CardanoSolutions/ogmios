@@ -14,7 +14,6 @@ category:            Web
 
 extra-source-files:
 - static/*
-- static/assets/*
 
 dependencies:
 - base >= 4.7 && < 5
@@ -57,6 +56,7 @@ library:
     - cardano-ledger-binary
     - cardano-ledger-byron
     - cardano-ledger-conway
+    - cardano-ledger-dijkstra
     - cardano-ledger-core
     - cardano-ledger-mary
     - cardano-ledger-shelley
@@ -88,13 +88,12 @@ library:
     - mtl
     - optparse-applicative
     - ouroboros-consensus
-    - ouroboros-consensus-cardano
-    - ouroboros-consensus-protocol
-    - ouroboros-network
-    - ouroboros-network-api
-    - ouroboros-network-framework
+    - ouroboros-consensus:cardano
+    - ouroboros-consensus:protocol
+    - ouroboros-network:api
+    - ouroboros-network:framework
     - ouroboros-network-ogmios
-    - ouroboros-network-protocols
+    - ouroboros-network:protocols
     - plutus-core
     - plutus-ledger-api
     - prettyprinter
@@ -153,6 +152,8 @@ tests:
     - cardano-ledger-babbage
     - cardano-ledger-binary
     - cardano-ledger-conway:testlib
+    - cardano-ledger-dijkstra
+    - cardano-ledger-dijkstra:testlib
     - cardano-ledger-core
     - cardano-ledger-mary
     - cardano-ledger-shelley
@@ -169,12 +170,12 @@ tests:
     - lens-aeson
     - ogmios
     - ouroboros-consensus
-    - ouroboros-consensus-cardano
-    - ouroboros-consensus-cardano:unstable-cardano-testlib
-    - ouroboros-network-api
-    - ouroboros-network-framework
+    - ouroboros-consensus:cardano
+    - ouroboros-consensus:unstable-cardano-testlib
+    - ouroboros-network:api
+    - ouroboros-network:framework
     - ouroboros-network-ogmios
-    - ouroboros-network-protocols
+    - ouroboros-network:protocols
     - QuickCheck
     - random
     - strict-sop-core

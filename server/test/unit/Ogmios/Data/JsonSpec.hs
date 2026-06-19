@@ -42,7 +42,6 @@ import GHC.Generics
     )
 import Ogmios.Data.EraTranslation
     ( MultiEraUTxO (..)
-    , Upgrade (..)
     )
 import Ogmios.Data.Json
     ( Json
@@ -79,6 +78,7 @@ import Ogmios.Data.Json.Prelude
 import Ogmios.Data.Json.Query
     ( QueryInEra
     , SomeQuery (..)
+    , decodeTimeLock
     , parseQueryLedgerConstitution
     , parseQueryLedgerConstitutionalCommittee
     , parseQueryLedgerDelegateRepresentatives
@@ -185,11 +185,10 @@ import System.Directory
     ( createDirectoryIfMissing
     )
 import Test.Generators
-    ( genAccountStateResult
-    , genAcquireFailure
-    , genBlock
+    ( genAcquireFailure
     , genBlockNo
     , genBoundResult
+    , genChainAccountStateResult
     , genCommitteeMembersStateResult
     , genConstitutionResult
     , genData
@@ -219,7 +218,7 @@ import Test.Generators
     , genTipNoGenesis
     , genTx
     , genUTxOResult
-    , genUtxoBabbage
+    , genUtxo
     , genWithOrigin
     , generateWith
     , reasonablySized
@@ -338,19 +337,19 @@ validateFromJSON gen (encode, decode) (n, vectorFilePath) ref = parallel $ do
 spec :: Spec
 spec = do
     context "JSON roundtrips" $ do
-        prop "encodeUtxo / decodeUtxo (Babbage)" $ forAllShrinkBlind genUtxoBabbage shrinkUtxo $ \utxo ->
+        prop "encodeUtxo / decodeUtxo (Babbage)" $ forAllShrinkBlind (genUtxo @ConwayEra) shrinkUtxo $ \utxo ->
             let encoded = inefficientEncodingToValue (Babbage.encodeUtxo utxo) in
             case Json.parse decodeUtxo encoded of
                 Json.Error e ->
                     property False
                         & counterexample e
                         & counterexample (decodeUtf8 $ Json.encodePretty encoded)
-                Json.Success (UTxOInBabbageEra utxo') ->
+                Json.Success (UTxOInConwayEra utxo') ->
                     utxo' === utxo
                         & counterexample (decodeUtf8 $ Json.encodePretty encoded)
-                Json.Success (UTxOInConwayEra utxo') ->
-                    utxo' === upgrade utxo
-                        & counterexample (decodeUtf8 $ Json.encodePretty encoded)
+                Json.Success (UTxOInDijkstraEra _) ->
+                    property False
+                        & counterexample "Unexpected: decoded Conway UTxO as Dijkstra"
 
         specify "Golden: Utxo_1.json" $ do
             json <- decodeFileThrow "Utxo_1.json"
@@ -358,17 +357,17 @@ spec = do
                 Json.Error e -> do
                     show e `shouldContain` "couldn't decode plutus script"
                     show e `shouldContain` "Please drop 'd8184c820249'"
-                Json.Success UTxOInBabbageEra{} ->
-                    fail "successfully decoded an invalid payload (as Babbage Utxo)?"
                 Json.Success UTxOInConwayEra{} ->
                     fail "successfully decoded an invalid payload( as Conway Utxo)?"
+                Json.Success UTxOInDijkstraEra{} ->
+                    fail "successfully decoded an invalid payload (as Dijkstra Utxo)?"
 
         specify "Golden: Utxo_2.json" $ do
             json <- decodeFileThrow "Utxo_2.json"
             case Json.parse decodeUtxo json of
                 Json.Error e ->
                     fail (show e)
-                Json.Success UTxOInBabbageEra{} ->
+                Json.Success UTxOInConwayEra{} ->
                     pure ()
                 Json.Success _ ->
                     fail "successfully decoded Babbage Utxo as another era?"
@@ -378,7 +377,7 @@ spec = do
             case Json.parse decodeUtxo json of
                 Json.Error e ->
                     fail (show e)
-                Json.Success UTxOInBabbageEra{} ->
+                Json.Success UTxOInConwayEra{} ->
                     pure ()
                 Json.Success _ ->
                     fail "successfully decoded Babbage Utxo as another era?"
@@ -389,14 +388,14 @@ spec = do
                 Json.Error e -> do
                     show e `shouldContain` "couldn't decode plutus script"
                     show e `shouldContain` "Please drop '820249'"
-                Json.Success UTxOInBabbageEra{} ->
-                    fail "successfully decoded an invalid payload( as Babbage Utxo)?"
                 Json.Success UTxOInConwayEra{} ->
                     fail "successfully decoded an invalid payload (as Conway Utxo)?"
+                Json.Success UTxOInDijkstraEra{} ->
+                    fail "successfully decoded an invalid payload (as Dijkstra Utxo)?"
 
         specify "Golden: Script_Native_0.json" $ do
-            json <- decodeFileThrow "Script_native_0.json"
-            case traverse @[] (Json.parse (decodeScript @BabbageEra)) json of
+            json <- decodeFileThrow "Script_Native_0.json"
+            case traverse @[] (Json.parse (decodeScript @ConwayEra decodeTimeLock)) json of
                 Json.Error e ->
                     fail (show e)
                 Json.Success{}  ->
@@ -729,7 +728,7 @@ spec = do
 
         validateLedgerStateQuery 10 "treasuryAndReserves"
             Nothing
-            (parseQueryLedgerTreasuryAndReserves genAccountStateResult)
+            (parseQueryLedgerTreasuryAndReserves genChainAccountStateResult)
 
         validateLedgerStateQuery 0 "governanceProposals"
             (Just [aesonQQ|{
@@ -794,23 +793,27 @@ spec = do
             Nothing
             (parseQueryLedgerDelegateRepresentatives genDelegateRepresentativesResult)
 
-        validateNetworkQuery 10 "blockHeight"
+        validateNetworkQuery 10 "blockHeight" ""
             Nothing
             (parseQueryNetworkBlockHeight (const $ genWithOrigin genBlockNo))
 
-        validateNetworkQuery 10 "genesisConfiguration"
+        validateNetworkQuery 10 "genesisConfiguration" "shelley"
             (Just [aesonQQ|{ "era": "shelley" }|])
             (parseQueryNetworkGenesisConfiguration genGenesisConfig)
 
-        validateNetworkQuery 20 "genesisConfiguration"
+        validateNetworkQuery 20 "genesisConfiguration" "alonzo"
             (Just [aesonQQ|{ "era": "alonzo" }|])
             (parseQueryNetworkGenesisConfiguration genGenesisConfig)
 
-        validateNetworkQuery 5 "startTime"
+        validateNetworkQuery 10 "genesisConfiguration" "conway"
+            (Just [aesonQQ|{ "era": "conway" }|])
+            (parseQueryNetworkGenesisConfiguration genGenesisConfig)
+
+        validateNetworkQuery 5 "startTime" ""
             Nothing
             (parseQueryNetworkStartTime (const genSystemStart))
 
-        validateNetworkQuery 10 "tip"
+        validateNetworkQuery 10 "tip" ""
             Nothing
             (parseQueryNetworkTip (const genPoint))
 
@@ -898,6 +901,7 @@ instance Arbitrary (SubmitTransactionResponse Block) where
             , ( SomeShelleyEra ShelleyBasedEraAlonzo,  Binary.DecoderErrorVoid, 0 )
             , ( SomeShelleyEra ShelleyBasedEraBabbage, Binary.DecoderErrorVoid, 0 )
             , ( SomeShelleyEra ShelleyBasedEraConway,  Binary.DecoderErrorVoid, 0 )
+            , ( SomeShelleyEra ShelleyBasedEraDijkstra, Binary.DecoderErrorVoid, 0 )
             ]
           )
         ]
@@ -1000,9 +1004,6 @@ instance Arbitrary (Point Block) where
 
 instance Arbitrary (Tip Block) where
     arbitrary = genTip
-
-instance Arbitrary Block where
-    arbitrary = reasonablySized genBlock
 
 instance Arbitrary (GenTx Block) where
     arbitrary = genTx
@@ -1249,15 +1250,17 @@ validateLedgerStateQuery n subMethod params parser = do
 validateNetworkQuery
     :: Int
     -> Text
+    -> Text
     -> Maybe Json.Value
     -> (Json.Value -> Json.Parser (QueryInEra Gen Block))
     -> SpecWith ()
-validateNetworkQuery n subMethod params parser = do
+validateNetworkQuery n subMethod variant params parser = do
   let category = "Network"
   let propName = "Query" <> category <> titleize subMethod
   let requestRef = "ogmios.json#/properties/" <> propName
   let responseRef = requestRef <> "Response"
   let method = "query" <> category <> "/" <> subMethod
+  let vectorName = toString (propName <> (if variant /= mempty then "_" else "") <> variant)
   parallel $ specify (toString propName) $ do
     queryRefs <- unsafeReadSchemaRef (SchemaRef requestRef)
     runQuickCheck $ withMaxSuccess 1 $ prop_validateToJSON
@@ -1268,6 +1271,7 @@ validateNetworkQuery n subMethod params parser = do
         )
         queryRefs
         params
+
     case Json.parseEither parser (fromMaybe Json.emptyObject params)  of
         Left e ->
             expectationFailure $ "failed to parse JSON: " <> show e
@@ -1289,7 +1293,7 @@ validateNetworkQuery n subMethod params parser = do
                 Just SomeEffectfullQuery{} -> do
                     error "unexpected effectful query in JSON spec"
                 Just (SomeStandardQuery _ encodeResult genResult) -> do
-                    generateTestVectors (n, toString propName)
+                    generateTestVectors (n, vectorName)
                         (reasonablySized $ genResult Proxy)
                         (encodeQueryResponse encodeResult)
                     runQuickCheck $ withMaxSuccess n $ forAllBlind
@@ -1299,7 +1303,7 @@ validateNetworkQuery n subMethod params parser = do
                             responseRefs
                         )
                 Just (SomeCompoundQuery _ _ _ encodeResult genResult) -> do
-                    generateTestVectors (n, toString propName)
+                    generateTestVectors (n, vectorName)
                         (reasonablySized $ genResult Proxy)
                         (encodeQueryResponse encodeResult)
                     runQuickCheck $ withMaxSuccess n $ forAllBlind
@@ -1309,7 +1313,7 @@ validateNetworkQuery n subMethod params parser = do
                             responseRefs
                         )
                 Just (SomeCompound2Query _ _ _ _ encodeResult genResult) -> do
-                    generateTestVectors (n, toString propName)
+                    generateTestVectors (n, vectorName)
                         (reasonablySized $ genResult Proxy)
                         (encodeQueryResponse encodeResult)
                     runQuickCheck $ withMaxSuccess n $ forAllBlind
@@ -1319,7 +1323,7 @@ validateNetworkQuery n subMethod params parser = do
                             responseRefs
                         )
                 Just (SomeAdHocQuery _ encodeResult genResult) -> do
-                    generateTestVectors (n, toString propName)
+                    generateTestVectors (n, vectorName)
                         (reasonablySized $ genResult Proxy)
                         (encodeQueryResponse (Right . encodeResult))
                     runQuickCheck $ withMaxSuccess n $ forAllBlind

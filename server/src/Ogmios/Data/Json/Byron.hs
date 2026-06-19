@@ -44,6 +44,7 @@ import qualified Cardano.Crypto.Signing as By
 import qualified Cardano.Crypto.Wallet as CC
 import qualified Cardano.Ledger.Binary as Binary
 import qualified Cardano.Ledger.Core as Ledger
+import qualified Data.ByteString as BS
 
 encodeAddress
     :: By.Address
@@ -85,11 +86,11 @@ encodeABlockOrBoundary opts = encodeObject . \case
             )
         <>
         "issuer" .= encodeObject
-            ( "verificationKey" .= encodeVerificationKey (By.Dlg.issuerVK c)
+            ( "verificationKey" .= encodeExtendedVerificationKey (By.Dlg.issuerVK c)
             )
         <>
         "delegate" .= encodeObject
-            ( "verificationKey" .= encodeVerificationKey (By.Dlg.delegateVK c)
+            ( "verificationKey" .= encodeExtendedVerificationKey (By.Dlg.delegateVK c)
             )
       where
         h = By.blockHeader blk
@@ -126,11 +127,11 @@ encodeACertificate
 encodeACertificate x =
     encodeObject
         ( "issuer" .= encodeObject
-            ( "verificationKey" .= encodeVerificationKey (By.Dlg.issuerVK x)
+            ( "verificationKey" .= encodeExtendedVerificationKey (By.Dlg.issuerVK x)
             )
         <>
           "delegate" .= encodeObject
-            ( "verificationKey" .= encodeVerificationKey (By.Dlg.delegateVK x)
+            ( "verificationKey" .= encodeExtendedVerificationKey (By.Dlg.delegateVK x)
             )
         )
 
@@ -302,7 +303,7 @@ encodeAVote x = encodeObject
         )
     <> "voter" .= encodeObject
         ( "verificationKey" .=
-            encodeVerificationKey (By.Upd.Vote.voterVK x)
+            encodeExtendedVerificationKey (By.Upd.Vote.voterVK x)
         )
     )
 
@@ -335,6 +336,12 @@ encodeEpochNumber
     -> Json
 encodeEpochNumber =
     encodeWord64 . By.getEpochNumber
+
+encodeExtendedVerificationKey
+    :: By.VerificationKey
+    -> Json
+encodeExtendedVerificationKey  =
+    encodeByteStringBase16 . CC.unXPub . By.unVerificationKey
 
 encodeGenesisHash
     :: By.GenesisHash
@@ -535,9 +542,9 @@ encodeTxInWitness
     -> Json
 encodeTxInWitness = encodeObject . \case
     By.VKWitness key sig ->
-        "key" .=
-            encodeVerificationKey key <>
-        "signature" .=
+        mempty
+        <> encodeVerificationKey key
+        <> "signature" .=
             encodeSignature sig
     By.RedeemWitness key sig ->
         "key" .=
@@ -559,9 +566,13 @@ encodeTxProof x =
 
 encodeVerificationKey
     :: By.VerificationKey
-    -> Json
-encodeVerificationKey =
-    encodeByteStringBase16 . CC.unXPub . By.unVerificationKey
+    -> Series
+encodeVerificationKey x =
+    "key" .= encodeByteStringBase16 (BS.take 32 xpub)
+    <>
+    "chainCode" .= encodeByteStringBase16 (BS.drop 32 xpub)
+  where
+    xpub = CC.unXPub (By.unVerificationKey x)
 
 stringifyAddress
     :: By.Address
