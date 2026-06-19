@@ -1043,7 +1043,7 @@
   , "EraWithGenesis":
     { "title": "EraWithGenesis"
     , "type": "string"
-    , "enum": [ "byron", "shelley", "alonzo", "conway" ]
+    , "enum": [ "byron", "shelley", "alonzo", "conway", "dijkstra" ]
     }
 
   , "EraParameters":
@@ -1282,6 +1282,36 @@
           , "delegateRepresentativeVotingThresholds": { "$ref": "cardano.json#/definitions/DelegateRepresentativeVotingThresholds" }
           , "delegateRepresentativeDeposit": { "$ref": "cardano.json#/definitions/Value<AdaOnly>" }
           , "delegateRepresentativeMaxIdleTime": { "$ref": "cardano.json#/definitions/Epoch" }
+          }
+        }
+      }
+    }
+
+  , "Genesis<Dijkstra>":
+    { "title": "Genesis<Dijkstra>"
+    , "type": "object"
+    , "description": "An Dijkstra genesis configuration, with information used to bootstrap the era. Some parameters are also updatable across the era."
+    , "additionalProperties": false
+    , "required":
+      [ "era"
+      , "maxReferenceScriptsSizePerBlock"
+      , "maxReferenceScriptsSizePerTransaction"
+      , "minFeeReferenceScripts"
+      ]
+    , "properties":
+      { "era":
+        { "type": "string"
+        , "enum": [ "dijkstra" ]
+        }
+      , "maxReferenceScriptsSizePerTransaction": { "$ref": "cardano.json#/definitions/NumberOfBytes" }
+      , "maxReferenceScriptsSizePerBlock": { "$ref": "cardano.json#/definitions/NumberOfBytes" }
+      , "minFeeReferenceScripts":
+        { "type": "object"
+        , "additionalProperties": false
+        , "required": ["range", "multiplier"]
+        , "properties":
+          { "range": { "$ref": "cardano.json#/definitions/UInt32" }
+          , "multiplier": { "type": "number" }
           }
         }
       }

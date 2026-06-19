@@ -2070,6 +2070,7 @@
               , { "$ref": "cardano.json#/definitions/Genesis<Shelley>" }
               , { "$ref": "cardano.json#/definitions/Genesis<Alonzo>"}
               , { "$ref": "cardano.json#/definitions/Genesis<Conway>"}
+              , { "$ref": "cardano.json#/definitions/Genesis<Dijkstra>"}
               ]
             }
           ]
