@@ -9,7 +9,15 @@ math: true
 
 ### [7.0.0] - UNRELEASED
 
+#### Added
+
+- Preliminary support for the DijkstraEra and PlutusV4
+
 #### Changed
+
+- Upgraded dependencies and compatibility to `cardano-node==11.0.1`.
+
+- Fixed Ogmios not returning a success error code when interrupted by the user (e.g. CTRL+C / SIGINT).
 
 - **⚠️ BREAKING-CHANGE ⚠️**: on `ProtocolParameters` and `ProposedProtocolParameters`, the field `maxReferenceScriptsSize` has been renamed to `maxReferenceScriptsSizePerTransaction` to disambiguate it from `maxReferenceScriptsSizePerBlock`.
 

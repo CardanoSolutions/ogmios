@@ -42,7 +42,14 @@ export type Script = Native | Plutus;
 /**
  * A phase-1 monetary script. Timelocks constraints are only supported since Allegra.
  */
-export type ScriptNative = ClauseSignature | ClauseAny | ClauseAll | ClauseSome | ClauseBefore | ClauseAfter;
+export type ScriptNative =
+  | ClauseSignature
+  | ClauseAny
+  | ClauseAll
+  | ClauseSome
+  | ClauseBefore
+  | ClauseAfter
+  | ClauseGuard;
 /**
  * A Blake2b 28-byte hash digest, encoded in base16.
  */
@@ -140,6 +147,10 @@ export type AddressAttributes = string;
  * Plutus data, CBOR-serialised.
  */
 export type RedeemerData = string;
+export type AccountBalanceInterval =
+  | AccountBalanceIntervalAtLeast
+  | AccountBalanceIntervalAtMost
+  | AccountBalanceIntervalWithin;
 export type BootstrapProtocolId = number;
 /**
  * An Ed25519-BIP32 Byron genesis delegate verification key with chain-code.
@@ -220,21 +231,24 @@ export type SubmitTransactionFailure =
   | SubmitTransactionFailureReferenceScriptsTooLarge
   | SubmitTransactionFailureUnknownVoters
   | SubmitTransactionFailureEmptyTreasuryWithdrawal
+  | SubmitTransactionFailurePointerAddressInCollateralReturn
+  | SubmitTransactionFailureStakePoolVRFKeyAlreadyRegistered
   | SubmitTransactionFailureUnexpectedMempoolError
   | SubmitTransactionFailureUnrecognizedCertificateType;
-export type Era = "byron" | "shelley" | "allegra" | "mary" | "alonzo" | "babbage" | "conway";
+export type Era = "byron" | "shelley" | "allegra" | "mary" | "alonzo" | "babbage" | "conway" | "dijkstra";
 export type ScriptPurpose =
   | ScriptPurposeSpend
   | ScriptPurposeMint
   | ScriptPurposePublish
   | ScriptPurposeWithdraw
   | ScriptPurposePropose
-  | ScriptPurposeVote;
+  | ScriptPurposeVote
+  | ScriptPurposeGuard;
 /**
  * A Blake2b 28-byte hash digest, encoded in base16.
  */
 export type PolicyId = string;
-export type Language = "plutus:v1" | "plutus:v2" | "plutus:v3";
+export type Language = "plutus:v1" | "plutus:v2" | "plutus:v3" | "plutus:v4";
 export type Utxo = {
   transaction: {
     id: TransactionId;
@@ -292,7 +306,7 @@ export type RewardAccountSummaries = RewardAccountSummary[];
 export type Delegator = {
   [k: string]: unknown;
 }[];
-export type EraWithGenesis = "byron" | "shelley" | "alonzo" | "conway";
+export type EraWithGenesis = "byron" | "shelley" | "alonzo" | "conway" | "dijkstra";
 export type UtcTime = string;
 /**
  * A magic number for telling networks apart. (e.g. 764824073)
@@ -588,9 +602,10 @@ export interface Transaction {
   collaterals?: TransactionOutputReference[];
   totalCollateral?: ValueAdaOnly;
   collateralReturn?: TransactionOutput;
-  outputs: TransactionOutput[];
+  outputs?: TransactionOutput[];
   certificates?: Certificate[];
   withdrawals?: Withdrawals;
+  credits?: Credits;
   fee?: ValueAdaOnly;
   validityInterval?: ValidityInterval;
   mint?: Assets;
@@ -598,6 +613,10 @@ export interface Transaction {
   scriptIntegrityHash?: DigestBlake2B256;
   requiredExtraSignatories?: DigestBlake2B224[];
   requiredExtraScripts?: DigestBlake2B224[];
+  /**
+   * Scripts which must pass for the transaction to be valid. Meant to replace the 'withdraw-0' design pattern. From Dijkstra era only.
+   */
+  guards?: DigestBlake2B224[];
   proposals?: GovernanceProposal[];
   votes?: GovernanceVote[];
   metadata?: Metadata;
@@ -613,6 +632,14 @@ export interface Transaction {
     value?: ValueAdaOnly;
     donation?: ValueAdaOnly;
   };
+  /**
+   * Interval contraints regarding accounts. This is used by scripts which must validates account balances with some levels of flexibility. From Dijkstra era only.
+   */
+  accountBalanceIntervals?: AccountBalanceInterval[];
+  /**
+   * Nested sub-transactions. From Dijkstra era only.
+   */
+  subTransactions?: SubTransaction[];
   /**
    * The raw serialized (CBOR) transaction, as found on-chain. Use --include-transaction-cbor to ALWAYS include the 'cbor' field. Omitted otherwise.
    */
@@ -680,8 +707,12 @@ export interface ClauseAfter {
   clause: "after";
   slot: Slot;
 }
+export interface ClauseGuard {
+  clause: "guard";
+  from: DigestBlake2B224;
+}
 export interface Plutus {
-  language: "plutus:v1" | "plutus:v2" | "plutus:v3";
+  language: "plutus:v1" | "plutus:v2" | "plutus:v3" | "plutus:v4";
   cbor: string;
 }
 /**
@@ -835,6 +866,12 @@ export interface DelegateRepresentativeRetirement {
 export interface Withdrawals {
   [k: string]: ValueAdaOnly;
 }
+/**
+ * Credits to account addresses (opposite of withdrawals). From Dijkstra era only.
+ */
+export interface Credits {
+  [k: string]: ValueAdaOnly;
+}
 export interface ValidityInterval {
   invalidBefore?: Slot;
   invalidAfter?: Slot;
@@ -879,9 +916,9 @@ export interface ProposedProtocolParameters {
   minFeeCoefficient?: UInt64;
   minFeeConstant?: ValueAdaOnly;
   minFeeReferenceScripts?: {
-    range: UInt32;
-    base: number;
-    multiplier: number;
+    range?: UInt32;
+    base?: number;
+    multiplier?: number;
   };
   minUtxoDepositCoefficient?: UInt64;
   minUtxoDepositConstant?: ValueAdaOnly;
@@ -894,7 +931,10 @@ export interface ProposedProtocolParameters {
   maxTransactionSize?: {
     bytes: UInt64;
   };
-  maxReferenceScriptsSize?: {
+  maxReferenceScriptsSizePerTransaction?: {
+    bytes: UInt64;
+  };
+  maxReferenceScriptsSizePerBlock?: {
     bytes: UInt64;
   };
   maxValueSize?: {
@@ -1129,8 +1169,81 @@ export interface Redeemer {
   validator: RedeemerPointer;
 }
 export interface RedeemerPointer {
-  purpose: "spend" | "mint" | "publish" | "withdraw" | "vote" | "propose";
+  purpose: "spend" | "mint" | "publish" | "withdraw" | "vote" | "propose" | "guard";
   index: UInt64;
+}
+/**
+ * Minimum (inclusive) balance of the target account.
+ */
+export interface AccountBalanceIntervalAtLeast {
+  from: CredentialOrigin;
+  credential: DigestBlake2B224;
+  atLeast: ValueAdaOnly;
+}
+/**
+ * Maximum (exclusive) balance of the target account.
+ */
+export interface AccountBalanceIntervalAtMost {
+  from: CredentialOrigin;
+  credential: DigestBlake2B224;
+  atMost: ValueAdaOnly;
+}
+/**
+ * Minimum (inclusive) and maximum (exclusive) balances of the target account.
+ */
+export interface AccountBalanceIntervalWithin {
+  from: CredentialOrigin;
+  credential: DigestBlake2B224;
+  atLeast: ValueAdaOnly;
+  atMost: ValueAdaOnly;
+}
+export interface SubTransaction {
+  id: DigestBlake2B256;
+  inputs: TransactionOutputReference[];
+  references?: TransactionOutputReference[];
+  outputs?: TransactionOutput[];
+  certificates?: Certificate[];
+  withdrawals?: Withdrawals;
+  credits?: Credits1;
+  validityInterval?: ValidityInterval;
+  mint?: Assets;
+  network?: Network;
+  scriptIntegrityHash?: DigestBlake2B256;
+  requiredExtraSignatories?: DigestBlake2B224[];
+  requiredExtraScripts?: DigestBlake2B224[];
+  /**
+   * Scripts which must pass for the (sub) transaction to be valid. Meant to replace the 'withdraw-0' design pattern.
+   */
+  guards?: DigestBlake2B224[];
+  /**
+   * Like 'guards', but apply to the host transaction.
+   */
+  topLevelGuards?: TopLevelGuard[];
+  proposals?: GovernanceProposal[];
+  votes?: GovernanceVote[];
+  treasury?: {
+    value?: ValueAdaOnly;
+    donation?: ValueAdaOnly;
+  };
+  accountBalanceIntervals?: AccountBalanceInterval[];
+  metadata?: Metadata;
+  signatories: Signatory[];
+  scripts?: {
+    [k: string]: Script;
+  };
+  datums?: {
+    [k: string]: Datum;
+  };
+  redeemers?: Redeemer[];
+  cbor?: string;
+}
+export interface Credits1 {
+  [k: string]: ValueAdaOnly;
+}
+export interface TopLevelGuard {
+  from: CredentialOrigin;
+  credential: DigestBlake2B224;
+  datum?: Datum;
 }
 /**
  * A (Byron) delegation certificate.
@@ -1187,7 +1300,7 @@ export interface BootstrapProtocolParameters {
 }
 export interface BootstrapVote {
   voter: {
-    verificationKey: VerificationKey;
+    verificationKey: ExtendedVerificationKey;
   };
   proposal: {
     id: DigestBlake2B256;
@@ -1195,7 +1308,7 @@ export interface BootstrapVote {
 }
 export interface BlockPraos {
   type: "praos";
-  era: "shelley" | "allegra" | "mary" | "alonzo" | "babbage" | "conway";
+  era: "shelley" | "allegra" | "mary" | "alonzo" | "babbage" | "conway" | "dijkstra";
   id: DigestBlake2B256;
   ancestor: DigestBlake2B256 | GenesisHash;
   nonce?: CertifiedVrf;
@@ -1408,6 +1521,10 @@ export interface ScriptPurposePropose {
 export interface ScriptPurposeVote {
   purpose: "vote";
   issuer: VoterGenesisDelegate | VoterConstitutionalCommittee | VoterDelegateRepresentative | VoterStakePoolOperator;
+}
+export interface ScriptPurposeGuard {
+  purpose: "guard";
+  script: DigestBlake2B224;
 }
 /**
  * Extraneous (non-required) redeemers found in the transaction. There are some redeemers that aren't pointing to any script. This could be because you've left some orphan redeemer behind, because they are pointing at the wrong thing or because you forgot to include their associated validator. Either way, the field 'data.extraneousRedeemers' lists the different orphan redeemer pointers.
@@ -2051,13 +2168,35 @@ export interface SubmitTransactionFailureEmptyTreasuryWithdrawal {
   message: string;
 }
 /**
+ * The collateral return output contains a pointer address, which is not permitted in the Dijkstra era.
+ */
+export interface SubmitTransactionFailurePointerAddressInCollateralReturn {
+  code: 3169;
+  message: string;
+  data: {
+    output: TransactionOutput;
+  };
+}
+/**
+ * Stake pool can (no longer) re-use an already used VRF key. Yet this transaction contains a pool which declares a VRF key that is already in use.
+ */
+export interface SubmitTransactionFailureStakePoolVRFKeyAlreadyRegistered {
+  code: 3170;
+  message: string;
+  data: {
+    poolId: StakePoolId;
+    alreadyRegisteredVrfKey: DigestBlake2B256;
+    [k: string]: unknown;
+  };
+}
+/**
  * A transaction was rejected due to custom rules that prevented it from entering the mempool. A justification is given as 'data.error'.
  */
 export interface SubmitTransactionFailureUnexpectedMempoolError {
   code: 3997;
   message: string;
   data: {
-    [k: string]: unknown;
+    error: string;
   };
 }
 /**
@@ -2086,6 +2225,7 @@ export interface DeserialisationFailure {
     alonzo: string;
     babbage: string;
     conway: string;
+    dijkstra: string;
   };
 }
 /**
@@ -2794,7 +2934,10 @@ export interface ProtocolParameters {
   scriptExecutionPrices?: ScriptExecutionPrices;
   maxExecutionUnitsPerTransaction?: ExecutionUnits;
   maxExecutionUnitsPerBlock?: ExecutionUnits;
-  maxReferenceScriptsSize?: {
+  maxReferenceScriptsSizePerTransaction?: {
+    bytes: UInt64;
+  };
+  maxReferenceScriptsSizePerBlock?: {
     bytes: UInt64;
   };
   stakePoolVotingThresholds?: StakePoolVotingThresholds;
@@ -3039,7 +3182,9 @@ export interface QueryNetworkGenesisConfiguration {
 export interface QueryNetworkGenesisConfigurationResponse {
   jsonrpc: "2.0";
   method: "queryNetwork/genesisConfiguration";
-  result: QueryNetworkInvalidGenesis | (GenesisByron | GenesisShelley | GenesisAlonzo | GenesisConway);
+  result:
+    | QueryNetworkInvalidGenesis
+    | (GenesisByron | GenesisShelley | GenesisAlonzo | GenesisConway | GenesisDijkstra);
   id?: unknown;
 }
 export interface QueryNetworkInvalidGenesis {
@@ -3150,6 +3295,22 @@ export interface GenesisConway {
     delegateRepresentativeVotingThresholds: DelegateRepresentativeVotingThresholds;
     delegateRepresentativeDeposit: ValueAdaOnly;
     delegateRepresentativeMaxIdleTime: Epoch;
+  };
+}
+/**
+ * An Dijkstra genesis configuration, with information used to bootstrap the era. Some parameters are also updatable across the era.
+ */
+export interface GenesisDijkstra {
+  era: "dijkstra";
+  maxReferenceScriptsSizePerTransaction: {
+    bytes: UInt64;
+  };
+  maxReferenceScriptsSizePerBlock: {
+    bytes: UInt64;
+  };
+  minFeeReferenceScripts: {
+    range: UInt32;
+    multiplier: number;
   };
 }
 /**

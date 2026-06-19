@@ -5,6 +5,7 @@ import {
   GenesisAlonzo,
   GenesisByron,
   GenesisConway,
+  GenesisDijkstra,
   GenesisShelley,
   EraWithGenesis
 } from '@cardano-ogmios/schema'
@@ -21,11 +22,12 @@ export function genesisConfiguration(context: InteractionContext, era: 'byron'):
 export function genesisConfiguration(context: InteractionContext, era: 'shelley'): Promise<GenesisShelley>
 export function genesisConfiguration(context: InteractionContext, era: 'alonzo'): Promise<GenesisAlonzo>
 export function genesisConfiguration(context: InteractionContext, era: 'conway'): Promise<GenesisConway>
+export function genesisConfiguration(context: InteractionContext, era: 'dijkstra'): Promise<GenesisDijkstra>
 export function genesisConfiguration (
   context: InteractionContext,
   era: EraWithGenesis
-): Promise<GenesisByron | GenesisShelley | GenesisAlonzo | GenesisConway> {
-  return Method<Request, Response, GenesisByron | GenesisShelley | GenesisAlonzo | GenesisConway>(
+): Promise<GenesisByron | GenesisShelley | GenesisAlonzo | GenesisConway | GenesisDijkstra> {
+  return Method<Request, Response, GenesisByron | GenesisShelley | GenesisAlonzo | GenesisConway | GenesisDijkstra>(
     {
       method: 'queryNetwork/genesisConfiguration',
       params: { era }
@@ -40,6 +42,8 @@ export function genesisConfiguration (
           resolve(response.result as GenesisAlonzo)
         } else if (era === 'conway' && isQueryNetworkGenesisConfigurationConway(response)) {
           resolve(response.result as GenesisConway)
+        } else if (era === 'dijkstra' && isQueryNetworkGenesisConfigurationDijkstra(response)) {
+          resolve(response.result as GenesisDijkstra)
         } else {
           reject(response)
         }
@@ -74,4 +78,11 @@ export function isQueryNetworkGenesisConfigurationAlonzo (response: any): respon
  */
 export function isQueryNetworkGenesisConfigurationConway (response: any): response is GenesisConway {
   return ((response as Response)?.result as GenesisConway)?.era === 'conway'
+}
+
+/**
+ * @internal
+ */
+export function isQueryNetworkGenesisConfigurationDijkstra (response: any): response is GenesisDijkstra {
+  return ((response as Response)?.result as GenesisDijkstra)?.era === 'dijkstra'
 }
