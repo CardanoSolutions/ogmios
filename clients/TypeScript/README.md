@@ -12,66 +12,9 @@ yarn install && \
 yarn build
 ```
 #### Run Tests
-```console
-yarn testnet:up
-```
-In another terminal
+
+Have a cardano node running on PreProd, and then:
+
 ```console
 yarn test
 ```
-
-### Start Cardano Node and Ogmios Server
-#### mainnet
-```console
-yarn mainnet:up
-```
-#### testnet
-```console
-yarn testnet:up
-```
-### Stop Cardano Node and Ogmios Server
-#### mainnet
-```console
-yarn mainnet:down
-```
-#### testnet
-```console
-yarn testnet:down
-```
-
-### Start the REPL
-#### mainnet
-```console
-yarn repl:start
-```
-#### testnet
-```console
-yarn repl:start --port 1337
-```
-### Lint
-```console
-yarn lint
-```
-### Cleanup
-```
-yarn cleanup
-```
-
-## Distribute
-
-### Pack
-```console
-./scripts/pack.sh
-```
-### Publish to npm.org
-```console
-./scripts/publish.sh
-```
-
-### Pkg REPL
-```console
-yarn repl:pkg
-```
-
-
-
