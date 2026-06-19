@@ -12,6 +12,9 @@ import Cardano.Ledger.Babbage.TxOut
 import Cardano.Ledger.Coin
     ( Coin (..)
     )
+import Cardano.Ledger.Core
+    ( TopTx
+    )
 import Cardano.Ledger.Mary.Value
     ( MaryValue (..)
     )
@@ -27,15 +30,11 @@ import Ogmios.Data.Protocol.TxSubmission
     , TxIn
     , UTxO (..)
     )
-import Cardano.Ledger.Core
-    ( TopTx
-    )
 import Ogmios.Prelude hiding
     ( Era
     )
-
 import Test.Generators
-    ( genUtxoBabbage
+    ( genUtxo
     , shrinkUtxo
     )
 import Test.Hspec
@@ -60,8 +59,8 @@ import Test.QuickCheck
 
 import qualified Data.Map as Map
 
-type Tx' = Tx TopTx BabbageEra
-type TxOut' = BabbageTxOut BabbageEra
+type Tx' = Tx TopTx ConwayEra
+type TxOut' = BabbageTxOut ConwayEra
 
 spec :: Spec
 spec = parallel $ do
@@ -72,8 +71,8 @@ spec = parallel $ do
 
 prop_merge :: Property
 prop_merge =
-    forAllShrinkBlind genUtxoBabbage shrinkUtxo $ \(UTxO utxoNetwork) ->
-    forAllShrinkBlind genUtxoBabbage shrinkUtxo $ \(UTxO utxoUser) ->
+    forAllShrinkBlind (genUtxo @ConwayEra) shrinkUtxo $ \(UTxO utxoNetwork) ->
+    forAllShrinkBlind (genUtxo @ConwayEra) shrinkUtxo $ \(UTxO utxoUser) ->
     forAllBlind arbitrary $ \tx ->
         (utxoNetwork /= utxoUser || null utxoNetwork) ==>
             property utxoNetwork utxoUser tx
@@ -87,11 +86,11 @@ prop_merge =
             const
             (\_ -> error "evaluation failed unexpectedly")
             (UTxO utxoNetwork)
-            (SomeEvaluationInAnyEra @BabbageEra (UTxO utxoUser) tx)
+            (SomeEvaluationInAnyEra @ConwayEra (UTxO utxoUser) tx)
 
 prop_coherent_intersection :: Property
 prop_coherent_intersection =
-    forAllShrinkBlind genUtxoBabbage shrinkUtxo $ \(UTxO utxoNetwork) ->
+    forAllShrinkBlind (genUtxo @ConwayEra) shrinkUtxo $ \(UTxO utxoNetwork) ->
     forAllBlind arbitrary $ \tx ->
         property utxoNetwork utxoNetwork tx
   where
@@ -100,11 +99,11 @@ prop_coherent_intersection =
             const
             (\_ -> error "evaluation failed unexpectedly")
             (UTxO utxoNetwork)
-            (SomeEvaluationInAnyEra @BabbageEra (UTxO utxoUser) tx)
+            (SomeEvaluationInAnyEra @ConwayEra (UTxO utxoUser) tx)
 
 prop_ambiguous_intersection :: Property
 prop_ambiguous_intersection =
-    forAllBlind (genUtxoBabbage `suchThat` (\(UTxO u) -> not (null u))) $ \(UTxO utxo) ->
+    forAllBlind (genUtxo @ConwayEra `suchThat` (\(UTxO u) -> not (null u))) $ \(UTxO utxo) ->
     forAllBlind arbitrary $ \tx ->
     forAllBlind arbitrary $ \coinFlip ->
         let (utxoNetwork, utxoUser)

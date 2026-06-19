@@ -42,7 +42,6 @@ import GHC.Generics
     )
 import Ogmios.Data.EraTranslation
     ( MultiEraUTxO (..)
-    , Upgrade (..)
     )
 import Ogmios.Data.Json
     ( Json
@@ -79,6 +78,7 @@ import Ogmios.Data.Json.Prelude
 import Ogmios.Data.Json.Query
     ( QueryInEra
     , SomeQuery (..)
+    , decodeTimeLock
     , parseQueryLedgerConstitution
     , parseQueryLedgerConstitutionalCommittee
     , parseQueryLedgerDelegateRepresentatives
@@ -185,10 +185,10 @@ import System.Directory
     ( createDirectoryIfMissing
     )
 import Test.Generators
-    ( genChainAccountStateResult
-    , genAcquireFailure
+    ( genAcquireFailure
     , genBlockNo
     , genBoundResult
+    , genChainAccountStateResult
     , genCommitteeMembersStateResult
     , genConstitutionResult
     , genData
@@ -218,7 +218,7 @@ import Test.Generators
     , genTipNoGenesis
     , genTx
     , genUTxOResult
-    , genUtxoBabbage
+    , genUtxo
     , genWithOrigin
     , generateWith
     , reasonablySized
@@ -337,22 +337,19 @@ validateFromJSON gen (encode, decode) (n, vectorFilePath) ref = parallel $ do
 spec :: Spec
 spec = do
     context "JSON roundtrips" $ do
-        prop "encodeUtxo / decodeUtxo (Babbage)" $ forAllShrinkBlind genUtxoBabbage shrinkUtxo $ \utxo ->
+        prop "encodeUtxo / decodeUtxo (Babbage)" $ forAllShrinkBlind (genUtxo @ConwayEra) shrinkUtxo $ \utxo ->
             let encoded = inefficientEncodingToValue (Babbage.encodeUtxo utxo) in
             case Json.parse decodeUtxo encoded of
                 Json.Error e ->
                     property False
                         & counterexample e
                         & counterexample (decodeUtf8 $ Json.encodePretty encoded)
-                Json.Success (UTxOInBabbageEra utxo') ->
-                    utxo' === utxo
-                        & counterexample (decodeUtf8 $ Json.encodePretty encoded)
                 Json.Success (UTxOInConwayEra utxo') ->
-                    utxo' === upgrade utxo
+                    utxo' === utxo
                         & counterexample (decodeUtf8 $ Json.encodePretty encoded)
                 Json.Success (UTxOInDijkstraEra _) ->
                     property False
-                        & counterexample "Unexpected: decoded Babbage UTxO as Dijkstra"
+                        & counterexample "Unexpected: decoded Conway UTxO as Dijkstra"
 
         specify "Golden: Utxo_1.json" $ do
             json <- decodeFileThrow "Utxo_1.json"
@@ -360,8 +357,6 @@ spec = do
                 Json.Error e -> do
                     show e `shouldContain` "couldn't decode plutus script"
                     show e `shouldContain` "Please drop 'd8184c820249'"
-                Json.Success UTxOInBabbageEra{} ->
-                    fail "successfully decoded an invalid payload (as Babbage Utxo)?"
                 Json.Success UTxOInConwayEra{} ->
                     fail "successfully decoded an invalid payload( as Conway Utxo)?"
                 Json.Success UTxOInDijkstraEra{} ->
@@ -372,7 +367,7 @@ spec = do
             case Json.parse decodeUtxo json of
                 Json.Error e ->
                     fail (show e)
-                Json.Success UTxOInBabbageEra{} ->
+                Json.Success UTxOInConwayEra{} ->
                     pure ()
                 Json.Success _ ->
                     fail "successfully decoded Babbage Utxo as another era?"
@@ -382,7 +377,7 @@ spec = do
             case Json.parse decodeUtxo json of
                 Json.Error e ->
                     fail (show e)
-                Json.Success UTxOInBabbageEra{} ->
+                Json.Success UTxOInConwayEra{} ->
                     pure ()
                 Json.Success _ ->
                     fail "successfully decoded Babbage Utxo as another era?"
@@ -393,8 +388,6 @@ spec = do
                 Json.Error e -> do
                     show e `shouldContain` "couldn't decode plutus script"
                     show e `shouldContain` "Please drop '820249'"
-                Json.Success UTxOInBabbageEra{} ->
-                    fail "successfully decoded an invalid payload( as Babbage Utxo)?"
                 Json.Success UTxOInConwayEra{} ->
                     fail "successfully decoded an invalid payload (as Conway Utxo)?"
                 Json.Success UTxOInDijkstraEra{} ->
@@ -402,7 +395,7 @@ spec = do
 
         specify "Golden: Script_Native_0.json" $ do
             json <- decodeFileThrow "Script_Native_0.json"
-            case traverse @[] (Json.parse (decodeScript @BabbageEra)) json of
+            case traverse @[] (Json.parse (decodeScript @ConwayEra decodeTimeLock)) json of
                 Json.Error e ->
                     fail (show e)
                 Json.Success{}  ->

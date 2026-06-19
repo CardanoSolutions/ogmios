@@ -17,14 +17,17 @@ import Cardano.Ledger.Compactible
     ( CompactForm
     , Compactible (..)
     )
-import Cardano.Ledger.HKD
-    ()
 import Data.SatInt
     ( fromSatInt
     )
 import Ouroboros.Consensus.Shelley.Ledger.Block
     ( ShelleyBlock (..)
     )
+
+import Cardano.Ledger.HKD
+    ()
+import Cardano.Ledger.Plutus.Language
+    ()
 import Ouroboros.Consensus.Shelley.Protocol.TPraos
     ()
 
@@ -36,8 +39,6 @@ import qualified Cardano.Protocol.TPraos.BHeader as TPraos
 import qualified Cardano.Ledger.Api as Ledger
 import qualified Cardano.Ledger.Block as Ledger
 import qualified Cardano.Ledger.Core as Ledger
-import Cardano.Ledger.Plutus.Language
-    ()
 
 import qualified Cardano.Ledger.Shelley.API as Sh
 import qualified Cardano.Ledger.Shelley.PParams as Sh
@@ -193,7 +194,7 @@ encodeGenesis x =
         ( "era" .= encodeText "alonzo"
        <> "updatableParameters" .= encodeObject
             ( "minUtxoDepositCoefficient" .=
-                (encodeInteger . (`div` 8) . unCoin . Al.unCoinPerWord) (Al.agCoinsPerUTxOWord x) <>
+                  (encodeInteger . (`div` 8) . unCoin . Al.unCoinPerWord) (Al.agCoinsPerUTxOWord x) <>
               "plutusCostModels" .=
                   maybe (encodeObject mempty) encodeCostModels
                       (Al.aecCostModels =<< Al.extraConfig x) <>
@@ -208,7 +209,7 @@ encodeGenesis x =
               "collateralPercentage" .=
                   encodeWord16 (Al.agCollateralPercentage x) <>
               "maxCollateralInputs" .=
-                    encodeWord16 (Al.agMaxCollateralInputs x)
+                  encodeWord16 (Al.agMaxCollateralInputs x)
             )
         )
 

@@ -490,8 +490,6 @@ utxoFromMempool =
 
     withoutKeys :: Set TxIn -> MultiEraUTxO block -> MultiEraUTxO block
     withoutKeys ks = \case
-        UTxOInBabbageEra (UTxO utxo) ->
-            UTxOInBabbageEra (UTxO (Map.withoutKeys utxo ks))
         UTxOInConwayEra (UTxO utxo) ->
             UTxOInConwayEra (UTxO (Map.withoutKeys utxo ks))
         UTxOInDijkstraEra (UTxO utxo) ->
@@ -499,12 +497,6 @@ utxoFromMempool =
 
     union :: MultiEraUTxO block -> MultiEraUTxO block -> MultiEraUTxO block
     union l r = case (l, r) of
-        (UTxOInBabbageEra (UTxO ul), UTxOInBabbageEra (UTxO ur)) ->
-            UTxOInBabbageEra (UTxO (Map.union ul ur))
-        (UTxOInBabbageEra (upgrade -> (UTxO ul)), UTxOInConwayEra (UTxO ur)) ->
-            UTxOInConwayEra (UTxO (Map.union ul ur))
-        (UTxOInConwayEra (UTxO ul), UTxOInBabbageEra (upgrade -> (UTxO ur))) ->
-            UTxOInConwayEra (UTxO (Map.union ul ur))
         (UTxOInConwayEra (UTxO ul), UTxOInConwayEra (UTxO ur)) ->
             UTxOInConwayEra (UTxO (Map.union ul ur))
         (UTxOInDijkstraEra (UTxO ul), UTxOInDijkstraEra (UTxO ur)) ->
@@ -551,12 +543,8 @@ utxoFromMempool =
                 utxo = newUtxoFor h (toList outs)
              in
                 UTxOInConwayEra (UTxO utxo)
-        GenTxBabbage (Consensus.ShelleyTx h tx) ->
-            let
-                outs = tx ^. Ledger.bodyTxL . Ledger.outputsTxBodyL
-                utxo = newUtxoFor h (toList outs)
-             in
-                UTxOInBabbageEra (UTxO utxo)
+        GenTxBabbage{} ->
+            error "outputs: unsupported era."
         GenTxAlonzo{} ->
             error "outputs: unsupported era."
         GenTxMary{} ->
@@ -570,24 +558,17 @@ utxoFromMempool =
 
 mergeUtxo ::  MultiEraUTxO block -> MultiEraUTxO block -> MultiEraUTxO block
 mergeUtxo a b = case (a, b) of
-    (UTxOInBabbageEra (unUTxO -> l), UTxOInBabbageEra (unUTxO -> r)) ->
-        UTxOInBabbageEra $ UTxO (Map.union l r)
-    (UTxOInBabbageEra (unUTxO -> l), UTxOInConwayEra (unUTxO -> r)) ->
-        UTxOInConwayEra $ UTxO (Map.union (upgrade <$> l) r)
-    (UTxOInConwayEra (unUTxO -> l), UTxOInBabbageEra (unUTxO -> r)) ->
-        UTxOInConwayEra $ UTxO (Map.union l (upgrade <$> r))
     (UTxOInConwayEra (unUTxO -> l), UTxOInConwayEra (unUTxO -> r)) ->
-        UTxOInConwayEra $ UTxO (Map.union l r)
+        UTxOInDijkstraEra $ UTxO (Map.union (upgrade <$> l) (upgrade <$> r))
+    (UTxOInDijkstraEra (unUTxO -> l), UTxOInConwayEra (unUTxO -> r)) ->
+        UTxOInDijkstraEra $ UTxO (Map.union l (upgrade <$> r))
+    (UTxOInConwayEra (unUTxO -> l), UTxOInDijkstraEra (unUTxO -> r)) ->
+        UTxOInDijkstraEra $ UTxO (Map.union (upgrade <$> l) r)
     (UTxOInDijkstraEra (unUTxO -> l), UTxOInDijkstraEra (unUTxO -> r)) ->
         UTxOInDijkstraEra $ UTxO (Map.union l r)
-    (_, UTxOInDijkstraEra (unUTxO -> r)) ->
-        UTxOInDijkstraEra $ UTxO r
-    (UTxOInDijkstraEra (unUTxO -> l), _) ->
-        UTxOInDijkstraEra $ UTxO l
 
 utxoReferences :: MultiEraUTxO (CardanoBlock crypto) -> [Text]
 utxoReferences = fmap txInToText . \case
-    UTxOInBabbageEra  (unUTxO -> u) -> Map.keys u
     UTxOInConwayEra   (unUTxO -> u) -> Map.keys u
     UTxOInDijkstraEra (unUTxO -> u) -> Map.keys u
   where

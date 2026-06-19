@@ -354,9 +354,6 @@ newExecutionUnitsEvaluator tr = do
                 (_, GenTxBabbage{}) ->
                     return $ Left (unsupportedEra "babbage")
 
-                (UTxOInBabbageEra{}, _) ->
-                    return $ Left (unsupportedEra "babbage")
-
                 (UTxOInConwayEra utxo, GenTxConway (ShelleyTx _id tx)) -> do
                     logWith tr $ TxSubmissionEvaluateArguments { utxoEra = "conway", transactionEra = "conway" }
                     return $ Right (SomeEvaluationInAnyEra utxo tx)

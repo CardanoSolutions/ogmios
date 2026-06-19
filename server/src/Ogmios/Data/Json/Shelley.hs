@@ -15,24 +15,27 @@ import Ogmios.Data.Json.Prelude
 import Cardano.Ledger.Compactible
     ( Compactible (..)
     )
-import Data.Array.Byte
-    ( ByteArray (..)
-    )
-import Data.ByteString.Short
-    ( ShortByteString (..)
-    )
 import Cardano.Ledger.Keys
     ( GenDelegPair (..)
     , KeyRole (..)
+    )
+import Data.Array.Byte
+    ( ByteArray (..)
     )
 import Data.ByteString.Bech32
     ( HumanReadablePart (..)
     , encodeBech32
     )
+import Data.ByteString.Short
+    ( ShortByteString (..)
+    )
 import Ouroboros.Consensus.Shelley.Ledger.Block
     ( ShelleyBlock (..)
     , ShelleyHash (..)
     )
+
+import Cardano.Ledger.HKD
+    ()
 import Ouroboros.Consensus.Shelley.Protocol.TPraos
     ()
 
@@ -48,17 +51,17 @@ import qualified Cardano.Protocol.TPraos.BHeader as TPraos
 import qualified Cardano.Protocol.TPraos.OCert as TPraos
 
 import qualified Cardano.Ledger.Api as Ledger
+import qualified Cardano.Ledger.Babbage.Core as Ba
 import qualified Cardano.Ledger.BaseTypes as Ledger
 import qualified Cardano.Ledger.Block as Ledger
 import qualified Cardano.Ledger.Coin as Ledger
 import qualified Cardano.Ledger.Core as Ledger
-import qualified Cardano.Ledger.Babbage.Core as Ba
 import qualified Cardano.Ledger.Credential as Ledger
-import Cardano.Ledger.HKD ()
 import qualified Cardano.Ledger.Keys as Ledger
 import qualified Cardano.Ledger.State as Ledger
 import qualified Cardano.Ledger.TxIn as Ledger
 
+import qualified Cardano.Ledger.Keys.WitVKey as Sh
 import qualified Cardano.Ledger.Shelley.BlockBody as Sh
 import qualified Cardano.Ledger.Shelley.Genesis as Sh
 import qualified Cardano.Ledger.Shelley.PParams as Sh
@@ -68,7 +71,6 @@ import qualified Cardano.Ledger.Shelley.Tx as Sh
 import qualified Cardano.Ledger.Shelley.TxAuxData as Sh
 import qualified Cardano.Ledger.Shelley.TxBody as Sh
 import qualified Cardano.Ledger.Shelley.TxCert as Sh
-import qualified Cardano.Ledger.Keys.WitVKey as Sh
 import qualified Cardano.Ledger.Shelley.TxOut as Sh
 import qualified Cardano.Ledger.Shelley.TxWits as Sh
 import qualified Cardano.Ledger.Shelley.UTxO as Sh

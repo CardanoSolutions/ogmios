@@ -117,7 +117,7 @@ encodeTimelock = encodeObject . \case
         "clause" .= encodeText "after" <>
         "slot" .= encodeSlotNo s
     _ ->
-        "clause" .= encodeText "unknown"
+        error "impossible: found extra unexpected variant in an pre-Dijkstra native script?"
 
 encodeTx
     :: (MetadataFormat, IncludeCbor)

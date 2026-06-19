@@ -23,6 +23,7 @@ import Ogmios.Prelude
 
 import Cardano.Ledger.Babbage.Tx
     ()
+
 import Cardano.Ledger.Babbage.TxOut
     ( BabbageTxOut (..)
     )
@@ -51,6 +52,7 @@ import Ouroboros.Consensus.Shelley.Ledger
 import Ouroboros.Consensus.Shelley.Ledger.Mempool
     ( GenTx (..)
     )
+
 import qualified Cardano.Ledger.Babbage.TxBody as Babbage
 import qualified Cardano.Ledger.Conway.Core as Conway
 
@@ -136,10 +138,6 @@ unsafeFromRight = either error id
 -- Era-specific GADTs
 
 data MultiEraUTxO block where
-    UTxOInBabbageEra
-        :: UTxO BabbageEra
-        -> MultiEraUTxO block
-
     UTxOInConwayEra
         :: UTxO ConwayEra
         -> MultiEraUTxO block
@@ -149,22 +147,16 @@ data MultiEraUTxO block where
         -> MultiEraUTxO block
 
 deriving instance
-    ( Eq (UTxO BabbageEra)
-    , Eq (UTxO ConwayEra)
+    ( Eq (UTxO ConwayEra)
     , Eq (UTxO DijkstraEra)
     ) => Eq (MultiEraUTxO block)
 
 deriving instance
-    ( Show (UTxO BabbageEra)
-    , Show (UTxO ConwayEra)
+    ( Show (UTxO ConwayEra)
     , Show (UTxO DijkstraEra)
     ) => Show (MultiEraUTxO block)
 
 data MultiEraTxOut block where
-    TxOutInBabbageEra
-        :: Babbage.BabbageTxOut BabbageEra
-        -> MultiEraTxOut block
-
     TxOutInConwayEra
         :: Babbage.BabbageTxOut ConwayEra
         -> MultiEraTxOut block
@@ -174,13 +166,11 @@ data MultiEraTxOut block where
         -> MultiEraTxOut block
 
 deriving instance
-    ( Eq (Babbage.BabbageTxOut BabbageEra)
-    , Eq (Babbage.BabbageTxOut ConwayEra)
+    ( Eq (Babbage.BabbageTxOut ConwayEra)
     , Eq (Babbage.BabbageTxOut DijkstraEra)
     ) => Eq (MultiEraTxOut block)
 
 deriving instance
-    ( Show (Babbage.BabbageTxOut BabbageEra)
-    , Show (Babbage.BabbageTxOut ConwayEra)
+    ( Show (Babbage.BabbageTxOut ConwayEra)
     , Show (Babbage.BabbageTxOut DijkstraEra)
     ) => Show (MultiEraTxOut block)

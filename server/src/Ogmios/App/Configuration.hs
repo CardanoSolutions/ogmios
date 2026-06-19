@@ -40,6 +40,10 @@ import Ogmios.Prelude
 import Cardano.Chain.Slotting
     ( EpochSlots (..)
     )
+import Cardano.Ledger.Alonzo.Genesis
+    ( AlonzoExtraConfig (..)
+    , extraConfig
+    )
 import Control.Arrow
     ( left
     )
@@ -80,10 +84,6 @@ import System.FilePath
     )
 
 import qualified Cardano.Chain.Genesis as Byron
-import Cardano.Ledger.Alonzo.Genesis
-    ( AlonzoExtraConfig (..)
-    , extraConfig
-    )
 import qualified Cardano.Ledger.Api as Ledger
 import qualified Cardano.Ledger.Plutus as Ledger
 import qualified Data.Aeson as Json

@@ -202,6 +202,9 @@ type Protocol = ChainSync Block (Point Block) (Tip Block)
 maxInFlight :: MaxInFlight
 maxInFlight = 3
 
+defaultSlotsPerEpoch :: EpochSlots
+defaultSlotsPerEpoch = EpochSlots 432000
+
 withChainSyncClient
     :: (MonadOuroboros m)
     => ((ChainSyncMessage Block -> m ()) ->  m Json -> m a)
@@ -219,8 +222,6 @@ withChainSyncClient action seed = do
         case result of
             Left{}  -> throwIO PeerTerminatedUnexpectedly
             Right a -> pure a
-  where
-    defaultSlotsPerEpoch = EpochSlots 432000
 
 chainSyncMockPeer
     :: forall m failure. (MonadSTM m, MonadThrow m, Show failure)
@@ -253,7 +254,7 @@ chainSyncMockPeer seed Codec{ encode, decode } (recv, send) = flip evalStateT se
     genNextBlockResponse
         :: Gen (ChainSync.Message Protocol ('StNext 'StMustReply) 'StIdle)
     genNextBlockResponse = reasonablySized $ frequency
-        [ (10, ChainSync.MsgRollForward <$> genBlock <*> genTip)
+        [ (10, ChainSync.MsgRollForward <$> genBlock Nothing <*> genTip)
         , ( 1, ChainSync.MsgRollBackward <$> genPoint <*> genTip)
         ]
 
