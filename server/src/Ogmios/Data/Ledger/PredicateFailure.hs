@@ -84,8 +84,10 @@ import Cardano.Ledger.Credential
     )
 import Cardano.Ledger.Hashes
     ( DataHash
+    , KeyRoleVRF (StakePoolVRF)
     , ScriptHash (..)
     , TxAuxDataHash
+    , VRFVerKeyHash
     )
 import Cardano.Ledger.Keys
     ( KeyHash (..)
@@ -462,6 +464,12 @@ data MultiEraPredicateFailure
     | StakePoolMetadataHashTooLarge
         { poolId :: KeyHash StakePool
         , computedMetadataHashSize :: Int
+        }
+
+    -- Trying to re-register an already seen VRF key
+    | StakePoolVRFKeyAlreadyRegistered
+        { poolId :: KeyHash StakePool
+        , alreadyRegisteredVrfKey :: VRFVerKeyHash StakePoolVRF
         }
 
     ---------------------------------------------------------------------------

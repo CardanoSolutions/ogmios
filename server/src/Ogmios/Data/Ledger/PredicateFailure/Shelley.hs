@@ -160,8 +160,8 @@ encodePoolFailure = \case
         NetworkMismatch { expectedNetwork, invalidEntities }
     Sh.PoolMedataHashTooBig poolId computedMetadataHashSize ->
         StakePoolMetadataHashTooLarge { poolId, computedMetadataHashSize }
-    Sh.VRFKeyHashAlreadyRegistered _existingPool _newPool ->
-        InvalidProtocolParametersUpdate
+    Sh.VRFKeyHashAlreadyRegistered poolId alreadyRegisteredVrfKey ->
+        StakePoolVRFKeyAlreadyRegistered { poolId, alreadyRegisteredVrfKey }
 
 encodeDelegFailure
     :: Sh.ShelleyDelegPredFailure era
