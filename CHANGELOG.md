@@ -11,7 +11,7 @@ math: true
 
 #### Added
 
-- Preliminary support for the DijkstraEra and PlutusV4
+- Preliminary support for the Dijkstra era and PlutusV4. The Dijkstra era is not officially available, so expect (breaking) changes in the schema moving forward; though a best effort will be done to avoid any important breaking changes.
 
 - Missing `plutusCostModels` and `minFeeReferenceScripts` properties from Conway's genesis object.
 
