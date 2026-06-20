@@ -559,7 +559,7 @@ utxoFromMempool =
 mergeUtxo ::  MultiEraUTxO block -> MultiEraUTxO block -> MultiEraUTxO block
 mergeUtxo a b = case (a, b) of
     (UTxOInConwayEra (unUTxO -> l), UTxOInConwayEra (unUTxO -> r)) ->
-        UTxOInDijkstraEra $ UTxO (Map.union (upgrade <$> l) (upgrade <$> r))
+        UTxOInConwayEra $ UTxO (Map.union l r)
     (UTxOInDijkstraEra (unUTxO -> l), UTxOInConwayEra (unUTxO -> r)) ->
         UTxOInDijkstraEra $ UTxO (Map.union l (upgrade <$> r))
     (UTxOInConwayEra (unUTxO -> l), UTxOInDijkstraEra (unUTxO -> r)) ->

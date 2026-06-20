@@ -22,6 +22,9 @@ import Ogmios.App.Protocol.TxSubmission
     ( SomeEvaluationInAnyEra (..)
     , newEvaluateTransactionResponse
     )
+import Ogmios.Data.EraTranslation
+    ( MultiEraUTxO (..)
+    )
 import Ogmios.Data.Ledger.ScriptFailure
     ( EvaluateTransactionError (..)
     )
@@ -29,6 +32,7 @@ import Ogmios.Data.Protocol.TxSubmission
     ( Tx
     , TxIn
     , UTxO (..)
+    , mergeUtxo
     )
 import Ogmios.Prelude hiding
     ( Era
@@ -41,6 +45,8 @@ import Test.Hspec
     ( Spec
     , context
     , parallel
+    , shouldBe
+    , specify
     )
 import Test.Hspec.QuickCheck
     ( prop
@@ -64,6 +70,11 @@ type TxOut' = BabbageTxOut ConwayEra
 
 spec :: Spec
 spec = parallel $ do
+    context "mergeUtxo" $ do
+        specify "preserves Conway era when both sides are Conway" $ do
+            let emptyConway = UTxOInConwayEra (UTxO mempty) :: MultiEraUTxO ()
+            mergeUtxo emptyConway emptyConway `shouldBe` emptyConway
+
     context "newEvaluateTransactionResponse" $ do
         prop "resulting UTxO is the union of network <> user-defined" prop_merge
         prop "succeeds when fully identical" prop_coherent_intersection
