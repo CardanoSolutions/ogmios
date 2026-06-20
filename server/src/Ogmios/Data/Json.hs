@@ -19,6 +19,7 @@ module Ogmios.Data.Json
     , encodeAcquireFailure
     , encodeBlock
     , encodeDeserialisationFailure
+    , encodeDecoderErrorInEra
     , Alonzo.encodeExUnits
     , encodePoint
     , encodeScriptFailure
@@ -104,12 +105,8 @@ import Ouroboros.Network.Protocol.LocalStateQuery.Type
 
 import qualified Cardano.Ledger.Binary as Binary
 import qualified Cardano.Protocol.TPraos.API as TPraos
-import qualified Codec.CBOR.Read as Cbor
 import qualified Codec.CBOR.Write as Cbor
 import qualified Codec.Json.Rpc as Rpc
-import qualified Data.Aeson as Json
-import qualified Data.ByteString as BS
-import qualified Data.Text as T
 
 import qualified Ogmios.Data.Json.Allegra as Allegra
 import qualified Ogmios.Data.Json.Alonzo as Alonzo
@@ -296,83 +293,11 @@ encodeDeserialisationFailure
 encodeDeserialisationFailure reject errs =
     reject Rpc.FaultInvalidParams
         "Invalid transaction; It looks like the given transaction wasn't \
-        \well-formed. Note that I try to decode the transaction in every \
-        \possible era and it was malformed in ALL eras. \
+        \well-formed. Note that I try to decode the transaction in multiple \
+        \possible eras and it was malformed in ALL eras. \
         \Yet, I can't pinpoint the exact issue for I do not know in which \
         \era / format you intended the transaction to be. The 'data' field, \
         \therefore, contains errors for each era."
         (pure $ encodeObject $ mconcat
             [ encodeDecoderErrorInEra size e era | (SomeShelleyEra era, e, size) <- errs ]
         )
-  where
-    encodeDecoderErrorInEra
-        :: forall era. ()
-        => Word
-        -> Binary.DecoderError
-        -> ShelleyBasedEra era
-        -> Json.Series
-    encodeDecoderErrorInEra size e era =
-        let
-            k = case era of
-                ShelleyBasedEraShelley  -> "shelley"
-                ShelleyBasedEraAllegra  -> "allegra"
-                ShelleyBasedEraMary     -> "mary"
-                ShelleyBasedEraAlonzo   -> "alonzo"
-                ShelleyBasedEraBabbage  -> "babbage"
-                ShelleyBasedEraConway   -> "conway"
-                ShelleyBasedEraDijkstra -> "dijkstra"
-         in
-            k .= encodeDecoderError size e
-
-    encodeDecoderError size = encodeText . reduceNoise . \case
-        Binary.DecoderErrorCanonicityViolation lbl ->
-            "couldn't decode due to internal constraint violations on '" <> lbl <> "': \
-            \ found CBOR that isn't canonical when I expected it to be."
-        Binary.DecoderErrorCustom lbl hint ->
-            "couldn't decode due to internal constraint violations on '" <> lbl <> "': " <> hint
-        Binary.DecoderErrorDeserialiseFailure lbl (Cbor.DeserialiseFailure offset hint) | offset >= fromIntegral size ->
-            "invalid or incomplete value of type '" <> lbl <> "': " <> toText hint
-        Binary.DecoderErrorDeserialiseFailure lbl (Cbor.DeserialiseFailure offset hint) ->
-            "invalid CBOR found at offset [" <> show offset <> "] while decoding a value of type '" <> lbl <> "': "
-            <> toText hint
-        Binary.DecoderErrorEmptyList{} ->
-            "couldn't decode due to internal constraint violations on a non-empty list: \
-            \must not be empty"
-        Binary.DecoderErrorLeftover lbl bytes ->
-            "unexpected " <> show (BS.length bytes) <> " bytes found left after \
-            \successfully deserialising a/an '" <> lbl <> "'"
-        Binary.DecoderErrorSizeMismatch lbl expected actual | expected >= actual ->
-            show (expected - actual) <> " missing element(s) in a \
-            \data-structure of type '" <> lbl <> "'"
-        Binary.DecoderErrorSizeMismatch lbl expected actual ->
-            show (actual - expected) <> " extra element(s) in a \
-            \data-structure of type '" <> lbl <> "'"
-        Binary.DecoderErrorUnknownTag lbl tag ->
-            "unknown binary tag (" <> show tag <> ") when decoding a value of type '" <> lbl <> "'\
-            \; which is probably because I am trying to decode something else than what \
-            \I encountered."
-        Binary.DecoderErrorVoid ->
-            "impossible: attempted to decode void. Please open an issue."
-     where
-        reduceNoise
-          = T.replace "\n" " "
-          . T.replace "Error: " ""
-          . T.replace "Record" "Object / Array"
-          . T.replace "Record RecD" "Object / Array"
-          . T.replace " ShelleyEra" ""
-          . T.replace " AllegraEra" ""
-          . T.replace " MaryEra" ""
-          . T.replace " AlonzoEra" ""
-          . T.replace " BabbageEra" ""
-          . T.replace " ConwayEra" ""
-          . T.replace " DijkstraEra" ""
-          . T.replace "value of type ConwayTxBodyRaw" "transaction body"
-          . T.replace "value of type BabbageTxBodyRaw" "transaction body"
-          . T.replace "value of type AlonzoTxBodyRaw" "transaction body"
-          . T.replace "value of type AllegraTxBodyRaw ()" "transaction body"
-          . T.replace "value of type AllegraTxBodyRaw MultiAsset" "transaction body"
-          . T.replace "value of type ShelleyTxBodyRaw" "transaction body"
-          . T.replace "atbr" ""
-          . T.replace "stbr" ""
-          . T.replace "btbr" ""
-          . T.replace "ctbr" ""

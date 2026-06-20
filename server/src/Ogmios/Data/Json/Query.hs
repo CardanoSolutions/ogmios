@@ -196,6 +196,7 @@ import Ogmios.Data.EraTranslation
     ( MostRecentEra
     , MultiEraTxOut (..)
     , MultiEraUTxO (..)
+    , upgradeGenTx
     )
 import Ogmios.Data.Ledger.Rewards
     ( PoolRewardsInfo' (..)
@@ -2656,8 +2657,10 @@ decodeSerializedTransaction = Json.withText "Transaction" $ \(encodeUtf8 -> utf8
     --
     -- NOTE (2):
     -- Avoiding 'asum' here because it generates poor errors on failures.
-    pure $  deserialiseCBOR @ConwayEra   GenTxConway   bytes
-        <|> deserialiseCBOR @DijkstraEra GenTxDijkstra bytes
+    pure $  deserialiseCBOR @ConwayEra   (pure . GenTxConway)   bytes
+        <|> deserialiseCBOR @BabbageEra  (upgradeGenTx . GenTxBabbage) bytes
+        <|> deserialiseCBOR @AlonzoEra   ((=<<) upgradeGenTx . upgradeGenTx . GenTxAlonzo) bytes
+        <|> deserialiseCBOR @DijkstraEra (pure . GenTxDijkstra) bytes
   where
     -- We use this extra constraint when decoding transactions to generate a
     -- compiler warning in case a new era becomes available, to not forget to update
@@ -2682,24 +2685,34 @@ decodeSerializedTransaction = Json.withText "Transaction" $ \(encodeUtf8 -> utf8
             , Era era
             , sub ~ ShelleyBlock (EraProto era) era
             )
-        => (GenTx sub -> GenTx (CardanoBlock crypto))
+        => (GenTx sub -> Either Text (GenTx (CardanoBlock crypto)))
         -> ByteString
         -> MultiEraDecoder (GenTx (CardanoBlock crypto))
     deserialiseCBOR mk bytes =
-        mk <$> decodeCborWith @era "Transaction"
-            (\e -> MultiEraDecoderErrors
-                [ ( SomeShelleyEra (shelleyBasedEra @era)
-                  , e
-                  , fromIntegral $ BS.length bytes
-                  )
-                ]
-            )
+        orUpgrade $ decodeCborWith @era "Transaction"
+            asMultiEraError
             (Binary.fromPlainDecoder fromCBOR)
             (if wrapper `BS.isPrefixOf` bytes
                then fromStrict bytes
                else wrap bytes
             )
       where
+        orUpgrade :: MultiEraDecoder (GenTx sub) -> MultiEraDecoder (GenTx (CardanoBlock crypto))
+        orUpgrade = \case
+            MultiEraDecoderErrors errs -> MultiEraDecoderErrors errs
+            MultiEraDecoderSuccess tx -> case mk tx of
+                Left e -> asMultiEraError (Binary.DecoderErrorCustom "Transaction" e)
+                Right upgradedTx -> MultiEraDecoderSuccess upgradedTx
+
+        asMultiEraError :: forall tx. Binary.DecoderError -> MultiEraDecoder tx
+        asMultiEraError e =
+            MultiEraDecoderErrors
+                [ ( SomeShelleyEra (shelleyBasedEra @era)
+                  , e
+                  , fromIntegral $ BS.length bytes
+                  )
+                ]
+
         wrapper = BS.pack [216, 24] -- D818...
 
         -- Cardano tools have a tendency to wrap cbor in cbor (e.g cardano-cli).

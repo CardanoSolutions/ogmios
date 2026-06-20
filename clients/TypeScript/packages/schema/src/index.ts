@@ -2218,15 +2218,16 @@ export interface SubmitTransactionDeserialisationError {
 export interface DeserialisationFailure {
   code: -32602;
   message: string;
-  data: {
-    shelley: string;
-    allegra: string;
-    mary: string;
-    alonzo: string;
-    babbage: string;
-    conway: string;
-    dijkstra: string;
-  };
+  data: DeserialisationFailures;
+}
+/**
+ * Deserialisation failures in each of the supported eras.
+ */
+export interface DeserialisationFailures {
+  alonzo?: string;
+  babbage?: string;
+  conway?: string;
+  dijkstra?: string;
 }
 /**
  * Evaluate execution units for which redeemers's budget hasn't yet been set.
@@ -2287,6 +2288,7 @@ export interface EvaluateTransactionFailureUnsupportedEra {
    */
   data: {
     unsupportedEra: Era;
+    hints?: DeserialisationFailures;
   };
 }
 /**

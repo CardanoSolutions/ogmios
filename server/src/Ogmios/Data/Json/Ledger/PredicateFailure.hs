@@ -1016,7 +1016,7 @@ encodePredicateFailure reject = \case
     -- an opaque `Text`, so its semantic is unclear.
     UnexpectedMempoolError { mempoolError } ->
         reject (predicateFailureCode 897)
-            "A transaction was rejected due to custom rules that prevented it from entering the mempool. A justification is given as 'data.error'."
+            "The transaction couldn't be added to the mempool. A justification is given as 'data.error'."
             (pure $ encodeObject
                 ( "error" .=
                     encodeText mempoolError

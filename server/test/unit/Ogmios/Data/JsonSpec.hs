@@ -895,10 +895,7 @@ instance Arbitrary (SubmitTransactionResponse Block) where
         [ (1, SubmitTransactionSuccess <$> arbitrary)
         , (50, SubmitTransactionFailure <$> genHardForkApplyTxErr)
         , (1, pure $ SubmitTransactionDeserialisationFailure
-            [ ( SomeShelleyEra ShelleyBasedEraShelley, Binary.DecoderErrorVoid, 0 )
-            , ( SomeShelleyEra ShelleyBasedEraAllegra, Binary.DecoderErrorVoid, 0 )
-            , ( SomeShelleyEra ShelleyBasedEraMary,    Binary.DecoderErrorVoid, 0 )
-            , ( SomeShelleyEra ShelleyBasedEraAlonzo,  Binary.DecoderErrorVoid, 0 )
+            [ ( SomeShelleyEra ShelleyBasedEraAlonzo,  Binary.DecoderErrorVoid, 0 )
             , ( SomeShelleyEra ShelleyBasedEraBabbage, Binary.DecoderErrorVoid, 0 )
             , ( SomeShelleyEra ShelleyBasedEraConway,  Binary.DecoderErrorVoid, 0 )
             , ( SomeShelleyEra ShelleyBasedEraDijkstra, Binary.DecoderErrorVoid, 0 )

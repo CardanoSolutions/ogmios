@@ -50,6 +50,10 @@ import Cardano.Ledger.Babbage.TxBody
 import Cardano.Ledger.BaseTypes
     ( SlotNo (..)
     )
+import Cardano.Ledger.Binary
+    ( EncCBOR
+    , FromCBOR (..)
+    )
 import Cardano.Ledger.Core
     ( EraTx (Tx, bodyTxL)
     , EraTxBody (..)
@@ -181,15 +185,24 @@ import Ouroboros.Network.Protocol.LocalTxSubmission.Type
     ( SubmitResult (..)
     )
 import Type.Reflection
-    ( typeRep
+    ( tyConName
+    , typeRep
+    , typeRepTyCon
     )
 
+import Cardano.Ledger.Conway.Tx
+    ()
+
+import qualified Cardano.Ledger.Binary.Decoding as Binary
 import qualified Codec.Json.Rpc as Rpc
 import qualified Data.Aeson as Json
+import qualified Data.ByteString as BS
+import qualified Data.ByteString.Lazy as BL
 import qualified Data.Map.Strict as Map
 import qualified Data.Text as T
 import qualified Ouroboros.Consensus.HardFork.Combinator as HF
 import qualified Ouroboros.Consensus.Ledger.Query as Ledger
+import qualified Ouroboros.Consensus.Shelley.Ledger.Mempool as Consensus
 import qualified Ouroboros.Network.Protocol.LocalStateQuery.Client as LSQ
 import qualified Ouroboros.Network.Protocol.LocalTxMonitor.Client as LMM
 
@@ -632,15 +645,8 @@ newEvaluateTransactionResponse
     -> result
 newEvaluateTransactionResponse callback onError (UTxO networkUtxo) args =
     case translateToNetworkEra @era args of
-        Nothing ->
-            error "impossible: arguments are not translatable to network era. \
-                  \This can't happen because 'selectEra' enforces that queries \
-                  \are only executed if the network is either in 'Conway' or \
-                  \'Dijkstra'. The arguments themselves can also only be 'Conway' \
-                  \or 'Dijkstra'. Thus, we can't reach this point with any other \
-                  \eras. We _could_ potentially capture this proof in the types \
-                  \to convince the compiler of this."
-        Just (UTxO userProvidedUtxo, tx) ->
+        Left e -> onError e
+        Right (UTxO userProvidedUtxo, tx) ->
             let
                 intersection = Map.intersectionWith (==) userProvidedUtxo networkUtxo
             in
@@ -671,17 +677,18 @@ translateToNetworkEra
         ( CanEvaluateScriptsInEra eraNetwork
         )
     => SomeEvaluationInAnyEra
-    -> Maybe (UTxO eraNetwork, Tx TopTx eraNetwork)
+    -> Either EvaluateTransactionError (UTxO eraNetwork, Tx TopTx eraNetwork)
 translateToNetworkEra (SomeEvaluationInAnyEra utxoOrig txOrig) =
     translate utxoOrig txOrig
   where
     translate
         :: forall eraArgs.
             ( CanEvaluateScriptsInEra eraArgs
+            , EncCBOR (Tx TopTx eraArgs)
             )
         => UTxO eraArgs
         -> Tx TopTx eraArgs
-        -> Maybe (UTxO eraNetwork, Tx TopTx eraNetwork)
+        -> Either EvaluateTransactionError (UTxO eraNetwork, Tx TopTx eraNetwork)
     translate utxo tx =
         let
             eraNetwork  = typeRep @eraNetwork
@@ -703,7 +710,52 @@ translateToNetworkEra (SomeEvaluationInAnyEra utxoOrig txOrig) =
                     _ ->
                         Nothing
           in
-            sameEra <|> conwayToDijkstra
+            maybe
+                (Left $ unsupportedEraWithConwayDeserialisationHint tx)
+                Right
+                (sameEra <|> conwayToDijkstra)
+
+    unsupportedEraWithConwayDeserialisationHint
+        :: forall eraArgs.
+            ( Era eraArgs
+            , EncCBOR (Tx TopTx eraArgs)
+            )
+        => Tx TopTx eraArgs
+        -> EvaluateTransactionError
+    unsupportedEraWithConwayDeserialisationHint tx =
+        UnsupportedEra era (conwayDeserialisationHint tx)
+      where
+        era =
+            T.dropEnd 3 $ toText $ tyConName $ typeRepTyCon $ typeRep @eraArgs
+
+    conwayDeserialisationHint
+        :: forall eraArgs.
+            ( Era eraArgs
+            , EncCBOR (Tx TopTx eraArgs)
+            )
+        => Tx TopTx eraArgs
+        -> Maybe [(SomeShelleyEra, Binary.DecoderError, Word)]
+    conwayDeserialisationHint tx =
+        case result of
+            Left err ->
+                Just
+                    [ ( SomeShelleyEra ShelleyBasedEraConway
+                      , err
+                      , fromIntegral $ BS.length bytes
+                      )
+                    ]
+            Right _ ->
+                Nothing
+      where
+        bytes = encodeCbor @eraArgs tx
+
+        result :: Either Binary.DecoderError (Consensus.GenTx (ShelleyBlock (EraProto ConwayEra) ConwayEra))
+        result =
+            decodeCborWith @ConwayEra
+                "Transaction"
+                Left
+                (Binary.fromPlainDecoder fromCBOR)
+                (BL.fromStrict bytes)
 
 --
 -- Logs

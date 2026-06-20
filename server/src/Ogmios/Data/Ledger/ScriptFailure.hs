@@ -16,13 +16,14 @@ import Ogmios.Data.Ledger
     )
 
 import qualified Cardano.Ledger.Api as Ledger
+import qualified Cardano.Ledger.Binary.Decoding as Binary
 import qualified Text.Show
 
 
 data EvaluateTransactionError
     = ScriptExecutionFailures (Map ScriptPurposeIndexInAnyEra [TransactionScriptFailureInAnyEra])
     | IncompatibleEra Text
-    | UnsupportedEra Text
+    | UnsupportedEra Text (Maybe [(SomeShelleyEra, Binary.DecoderError, Word)])
     | OverlappingAdditionalUtxo (Set TxIn)
     | NodeTipTooOldErr NodeTipTooOldError
     | CannotCreateEvaluationContext ContextErrorInAnyEra

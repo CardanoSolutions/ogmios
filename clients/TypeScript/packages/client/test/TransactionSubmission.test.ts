@@ -51,16 +51,14 @@ describe('TransactionSubmission', () => {
       it('rejects with an array of named errors (submitTransaction)', async () => {
         try {
           const someTransaction =
-            '83a40081825820e1e86da6446c7f81da8d5e440bb0d4eed0f1530ba15bf77e49c33d' +
-            '6f050d8fb500018182581d60ff7b4521589238cfb9c26870edfa782541e615444744' +
-            '22d849ceb1031a001954ce021a000297d9031a05f5e100a10081825820cf14d1c834' +
-            'cecab8e1f5447bde551946804057332825e26e64ee43079dd408355840247c5e6092' +
-            '1130fa1df800d310f39788f4ae04837534ade6727875dbb87218f5b45e96ccd125a1' +
-            '4c4510e81694e7aad3ba8a24458aaf6b6f9c4f1a4801beba05f6'
+            '84A400818258207D93519864ACAD5714A4057FF16950632D45BB0B5644DD81AB131'+
+            '03464FC76D4000181825839015C2B1A505AAD911F3F2B1932DC37679995B3C352EC'+
+            'FF08070682E8365E7DD93FF18E14F79BB80924ECFD775081CE0020A19B7E0607026'+
+            '6D11A05D49B93021A0002C0ED031A04724864A0F5F6'
           await submit(someTransaction)
         } catch (e) {
           expect(e).toBeInstanceOf(JSONRPCError)
-          expect(e.code).toBe(3117)
+          expect(e.code).toBe(3997)
         }
       })
 
@@ -74,12 +72,10 @@ describe('TransactionSubmission', () => {
           expect(e).toBeInstanceOf(JSONRPCError)
           expect(e.code).toBe(-32602)
           expect(e.data).toEqual({
-            allegra: "invalid or incomplete value of type 'Transaction': Size mismatch when decoding Object / Array. Expected 0, but found 3.",
             alonzo: "invalid or incomplete value of type 'Transaction': Size mismatch when decoding Object / Array. Expected 0, but found 4.",
             babbage: "invalid or incomplete value of type 'Transaction': Size mismatch when decoding Object / Array. Expected 0, but found 4.",
             conway: "invalid or incomplete value of type 'Transaction': Size mismatch when decoding Object / Array. Expected 0, but found 4.",
-            mary: "invalid or incomplete value of type 'Transaction': Size mismatch when decoding Object / Array. Expected 0, but found 3.",
-            shelley: "invalid or incomplete value of type 'Transaction': Size mismatch when decoding Object / Array. Expected 0, but found 3."
+            dijkstra: "invalid or incomplete value of type 'Transaction': Unexpected list length: 0. Expected: 4 or 3.",
           })
         }
       })
@@ -102,11 +98,7 @@ describe('TransactionSubmission', () => {
             alonzo: "invalid or incomplete value of type 'Transaction': Size mismatch when decoding Object / Array. Expected 3, but found 4.",
             babbage: "invalid or incomplete value of type 'Transaction': Size mismatch when decoding Object / Array. Expected 3, but found 4.",
             conway: "invalid or incomplete value of type 'Transaction': Size mismatch when decoding Object / Array. Expected 3, but found 4.",
-            mary: "invalid or incomplete value of type 'Transaction': An error occured while decoding transaction body. field TxFee with key 2, not decoded.",
-            allegra: "invalid or incomplete value of type 'Transaction': An error occured while decoding transaction body. " +
-              'field TxFee with key 2, not decoded.',
-            shelley: "invalid or incomplete value of type 'Transaction': An error occured while decoding transaction body. " +
-              'field fee with key 2, not decoded.'
+            dijkstra: "invalid or incomplete value of type 'Transaction': An error occured while decoding value of type Annotator (DijkstraTxBodyRaw TopTx). field fee with key 2, not decoded.",
           })
         }
       })
@@ -150,7 +142,7 @@ describe('TransactionSubmission', () => {
           },
           budget: {
             memory: 15694,
-            cpu: 3776833
+            cpu: 3776164
           }
         }])
       })
@@ -205,7 +197,7 @@ describe('TransactionSubmission', () => {
           },
           budget: {
             memory: 15694,
-            cpu: 3776833
+            cpu: 3776164
           }
         }])
       })
@@ -240,7 +232,7 @@ describe('TransactionSubmission', () => {
           )
         } catch (e) {
           expect(e).toBeInstanceOf(JSONRPCError)
-          expect(e.code).toBe(3000)
+          expect(e.code).toBe(3001)
         }
       })
 

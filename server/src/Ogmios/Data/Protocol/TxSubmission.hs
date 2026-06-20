@@ -347,7 +347,7 @@ deriving instance Show (EvaluateTransactionResponse block)
 -- | Shorthand constructor for 'EvaluateTransactionResponse'
 unsupportedEra :: Text -> EvaluateTransactionResponse block
 unsupportedEra =
-    EvaluationFailure . UnsupportedEra
+    EvaluationFailure . flip UnsupportedEra Nothing
 
 -- | Shorthand constructor for 'EvaluateTransactionResponse'
 incompatibleEra :: Text -> EvaluateTransactionResponse block

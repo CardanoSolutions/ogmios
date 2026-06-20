@@ -32,6 +32,7 @@ import Prettyprinter
     )
 
 import qualified Cardano.Ledger.Api as Ledger
+import qualified Cardano.Ledger.Binary.Decoding as Binary
 import qualified Codec.Json.Rpc as Rpc
 import qualified Data.Aeson as Json
 import qualified Data.Aeson.Encoding as Json
@@ -124,13 +125,22 @@ encodeEvaluationError reject = \case
                 )
             )
 
-    UnsupportedEra era ->
+    UnsupportedEra era deserialisationErrors ->
         reject (Rpc.FaultCustom 3001)
-            "Trying to evaluate a transaction from an era that's no longer supported \
-            \(e.g. Alonzo). Please use a more recent transaction format."
+            "Couldn't evaluate the transaction in the current network era, probably because \
+            \the transaction is in a more recent era. There are two plausible explanations: either \
+            \you are trying to evaluate a Dijkstra transaction but the network is still in Conway; \
+            \or you're evaluating a transaction in an old format while the network is still in Conway. \
+            \The latter needs more explanations: in Dijkstra, transaction decoders have greatly changed \
+            \and are now able to also parse very old eras. Hence if you're submitting a Shelley, Allegra \
+            \or Mary era, there's a chance it is successfully parsed as a Dijkstra transaction. If \
+            \you must evaluate this transaction *now*, make sure its format is compatible with Conway."
             (pure $ encodeObject
                 ( "unsupportedEra" .=
                     encodeEraName era
+               <> foldMap
+                    (\errs -> "hints" .= encodeObject (encodeDeserialisationErrors errs))
+                    deserialisationErrors
                 )
             )
 
@@ -186,3 +196,12 @@ encodeEvaluationError reject = \case
                          in x : xs
                 ) [] failures
             )
+
+encodeDeserialisationErrors
+    :: [(SomeShelleyEra, Binary.DecoderError, Word)]
+    -> Json.Series
+encodeDeserialisationErrors errs =
+    mconcat
+        [ encodeDecoderErrorInEra size e era
+        | (SomeShelleyEra era, e, size) <- errs
+        ]

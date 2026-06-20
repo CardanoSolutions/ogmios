@@ -2624,20 +2624,20 @@
     , "properties":
       { "code": { "type": "integer", "enum": [ -32602 ] }
       , "message": { "type": "string" }
-      , "data":
-        { "type": "object"
-        , "required": [ "shelley", "allegra", "mary", "alonzo", "babbage", "conway", "dijkstra" ]
-        , "additionalProperties": false
-        , "properties":
-          { "shelley": { "type": "string" }
-          , "allegra": { "type": "string" }
-          , "mary": { "type": "string" }
-          , "alonzo": { "type": "string" }
-          , "babbage": { "type": "string" }
-          , "conway": { "type": "string" }
-          , "dijkstra": { "type": "string" }
-          }
-        }
+      , "data": { "$ref": "ogmios.json#/definitions/DeserialisationFailures" }
+      }
+    }
+
+  , "DeserialisationFailures":
+    { "title": "DeserialisationFailures"
+    , "description": "Deserialisation failures in each of the supported eras."
+    , "type": "object"
+    , "additionalProperties": false
+    , "properties":
+      { "alonzo": { "type": "string" }
+      , "babbage": { "type": "string" }
+      , "conway": { "type": "string" }
+      , "dijkstra": { "type": "string" }
       }
     }
 
@@ -2688,6 +2688,7 @@
             , "required": [ "unsupportedEra" ]
             , "properties":
               { "unsupportedEra": { "$ref": "cardano.json#/definitions/Era" }
+              , "hints": { "$ref": "ogmios.json#/definitions/DeserialisationFailures" }
               }
             }
           }

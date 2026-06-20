@@ -20,6 +20,7 @@ module Ogmios.Data.Json.Prelude
     , decodeWith
     , choice
     , inefficientEncodingToValue
+    , encodeDecoderErrorInEra
     , (.:)
     , (.:?)
     , (.=)
@@ -197,6 +198,7 @@ import Ouroboros.Consensus.BlockchainTime.WallClock.Types
     )
 
 import qualified Cardano.Ledger.Binary.Decoding as Binary
+import qualified Codec.CBOR.Read as Cbor
 import qualified Data.Aeson as Json
 import qualified Data.Aeson.Encoding as Json
 import qualified Data.Aeson.Key as Json
@@ -206,6 +208,7 @@ import qualified Data.Aeson.Parser.Internal as Json hiding
     )
 import qualified Data.Aeson.Types as Json
 import qualified Data.ByteArray as BA
+import qualified Data.ByteString as BS
 import qualified Data.ByteString.Base58 as B58
 import qualified Data.ByteString.Lazy as BL
 import qualified Data.ListMap as LM
@@ -720,6 +723,79 @@ data MultiEraDecoder a
     -- the size of the payload. The size is useful to know whether the error
     -- happened mid-way or after decoding the whole object and missing fields.
     deriving (Show)
+
+encodeDecoderErrorInEra
+    :: forall era. ()
+    => Word
+    -> Binary.DecoderError
+    -> ShelleyBasedEra era
+    -> Json.Series
+encodeDecoderErrorInEra size e era =
+    let
+        k = case era of
+            ShelleyBasedEraShelley  -> "shelley"
+            ShelleyBasedEraAllegra  -> "allegra"
+            ShelleyBasedEraMary     -> "mary"
+            ShelleyBasedEraAlonzo   -> "alonzo"
+            ShelleyBasedEraBabbage  -> "babbage"
+            ShelleyBasedEraConway   -> "conway"
+            ShelleyBasedEraDijkstra -> "dijkstra"
+     in
+        k .= encodeDecoderError e
+  where
+    encodeDecoderError = encodeText . reduceNoise . \case
+        Binary.DecoderErrorCanonicityViolation lbl ->
+            "couldn't decode due to internal constraint violations on '" <> lbl <> "': \
+            \ found CBOR that isn't canonical when I expected it to be."
+        Binary.DecoderErrorCustom lbl hint ->
+            "couldn't decode due to internal constraint violations on '" <> lbl <> "': " <> hint
+        Binary.DecoderErrorDeserialiseFailure lbl (Cbor.DeserialiseFailure offset hint) | offset >= fromIntegral size ->
+            "invalid or incomplete value of type '" <> lbl <> "': " <> toText hint
+        Binary.DecoderErrorDeserialiseFailure lbl (Cbor.DeserialiseFailure offset hint) ->
+            "invalid CBOR found at offset [" <> show offset <> "] while decoding a value of type '" <> lbl <> "': "
+            <> toText hint
+        Binary.DecoderErrorEmptyList{} ->
+            "couldn't decode due to internal constraint violations on a non-empty list: \
+            \must not be empty"
+        Binary.DecoderErrorLeftover lbl bytes ->
+            "unexpected " <> show (BS.length bytes) <> " bytes found left after \
+            \successfully deserialising a/an '" <> lbl <> "'"
+        Binary.DecoderErrorSizeMismatch lbl expected actual | expected >= actual ->
+            show (expected - actual) <> " missing element(s) in a \
+            \data-structure of type '" <> lbl <> "'"
+        Binary.DecoderErrorSizeMismatch lbl expected actual ->
+            show (actual - expected) <> " extra element(s) in a \
+            \data-structure of type '" <> lbl <> "'"
+        Binary.DecoderErrorUnknownTag lbl tag ->
+            "unknown binary tag (" <> show tag <> ") when decoding a value of type '" <> lbl <> "'\
+            \; which is probably because I am trying to decode something else than what \
+            \I encountered."
+        Binary.DecoderErrorVoid ->
+            "impossible: attempted to decode void. Please open an issue."
+     where
+        reduceNoise
+          = T.replace "\n" " "
+          . T.replace "Error: " ""
+          . T.replace "Record" "Object / Array"
+          . T.replace "Record RecD" "Object / Array"
+          . T.replace " ShelleyEra" ""
+          . T.replace " AllegraEra" ""
+          . T.replace " MaryEra" ""
+          . T.replace " AlonzoEra" ""
+          . T.replace " BabbageEra" ""
+          . T.replace " ConwayEra" ""
+          . T.replace " DijkstraEra" ""
+          . T.replace "value of type DijkstraTxBodyRaw" "transaction body"
+          . T.replace "value of type ConwayTxBodyRaw" "transaction body"
+          . T.replace "value of type BabbageTxBodyRaw" "transaction body"
+          . T.replace "value of type AlonzoTxBodyRaw" "transaction body"
+          . T.replace "value of type AllegraTxBodyRaw ()" "transaction body"
+          . T.replace "value of type AllegraTxBodyRaw MultiAsset" "transaction body"
+          . T.replace "value of type ShelleyTxBodyRaw" "transaction body"
+          . T.replace "atbr" ""
+          . T.replace "stbr" ""
+          . T.replace "btbr" ""
+          . T.replace "ctbr" ""
 
 instance Functor MultiEraDecoder where
     f `fmap` m =
