@@ -5,9 +5,6 @@
 {-# LANGUAGE AllowAmbiguousTypes #-}
 {-# LANGUAGE PatternSynonyms #-}
 {-# LANGUAGE QuasiQuotes #-}
--- TODO: Migrate GetStakeDistribution to GetStakeDistribution2 (added in
--- ShelleyNodeToClientVersion13) and remove this suppression.
-{-# OPTIONS_GHC -fno-warn-deprecations #-}
 
 module Ogmios.Data.Json.Query
     ( -- * Types
@@ -340,7 +337,6 @@ import qualified Ogmios.Data.Json.Mary as Mary
 import qualified Ogmios.Data.Json.Shelley as Shelley
 import qualified Ouroboros.Consensus.HardFork.Combinator.Ledger.Query as LSQ
 import qualified Ouroboros.Consensus.Ledger.Query as LSQ
-import qualified Ouroboros.Consensus.Shelley.Ledger.Query.Types as Consensus
 import qualified PlutusLedgerApi.Common as Plutus
 
 --
@@ -690,19 +686,19 @@ encodePoint = \case
         & encodeObject
 
 encodePoolDistr
-    :: Consensus.PoolDistr crypto
+    :: Ledger.PoolDistr
     -> Json
 encodePoolDistr =
-    encodeMap Shelley.stringifyPoolId encodeIndividualPoolStake . Consensus.unPoolDistr
+    encodeMap Shelley.stringifyPoolId encodeIndividualPoolStake . Ledger.unPoolDistr
   where
     encodeIndividualPoolStake
-        :: Consensus.IndividualPoolStake crypto
+        :: Ledger.IndividualPoolStake
         -> Json
     encodeIndividualPoolStake x =
         "stake" .=
-            encodeRational (Consensus.individualPoolStake x) <>
+            encodeRational (Ledger.individualPoolStake x) <>
         "vrf" .=
-            Shelley.encodeHash (Consensus.individualPoolStakeVrf x)
+            Shelley.encodeHash (Ledger.unVRFVerKeyHash $ Ledger.individualPoolStakeVrf x)
         & encodeObject
 
 encodeRewardInfoPool
@@ -1785,7 +1781,7 @@ parseQueryLedgerGovernanceProposalsByProposalReference genResultInEra =
 
 parseQueryLedgerLiveStakeDistribution
     :: forall crypto f. ()
-    => GenResult crypto f (Consensus.PoolDistr crypto)
+    => GenResult crypto f Ledger.PoolDistr
     -> Json.Value
     -> Json.Parser (QueryInEra f (CardanoBlock crypto))
 parseQueryLedgerLiveStakeDistribution genResult =
@@ -1800,19 +1796,19 @@ parseQueryLedgerLiveStakeDistribution genResult =
             .
             ( \case
                 SomeShelleyEra ShelleyBasedEraShelley ->
-                    LSQ.BlockQuery $ QueryIfCurrentShelley GetStakeDistribution
+                    LSQ.BlockQuery $ QueryIfCurrentShelley (GetPoolDistr2 Nothing)
                 SomeShelleyEra ShelleyBasedEraAllegra ->
-                    LSQ.BlockQuery $ QueryIfCurrentAllegra GetStakeDistribution
+                    LSQ.BlockQuery $ QueryIfCurrentAllegra (GetPoolDistr2 Nothing)
                 SomeShelleyEra ShelleyBasedEraMary ->
-                    LSQ.BlockQuery $ QueryIfCurrentMary GetStakeDistribution
+                    LSQ.BlockQuery $ QueryIfCurrentMary (GetPoolDistr2 Nothing)
                 SomeShelleyEra ShelleyBasedEraAlonzo ->
-                    LSQ.BlockQuery $ QueryIfCurrentAlonzo GetStakeDistribution
+                    LSQ.BlockQuery $ QueryIfCurrentAlonzo (GetPoolDistr2 Nothing)
                 SomeShelleyEra ShelleyBasedEraBabbage ->
-                    LSQ.BlockQuery $ QueryIfCurrentBabbage GetStakeDistribution
+                    LSQ.BlockQuery $ QueryIfCurrentBabbage (GetPoolDistr2 Nothing)
                 SomeShelleyEra ShelleyBasedEraConway ->
-                    LSQ.BlockQuery $ QueryIfCurrentConway GetStakeDistribution
+                    LSQ.BlockQuery $ QueryIfCurrentConway (GetPoolDistr2 Nothing)
                 SomeShelleyEra ShelleyBasedEraDijkstra ->
-                    LSQ.BlockQuery $ QueryIfCurrentDijkstra GetStakeDistribution
+                    LSQ.BlockQuery $ QueryIfCurrentDijkstra (GetPoolDistr2 Nothing)
             )
 
 parseQueryLedgerUtxo

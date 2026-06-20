@@ -145,7 +145,6 @@ tests:
     - aeson
     - aeson-pretty
     - bytestring
-    - cardano-crypto-class
     - cardano-ledger-alonzo
     - cardano-ledger-alonzo:testlib
     - cardano-ledger-api

@@ -350,7 +350,6 @@ test-suite unit
     , aeson-pretty
     , base >=4.7 && <5
     , bytestring
-    , cardano-crypto-class
     , cardano-ledger-alonzo
     , cardano-ledger-alonzo:testlib
     , cardano-ledger-api

@@ -8,10 +8,6 @@ module Test.Generators where
 
 import Ogmios.Prelude
 
-import Cardano.Crypto.Hash.Class
-    ( hashFromBytes
-    , hashToBytes
-    )
 import Cardano.Ledger.Api
     ( TransactionScriptFailure (..)
     )
@@ -45,9 +41,6 @@ import Cardano.Slotting.Slot
     )
 import Cardano.Slotting.Time
     ( SystemStart
-    )
-import Data.Maybe
-    ( fromJust
     )
 import Data.SOP.Strict
     ( NS (..)
@@ -179,7 +172,6 @@ import qualified Cardano.Ledger.State as Ledger
 import qualified Cardano.Ledger.TxIn as Ledger
 import qualified Data.Aeson as Json
 import qualified Data.Map as Map
-import qualified Ouroboros.Consensus.Shelley.Ledger.Query.Types as Consensus
 import qualified Ouroboros.Network.Point as Point
 
 genBlock :: Maybe (Gen Block) -> Gen Block
@@ -818,28 +810,12 @@ genCommitteeMemberState = Ledger.CommitteeMemberState
 
 genPoolDistrResult
     :: forall crypto. (crypto ~ StandardCrypto)
-    => Proxy (QueryResult crypto (Consensus.PoolDistr crypto))
-    -> Gen (QueryResult crypto (Consensus.PoolDistr crypto))
+    => Proxy (QueryResult crypto Ledger.PoolDistr)
+    -> Gen (QueryResult crypto Ledger.PoolDistr)
 genPoolDistrResult _ = frequency
     [ (1, Left <$> genMismatchEraInfo)
-    , (10, Right . fromLedgerPoolDistr <$> arbitrary)
+    , (10, Right <$> arbitrary)
     ]
-  where
-    -- FIXME: See note on imports.
-    fromLedgerPoolDistr :: Ledger.PoolDistr -> Consensus.PoolDistr crypto
-    fromLedgerPoolDistr =
-        Consensus.PoolDistr . Map.map fromLedgerIndividualPoolStake . Ledger.unPoolDistr
-
-    fromLedgerIndividualPoolStake :: Ledger.IndividualPoolStake -> Consensus.IndividualPoolStake crypto
-    fromLedgerIndividualPoolStake ips = Consensus.IndividualPoolStake
-        { Consensus.individualPoolStake    = Ledger.individualPoolStake ips
-        , Consensus.individualPoolStakeVrf = ips
-            & Ledger.individualPoolStakeVrf
-            & Ledger.unVRFVerKeyHash
-            & hashToBytes
-            & hashFromBytes
-            & fromJust
-        }
 
 genUTxOResult
     :: forall crypto era. (crypto ~ StandardCrypto, Typeable era)
