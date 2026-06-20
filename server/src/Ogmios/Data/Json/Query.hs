@@ -2632,7 +2632,6 @@ decodeScript decodeNativeScript v =
 decodeSerializedTransaction
     :: forall crypto constraint.
         ( PraosCrypto crypto
-        , TPraos.PraosCrypto crypto
         , constraint ~ (MostRecentEra (CardanoBlock crypto) ~ DijkstraEra)
         , crypto ~ StandardCrypto
         )
@@ -2659,11 +2658,6 @@ decodeSerializedTransaction = Json.withText "Transaction" $ \(encodeUtf8 -> utf8
     -- Avoiding 'asum' here because it generates poor errors on failures.
     pure $  deserialiseCBOR @ConwayEra   GenTxConway   bytes
         <|> deserialiseCBOR @DijkstraEra GenTxDijkstra bytes
-        <|> deserialiseCBOR @BabbageEra  GenTxBabbage  bytes
-        <|> deserialiseCBOR @AlonzoEra   GenTxAlonzo   bytes
-        <|> deserialiseCBOR @MaryEra     GenTxMary     bytes
-        <|> deserialiseCBOR @AllegraEra  GenTxAllegra  bytes
-        <|> deserialiseCBOR @ShelleyEra  GenTxShelley  bytes
   where
     -- We use this extra constraint when decoding transactions to generate a
     -- compiler warning in case a new era becomes available, to not forget to update
