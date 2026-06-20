@@ -484,7 +484,7 @@ utxoFromMempool =
         tx:txs -> go
             (utxo
                 & withoutKeys (inputs tx)
-                & union (outputs tx)
+                & mergeUtxo (outputs tx)
             )
             txs
 
@@ -494,17 +494,6 @@ utxoFromMempool =
             UTxOInConwayEra (UTxO (Map.withoutKeys utxo ks))
         UTxOInDijkstraEra (UTxO utxo) ->
             UTxOInDijkstraEra (UTxO (Map.withoutKeys utxo ks))
-
-    union :: MultiEraUTxO block -> MultiEraUTxO block -> MultiEraUTxO block
-    union l r = case (l, r) of
-        (UTxOInConwayEra (UTxO ul), UTxOInConwayEra (UTxO ur)) ->
-            UTxOInConwayEra (UTxO (Map.union ul ur))
-        (UTxOInDijkstraEra (UTxO ul), UTxOInDijkstraEra (UTxO ur)) ->
-            UTxOInDijkstraEra (UTxO (Map.union ul ur))
-        (_, UTxOInDijkstraEra (UTxO ur)) ->
-            UTxOInDijkstraEra (UTxO ur)
-        (UTxOInDijkstraEra (UTxO ul), _) ->
-            UTxOInDijkstraEra (UTxO ul)
 
     newUtxoFor :: TxId -> [out] -> Map TxIn out
     newUtxoFor h outs =

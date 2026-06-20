@@ -21,6 +21,8 @@ math: true
 
 - Ogmios not returning a success error code when interrupted by the user (e.g. CTRL+C / SIGINT).
 
+- When evaluating transactions, additional utxos provided manually are now preferred over those automatically resolved (allowing to override more easily existing utxos for testing).
+
 - **⚠️ BREAKING-CHANGE ⚠️**: on `ProtocolParameters` and `ProposedProtocolParameters`, the field `maxReferenceScriptsSize` has been renamed to `maxReferenceScriptsSizePerTransaction` to disambiguate it from `maxReferenceScriptsSizePerBlock`.
 
 ---

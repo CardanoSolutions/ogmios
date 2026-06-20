@@ -290,7 +290,7 @@ mkTxSubmissionClient tr defaultWithInternalError TxSubmissionCodecs{..} Executio
                     mempoolUtxo <- utxoFromMempool <$> readMempoolM
                     logWith tr $ TxSubmissionEvaluateUtxoProvidedByUser { utxoRefs = utxoReferences additionalUtxo }
                     logWith tr $ TxSubmissionEvaluateUtxoInferredFromMempool { utxoRefs = utxoReferences mempoolUtxo }
-                    result <- evaluateExecutionUnitsM (mergeUtxo mempoolUtxo additionalUtxo, transaction)
+                    result <- evaluateExecutionUnitsM (mergeUtxo additionalUtxo mempoolUtxo, transaction)
                     result
                         & toResponse
                         & encodeEvaluateTransactionResponse
