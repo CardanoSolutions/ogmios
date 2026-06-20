@@ -2893,17 +2893,7 @@ export interface QueryLedgerStateProtocolParametersResponse {
 export interface ProtocolParameters {
   minFeeCoefficient: UInt64;
   minFeeConstant: ValueAdaOnly;
-  minFeeReferenceScripts?: {
-    range: UInt32;
-    /**
-     * The base cost for the tier-price calculation.
-     */
-    base: number;
-    /**
-     * The multiplier increasing the cost of each tier.
-     */
-    multiplier: number;
-  };
+  minFeeReferenceScripts?: MinFeeReferenceScripts;
   minUtxoDepositCoefficient: UInt64;
   minUtxoDepositConstant: ValueAdaOnly;
   maxBlockBodySize: {
@@ -2949,6 +2939,17 @@ export interface ProtocolParameters {
   delegateRepresentativeDeposit?: ValueAdaOnly;
   delegateRepresentativeMaxIdleTime?: Epoch;
   version: ProtocolVersion;
+}
+export interface MinFeeReferenceScripts {
+  range: UInt32;
+  /**
+   * The base cost for the tier-price calculation.
+   */
+  base: number;
+  /**
+   * The multiplier increasing the cost of each tier.
+   */
+  multiplier: number;
 }
 /**
  * Query current delegation settings and rewards of some given reward accounts.
@@ -3295,6 +3296,8 @@ export interface GenesisConway {
     delegateRepresentativeVotingThresholds: DelegateRepresentativeVotingThresholds;
     delegateRepresentativeDeposit: ValueAdaOnly;
     delegateRepresentativeMaxIdleTime: Epoch;
+    plutusCostModels: CostModels;
+    minFeeReferenceScripts: MinFeeReferenceScripts;
   };
 }
 /**

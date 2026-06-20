@@ -13,11 +13,13 @@ math: true
 
 - Preliminary support for the DijkstraEra and PlutusV4
 
+- Missing `plutusCostModels` and `minFeeReferenceScripts` properties from Conway's genesis object.
+
 #### Changed
 
-- Upgraded dependencies and compatibility to `cardano-node==11.0.1`.
+- Dependencies and compatibility to `cardano-node==11.0.1`.
 
-- Fixed Ogmios not returning a success error code when interrupted by the user (e.g. CTRL+C / SIGINT).
+- Ogmios not returning a success error code when interrupted by the user (e.g. CTRL+C / SIGINT).
 
 - **⚠️ BREAKING-CHANGE ⚠️**: on `ProtocolParameters` and `ProposedProtocolParameters`, the field `maxReferenceScriptsSize` has been renamed to `maxReferenceScriptsSizePerTransaction` to disambiguate it from `maxReferenceScriptsSizePerBlock`.
 

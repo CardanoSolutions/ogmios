@@ -11,11 +11,15 @@ import Cardano.Ledger.Allegra.Scripts
     )
 import Cardano.Ledger.Api
     ( AsIx
+    , Language (..)
     , PlutusPurpose
     )
 import Cardano.Ledger.Compactible
     ( CompactForm
     , Compactible (..)
+    )
+import Cardano.Ledger.Plutus.CostModels
+    ( mkCostModels
     )
 import Data.SatInt
     ( fromSatInt
@@ -196,8 +200,7 @@ encodeGenesis x =
             ( "minUtxoDepositCoefficient" .=
                   (encodeInteger . (`div` 8) . unCoin . Al.unCoinPerWord) (Al.agCoinsPerUTxOWord x) <>
               "plutusCostModels" .=
-                  maybe (encodeObject mempty) encodeCostModels
-                      (Al.aecCostModels =<< Al.extraConfig x) <>
+                  encodeCostModels (mkCostModels $ Map.singleton PlutusV1 (Al.agPlutusV1CostModel x)) <>
               "scriptExecutionPrices" .=
                   encodePrices (Al.agPrices x) <>
               "maxExecutionUnitsPerTransaction" .=
