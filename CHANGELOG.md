@@ -7,7 +7,7 @@ pre: "<b>6. </b>"
 math: true
 ---
 
-### [7.0.0] - UNRELEASED
+### [7.0.0] - 2026-06-20
 
 #### Added
 
@@ -23,7 +23,17 @@ math: true
 
 - When evaluating transactions, additional utxos provided manually are now preferred over those automatically resolved (allowing to override more easily existing utxos for testing).
 
+- The `treasury` field on transaction was sometimes ommitted when it should've been present; this is now fixed.
+
 - **⚠️ BREAKING-CHANGE ⚠️**: on `ProtocolParameters` and `ProposedProtocolParameters`, the field `maxReferenceScriptsSize` has been renamed to `maxReferenceScriptsSizePerTransaction` to disambiguate it from `maxReferenceScriptsSizePerBlock`.
+
+- **⚠️ BREAKING-CHANGE ⚠️**: transaction object now omits the `validityInterval` and `outputs` fields when they're empty.
+
+- **⚠️ BREAKING-CHANGE ⚠️**: Byron bootstrap witness encoding has changed from a single 64-bytes key payload to a combo key + chain-code.
+
+#### Removed
+
+- **⚠️ BREAKING-CHANGE ⚠️**: transaction submission and evaluation no longer include `shelley`, `allegra` and `mary` parsing hints on errors. Only `alonzo` onwards is included.
 
 ---
 ---
