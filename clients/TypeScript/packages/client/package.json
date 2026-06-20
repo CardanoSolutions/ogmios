@@ -17,7 +17,7 @@
     "build": "tsc --build ./src",
     "build-all": "tsc --build ./src && tsc --build ./test",
     "cleanup": "shx rm -rf dist node_modules",
-    "lint": "eslint --ignore-path ../../.eslintignore \"**/*.ts\"",
+    "lint": "eslint --ignore-path ../../.eslintignore \"**/*.ts\" --fix",
     "prepack": "yarn build",
     "test": "jest -c ./jest.config.js"
   },

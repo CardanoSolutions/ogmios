@@ -51,9 +51,9 @@ describe('TransactionSubmission', () => {
       it('rejects with an array of named errors (submitTransaction)', async () => {
         try {
           const someTransaction =
-            '84A400818258207D93519864ACAD5714A4057FF16950632D45BB0B5644DD81AB131'+
-            '03464FC76D4000181825839015C2B1A505AAD911F3F2B1932DC37679995B3C352EC'+
-            'FF08070682E8365E7DD93FF18E14F79BB80924ECFD775081CE0020A19B7E0607026'+
+            '84A400818258207D93519864ACAD5714A4057FF16950632D45BB0B5644DD81AB131' +
+            '03464FC76D4000181825839015C2B1A505AAD911F3F2B1932DC37679995B3C352EC' +
+            'FF08070682E8365E7DD93FF18E14F79BB80924ECFD775081CE0020A19B7E0607026' +
             '6D11A05D49B93021A0002C0ED031A04724864A0F5F6'
           await submit(someTransaction)
         } catch (e) {
@@ -75,7 +75,7 @@ describe('TransactionSubmission', () => {
             alonzo: "invalid or incomplete value of type 'Transaction': Size mismatch when decoding Object / Array. Expected 0, but found 4.",
             babbage: "invalid or incomplete value of type 'Transaction': Size mismatch when decoding Object / Array. Expected 0, but found 4.",
             conway: "invalid or incomplete value of type 'Transaction': Size mismatch when decoding Object / Array. Expected 0, but found 4.",
-            dijkstra: "invalid or incomplete value of type 'Transaction': Unexpected list length: 0. Expected: 4 or 3.",
+            dijkstra: "invalid or incomplete value of type 'Transaction': Unexpected list length: 0. Expected: 4 or 3."
           })
         }
       })
@@ -98,7 +98,7 @@ describe('TransactionSubmission', () => {
             alonzo: "invalid or incomplete value of type 'Transaction': Size mismatch when decoding Object / Array. Expected 3, but found 4.",
             babbage: "invalid or incomplete value of type 'Transaction': Size mismatch when decoding Object / Array. Expected 3, but found 4.",
             conway: "invalid or incomplete value of type 'Transaction': Size mismatch when decoding Object / Array. Expected 3, but found 4.",
-            dijkstra: "invalid or incomplete value of type 'Transaction': An error occured while decoding value of type Annotator (DijkstraTxBodyRaw TopTx). field fee with key 2, not decoded.",
+            dijkstra: "invalid or incomplete value of type 'Transaction': An error occured while decoding value of type Annotator (DijkstraTxBodyRaw TopTx). field fee with key 2, not decoded."
           })
         }
       })
