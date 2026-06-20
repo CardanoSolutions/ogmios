@@ -351,6 +351,9 @@ jobs:
     if: ${{ github.event_name == 'push' }}
     runs-on: ${{ matrix.os }}
     needs: [clients_TypeScript]
+    permissions:
+      contents: read
+      id-token: write
     strategy:
       matrix:
         os: [ ubuntu-22.04 ]
@@ -362,7 +365,9 @@ jobs:
     - name: 🧰 Setup Node.js
       uses: actions/setup-node@v5
       with:
-        node-version: lts/jod
+        node-version: 24
+        registry-url: https://registry.npmjs.org
+        package-manager-cache: false
 
     - name: 📦 Pack
       working-directory: clients/TypeScript
@@ -385,7 +390,7 @@ jobs:
       with:
         package: clients/TypeScript/packages/${{ matrix.package }}/package.json
         strategy: upgrade
-        token: ${{ secrets.NPM_TOKEN }}
+        access: public
 
   #  ██████████      ███████      █████████  █████   ████ ██████████ ███████████
   # ░░███░░░░███   ███░░░░░███   ███░░░░░███░░███   ███░ ░░███░░░░░█░░███░░░░░███

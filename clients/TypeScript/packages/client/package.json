@@ -8,8 +8,11 @@
   "main": "dist/index.js",
   "repository": {
     "type": "git",
-    "url": "https://github.com/cardanosolutions/ogmios.git",
+    "url": "git+https://github.com/cardanosolutions/ogmios.git",
     "directory": "clients/TypeScript/packages/client"
+  },
+  "publishConfig": {
+    "access": "public"
   },
   "author": "Rhys Bartels-Waller",
   "license": "MPL-2.0",
