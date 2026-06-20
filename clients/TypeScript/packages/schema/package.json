@@ -1,6 +1,6 @@
 {
   "name": "@cardano-ogmios/schema",
-  "version": "6.14.0",
+  "version": "7.0.0",
   "description": "Generated TypeScript from the Cardano Ogmios schema",
   "engines": {
     "node": ">=14"
@@ -8,8 +8,11 @@
   "main": "dist/index.js",
   "repository": {
     "type": "git",
-    "url": "https://github.com/cardanosolutions/ogmios.git",
+    "url": "git+https://github.com/cardanosolutions/ogmios.git",
     "directory": "clients/TypeScript/packages/schema"
+  },
+  "publishConfig": {
+    "access": "public"
   },
   "author": "Rhys Bartels-Waller",
   "license": "MPL-2.0",
