@@ -171,8 +171,8 @@ import qualified Cardano.Ledger.Api.Governance as Ledger
 import qualified Cardano.Ledger.Api.State.Query as Ledger
 import qualified Cardano.Ledger.Block as Ledger
 import qualified Cardano.Ledger.Core as Ledger
-import qualified Cardano.Ledger.DRep as Ledger
 import qualified Cardano.Ledger.Dijkstra.Rules as Dijkstra
+import qualified Cardano.Ledger.DRep as Ledger
 import qualified Cardano.Ledger.Shelley.API.Wallet as Sh.Api
 import qualified Cardano.Ledger.Shelley.UTxO as Sh
 import qualified Cardano.Ledger.State as Ledger
