@@ -1649,8 +1649,12 @@ parseQueryLedgerRewardAccountSummaries genResult =
                 (Map.zipWithMatched $ \_ drep mk -> mk (SJust drep))
                 dreps
                 (Map.merge
+                    -- pool, but no reward account; impossible, a delegation requires a registration
                     Map.dropMissing
-                    Map.dropMissing
+                    -- reward account, but no pool: registered without a pool delegation
+                    (Map.mapMissing $ \_ rewards drep ->
+                        RewardAccountSummary SNothing drep rewards
+                    )
                     (Map.zipWithMatched
                         (\_ poolDelegate rewards drep ->
                             RewardAccountSummary (SJust poolDelegate) drep rewards
