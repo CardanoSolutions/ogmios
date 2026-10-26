@@ -1,4 +1,4 @@
-import { InteractionContext, Method } from '../../Connection'
+import { InteractionContext, Method, MethodOptions } from '../../Connection'
 import { Ogmios, Point, Origin } from '@cardano-ogmios/schema'
 
 type Request = Ogmios['QueryNetworkTip']
@@ -9,12 +9,13 @@ type Response = Ogmios['QueryNetworkTipResponse']
  *
  * @category LedgerStateQuery
  */
-export function networkTip (context: InteractionContext): Promise<Point | Origin> {
+export function networkTip (context: InteractionContext, options?: MethodOptions): Promise<Point | Origin> {
   return Method<Request, Response, Point | Origin>(
     {
       method: 'queryNetwork/tip'
     },
     {},
-    context
+    context,
+    options
   )
 }

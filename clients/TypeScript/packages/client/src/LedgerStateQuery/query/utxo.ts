@@ -1,4 +1,4 @@
-import { InteractionContext, Method } from '../../Connection'
+import { InteractionContext, Method, MethodOptions } from '../../Connection'
 import {
   Ogmios,
   Utxo,
@@ -18,7 +18,8 @@ type Response = Ogmios['QueryLedgerStateUtxoResponse']
  */
 export function utxo (
   context: InteractionContext,
-  params?: UtxoByOutputReferences | UtxoByAddresses
+  params?: UtxoByOutputReferences | UtxoByAddresses,
+  options?: MethodOptions
 ): Promise<Utxo> {
   return Method<Request, Response, Utxo>(
     {
@@ -26,6 +27,7 @@ export function utxo (
       params
     },
     {},
-    context
+    context,
+    options
   )
 }

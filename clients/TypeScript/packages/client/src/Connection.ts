@@ -1,4 +1,5 @@
 import { nanoid } from 'nanoid'
+import { CustomError } from 'ts-custom-error'
 import { WebSocket, CloseEvent } from './IsomorphicWebSocket'
 import { getServerHealth, ServerNotReady } from './ServerHealth'
 import { safeJSON } from './util'
@@ -96,6 +97,20 @@ export class JSONRPCError extends Error {
   }
 }
 
+/**
+ * Raised when a request made with a {@link MethodOptions} `timeout` receives no response in time.
+ *
+ * @category Connection
+ */
+export class RequestTimeoutError extends CustomError {
+  public readonly timeout: number
+
+  public constructor (timeout: number) {
+    super(`Request timed out after ${timeout}ms`)
+    this.timeout = timeout
+  }
+}
+
 /** @category Constructor */
 export function createConnectionObject (config?: ConnectionConfig): Connection {
   if (config?.address && (config?.host || config?.port || config?.tls)) {
@@ -123,6 +138,52 @@ export function createConnectionObject (config?: ConnectionConfig): Connection {
   }
 }
 
+/** @internal */
+const DEFAULT_HEARTBEAT_INTERVAL = 30_000
+
+/**
+ * Starts a `ws`-level ping/pong heartbeat on an open socket: after `interval` ms of silence,
+ * pings and waits for a reply; if none arrives (no pong, no other message) before the next tick,
+ * terminates the connection (which fires `close`, letting the rest of the stack handle it as any
+ * other disconnect). Any inbound traffic — a pong, or an ordinary message — counts as proof of
+ * life and pushes the next check back by a full `interval`, so an actively-used connection never
+ * gets pinged at all.
+ *
+ * @internal
+ */
+const startHeartbeat = (socket: WebSocket, interval: number) => {
+  if (!interval || interval <= 0) { return }
+  // A no-op when the socket doesn't support `ping` (e.g. a browser WebSocket, which exposes no such API)
+  if (typeof socket.ping !== 'function') { return }
+
+  let timer: ReturnType<typeof setTimeout>
+
+  // Quiet for `interval` -> send a ping, then wait `interval` for any sign of life
+  const probe = () => {
+    if (socket.readyState !== socket.OPEN) { return }
+    try { socket.ping() } catch { return socket.terminate() }
+    timer = setTimeout(() => socket.terminate(), interval)
+    timer.unref?.()
+  }
+
+  // Any activity: cancel whatever is pending and restart the idle countdown
+  const onAlive = () => {
+    clearTimeout(timer)
+    timer = setTimeout(probe, interval)
+    timer.unref?.()
+  }
+
+  socket.on('pong', onAlive)
+  socket.on('message', onAlive)
+  onAlive()
+
+  socket.once('close', () => {
+    clearTimeout(timer)
+    socket.removeListener('pong', onAlive)
+    socket.removeListener('message', onAlive)
+  })
+}
+
 /** @category Constructor */
 export const createInteractionContext = async (
   errorHandler: WebSocketErrorHandler,
@@ -130,7 +191,15 @@ export const createInteractionContext = async (
   options?: {
     connection?: ConnectionConfig
     maxEventListeners?: number,
+    /**
+     * Ping interval, in milliseconds, used to detect a half-open connection (NAT timeout,
+     * laptop sleep, dropped network) that would otherwise hang requests silently. Defaults to
+     * 30s; pass `0` (or any non-positive value) to disable. Node-only: a no-op in environments
+     * without access to WebSocket ping/pong frames (e.g. browsers).
+     */
+    heartbeat?: number
   }): Promise<InteractionContext> => {
+  const { heartbeat = DEFAULT_HEARTBEAT_INTERVAL } = options ?? {}
   const connection = createConnectionObject(options?.connection)
   const health = await getServerHealth({ connection })
   return new Promise((resolve, reject) => {
@@ -143,16 +212,21 @@ export const createInteractionContext = async (
       socket.removeAllListeners()
       return reject(error)
     }
-    socket.setMaxListeners(options.maxEventListeners || 10)
-    socket.on('error', onInitialError)
-    socket.once('close', (_code: number, reason: string) => {
+    const onInitialClose = (_code: number, reason: string) => {
       socket.removeAllListeners()
       reject(new Error(reason))
-    })
+    }
+    socket.setMaxListeners(options?.maxEventListeners ?? 10)
+    socket.on('error', onInitialError)
+    socket.once('close', onInitialClose)
     socket.on('open', async () => {
       socket.removeListener('error', onInitialError)
+      socket.removeListener('close', onInitialClose)
       socket.on('error', errorHandler)
       socket.on('close', closeHandler)
+
+      startHeartbeat(socket, heartbeat)
+
       resolve({
         connection,
         socket
@@ -173,31 +247,72 @@ export const ensureSocketIsOpen = (socket: WebSocket) => {
   }
 }
 
+/**
+ * Options for the websocket send query awaiting response.
+ *
+ * @category Connection
+ */
+export type MethodOptions = {
+  /**
+   * Reject the call with a {@link RequestTimeoutError} if no response is received within this
+   * many milliseconds. Unset by default (the call waits indefinitely). The server still
+   * processes a timed-out request, so discard the connection afterwards; see "Request
+   * Timeouts" in the README.
+   */
+  timeout?: number
+}
+
 /** @internal */
 export const send = async <T>(
-  send: (socket: WebSocket) => Promise<T>,
-  context: InteractionContext
+  send: (socket: WebSocket, onSettle: (cleanup: () => void) => void) => Promise<T>,
+  context: InteractionContext,
+  options?: MethodOptions
 ): Promise<T> => {
   const { socket } = context
   return new Promise((resolve, reject) => {
+    let settled = false
+    let cleanup: (() => void) | undefined
+    let timer: ReturnType<typeof setTimeout> | undefined
+
+    /**
+     * Runs the full teardown and guards against running it multiple times.
+     */
+    function settleOnce (fn: () => void) {
+      if (settled) { return }
+      settled = true
+      cleanup?.()
+      if (timer !== undefined) { clearTimeout(timer) }
+      socket.removeListener('close', onUnexpectedClose)
+      fn()
+    }
+
     function onUnexpectedClose (code: CloseEvent['code'], reason: CloseEvent['reason']) {
-      reject(new JSONRPCError(
+      settleOnce(() => reject(new JSONRPCError(
         -32000,
         'Connection closed',
         { code, reason }
-      ))
+      )))
     }
 
     socket.once('close', onUnexpectedClose)
 
-    send(socket)
-      .then(resolve)
-      .catch(error => reject(JSONRPCError.tryFrom(error) || error))
-      .finally(() => socket.removeListener('close', onUnexpectedClose))
+    if (options?.timeout !== undefined) {
+      timer = setTimeout(() => {
+        settleOnce(() => reject(new RequestTimeoutError(options.timeout)))
+      }, options.timeout)
+    }
+
+    send(socket, fn => { cleanup = fn })
+      .then(result => settleOnce(() => resolve(result)))
+      .catch(error => settleOnce(() => reject(JSONRPCError.tryFrom(error) || error)))
   })
 }
 
-/** @internal */
+/**
+ * Fire a request and resolve once it's answered (response, failure, timeout, etc.).
+ *
+ * @internal
+ */
 export const Method = <
   Request extends { method: string, params?: any },
   Response extends { method: string, id?: { requestId?: string } },
@@ -210,20 +325,20 @@ export const Method = <
     res: {
       handler?: (
         response: Response,
-        resolve: (value?: A | PromiseLike<A>) => void,
+        resolve: (value: A | PromiseLike<A>) => void,
         reject: (reason?: any) => void
       ) => void
     },
-    context: InteractionContext
+    context: InteractionContext,
+    options?: MethodOptions
   ): Promise<A> =>
-    send<A>((socket) =>
+    send<A>((socket, onSettle) =>
       new Promise((resolve, reject) => {
         const requestId = nanoid(16)
 
         async function listener (data: string) {
           const response = safeJSON.parse(data) as Response
           if (response?.id?.requestId !== requestId) { return }
-          socket.removeListener('message', listener)
           try {
             const handler = res.handler || ((response, resolve, reject) => {
               if (response.method === req.method && response) {
@@ -243,9 +358,10 @@ export const Method = <
           }
         }
 
-        socket.on('message', listener)
-
         ensureSocketIsOpen(socket)
+
+        socket.on('message', listener)
+        onSettle(() => socket.removeListener('message', listener))
 
         socket.send(safeJSON.stringify({
           ...baseRequest,
@@ -253,4 +369,4 @@ export const Method = <
           params: req.params,
           id: { requestId }
         } as unknown as Request))
-      }), context)
+      }), context, options)

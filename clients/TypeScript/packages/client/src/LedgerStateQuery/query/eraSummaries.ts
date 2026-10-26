@@ -1,4 +1,4 @@
-import { InteractionContext, Method } from '../../Connection'
+import { InteractionContext, Method, MethodOptions } from '../../Connection'
 import { Ogmios, EraSummary } from '@cardano-ogmios/schema'
 
 type Request = Ogmios['QueryLedgerStateEraSummaries']
@@ -9,12 +9,13 @@ type Response = Ogmios['QueryLedgerStateEraSummariesResponse']
  *
  * @category LedgerStateQuery
  */
-export function eraSummaries (context: InteractionContext): Promise<EraSummary[]> {
+export function eraSummaries (context: InteractionContext, options?: MethodOptions): Promise<EraSummary[]> {
   return Method<Request, Response, EraSummary[]>(
     {
       method: 'queryLedgerState/eraSummaries'
     },
     {},
-    context
+    context,
+    options
   )
 }

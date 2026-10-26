@@ -1,5 +1,5 @@
 /* eslint no-redeclare: "off" */
-import { InteractionContext, Method } from '../../Connection'
+import { InteractionContext, Method, MethodOptions } from '../../Connection'
 import {
   Ogmios,
   GenesisAlonzo,
@@ -18,14 +18,15 @@ type Response = Ogmios['QueryNetworkGenesisConfigurationResponse']
  *
  * @category LedgerStateQuery
  */
-export function genesisConfiguration(context: InteractionContext, era: 'byron'): Promise<GenesisByron>
-export function genesisConfiguration(context: InteractionContext, era: 'shelley'): Promise<GenesisShelley>
-export function genesisConfiguration(context: InteractionContext, era: 'alonzo'): Promise<GenesisAlonzo>
-export function genesisConfiguration(context: InteractionContext, era: 'conway'): Promise<GenesisConway>
-export function genesisConfiguration(context: InteractionContext, era: 'dijkstra'): Promise<GenesisDijkstra>
+export function genesisConfiguration(context: InteractionContext, era: 'byron', options?: MethodOptions): Promise<GenesisByron>
+export function genesisConfiguration(context: InteractionContext, era: 'shelley', options?: MethodOptions): Promise<GenesisShelley>
+export function genesisConfiguration(context: InteractionContext, era: 'alonzo', options?: MethodOptions): Promise<GenesisAlonzo>
+export function genesisConfiguration(context: InteractionContext, era: 'conway', options?: MethodOptions): Promise<GenesisConway>
+export function genesisConfiguration(context: InteractionContext, era: 'dijkstra', options?: MethodOptions): Promise<GenesisDijkstra>
 export function genesisConfiguration (
   context: InteractionContext,
-  era: EraWithGenesis
+  era: EraWithGenesis,
+  options?: MethodOptions
 ): Promise<GenesisByron | GenesisShelley | GenesisAlonzo | GenesisConway | GenesisDijkstra> {
   return Method<Request, Response, GenesisByron | GenesisShelley | GenesisAlonzo | GenesisConway | GenesisDijkstra>(
     {
@@ -49,7 +50,8 @@ export function genesisConfiguration (
         }
       }
     },
-    context)
+    context,
+    options)
 }
 
 /**

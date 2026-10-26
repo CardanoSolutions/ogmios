@@ -1,4 +1,4 @@
-import { InteractionContext, Method } from '../../Connection'
+import { InteractionContext, Method, MethodOptions } from '../../Connection'
 import {
   Ogmios,
   AnyStakeCredential,
@@ -18,7 +18,8 @@ type Response = Ogmios['QueryLedgerStateProjectedRewardsResponse']
  */
 export function projectedRewards (
   context: InteractionContext,
-  params?: { stake?: ValueAdaOnly[], scripts?: AnyStakeCredential[], keys?: AnyStakeCredential[] }
+  params?: { stake?: ValueAdaOnly[], scripts?: AnyStakeCredential[], keys?: AnyStakeCredential[] },
+  options?: MethodOptions
 ): Promise<ProjectedRewards> {
   return Method<Request, Response, ProjectedRewards>(
     {
@@ -26,6 +27,7 @@ export function projectedRewards (
       params
     },
     {},
-    context
+    context,
+    options
   )
 }

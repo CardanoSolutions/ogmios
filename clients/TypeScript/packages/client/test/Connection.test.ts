@@ -1,8 +1,54 @@
+import { createHash } from 'crypto'
+import { createServer } from 'http'
+import { AddressInfo } from 'net'
+import { Duplex } from 'stream'
 import {
   createInteractionContext,
   createConnectionObject,
-  InteractionContext
+  InteractionContext,
+  JSONRPCError,
+  RequestTimeoutError,
+  LedgerStateQuery
 } from '../src'
+
+/**
+ * A server that reports itself healthy and accepts WebSocket connections, but never sends
+ * anything on them afterwards: no response to requests and no pong to pings. Mimics a server
+ * that is stuck, or a connection that has silently gone half-open.
+ */
+const createSilentServer = (): Promise<{ close: () => Promise<void>, port: number, pings: () => number }> => {
+  let pings = 0
+  const sockets = new Set<Duplex>()
+  const server = createServer((_req, res) => {
+    res.setHeader('Content-Type', 'application/json')
+    res.end(JSON.stringify({ lastTipUpdate: new Date().toISOString() }))
+  })
+  server.on('upgrade', (req, socket) => {
+    sockets.add(socket)
+    socket.once('close', () => sockets.delete(socket))
+    const accept = createHash('sha1')
+      .update(`${req.headers['sec-websocket-key']}258EAFA5-E914-47DA-95CA-C5AB0DC85B11`)
+      .digest('base64')
+    socket.write([
+      'HTTP/1.1 101 Switching Protocols',
+      'Upgrade: websocket',
+      'Connection: Upgrade',
+      `Sec-WebSocket-Accept: ${accept}`,
+      '', ''
+    ].join('\r\n'))
+    socket.on('data', (frame: Buffer) => {
+      if ((frame[0] & 0x0f) === 0x09) { pings += 1 }
+    })
+    socket.on('error', () => {})
+  })
+  const close = () => new Promise<void>(resolve => {
+    sockets.forEach(socket => socket.destroy())
+    server.close(() => resolve())
+  })
+  return new Promise(resolve => server.listen(0, '127.0.0.1', () => {
+    resolve({ close, port: (server.address() as AddressInfo).port, pings: () => pings })
+  }))
+}
 
 describe('Connection', () => {
   describe('createConnectionObject', () => {
@@ -183,6 +229,65 @@ describe('Connection', () => {
       } catch (error) {
         expect(error.code).toBe('ECONNREFUSED')
       }
+    })
+  })
+  describe('MethodOptions', () => {
+    let close: () => Promise<void>
+    let context: InteractionContext
+    beforeEach(async () => {
+      const server = await createSilentServer()
+      close = server.close
+      context = await createInteractionContext(
+        console.error,
+        () => {},
+        { connection: { port: server.port } }
+      )
+    })
+    afterEach(async () => {
+      context.socket.terminate()
+      await close()
+    })
+
+    it('rejects with a RequestTimeoutError when no response arrives within the timeout', async () => {
+      expect.assertions(3)
+      try {
+        await LedgerStateQuery.ledgerTip(context, { timeout: 100 })
+      } catch (error) {
+        expect(error).toBeInstanceOf(RequestTimeoutError)
+        expect(error.timeout).toBe(100)
+        expect(error.message).toBe('Request timed out after 100ms')
+      }
+    })
+  })
+  describe('heartbeat', () => {
+    let server: { close: () => Promise<void>, port: number, pings: () => number }
+    beforeEach(async () => {
+      server = await createSilentServer()
+    })
+    afterEach(async () => {
+      await server.close()
+    })
+
+    it('rejects pending requests with "Connection closed" once a dead connection is detected', async () => {
+      expect.assertions(6)
+      let onClose: (code: number) => void
+      const closed = new Promise<number>(resolve => { onClose = resolve })
+      const context = await createInteractionContext(
+        console.error,
+        code => onClose(code),
+        { connection: { port: server.port }, heartbeat: 50 }
+      )
+      try {
+        await LedgerStateQuery.ledgerTip(context)
+      } catch (error) {
+        expect(error).toBeInstanceOf(JSONRPCError)
+        expect(error.code).toBe(-32000)
+        expect(error.message).toBe('Connection closed')
+      }
+      // Abnormal closure: the socket was terminated locally, not closed by the server.
+      expect(await closed).toBe(1006)
+      expect(context.socket.readyState).toBe(context.socket.CLOSED)
+      expect(server.pings()).toBeGreaterThanOrEqual(1)
     })
   })
 })

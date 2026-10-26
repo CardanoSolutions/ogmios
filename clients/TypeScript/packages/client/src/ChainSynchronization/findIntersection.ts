@@ -1,4 +1,4 @@
-import { InteractionContext, Method } from '../Connection'
+import { InteractionContext, Method, MethodOptions } from '../Connection'
 import {
   IntersectionFound,
   Ogmios,
@@ -16,7 +16,8 @@ export type Intersection = {
 /** @category ChainSynchronization */
 export function findIntersection (
   context: InteractionContext,
-  points: (Point | Origin)[]
+  points: (Point | Origin)[],
+  options?: MethodOptions
 ): Promise<Intersection> {
   return Method<Ogmios['FindIntersection'], Ogmios['FindIntersectionResponse'], Intersection>(
     {
@@ -34,7 +35,8 @@ export function findIntersection (
         }
       }
     },
-    context
+    context,
+    options
   )
 }
 

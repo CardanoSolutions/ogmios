@@ -1,4 +1,4 @@
-import { InteractionContext, Method } from '../../Connection'
+import { InteractionContext, Method, MethodOptions } from '../../Connection'
 import {
   Ogmios,
   AnyStakeCredential,
@@ -18,7 +18,8 @@ export function rewardAccountSummaries (
   params: {
     scripts?: AnyStakeCredential[],
     keys?: AnyStakeCredential[],
-  }
+  },
+  options?: MethodOptions
 ): Promise<RewardAccountSummaries> {
   return Method<Request, Response, RewardAccountSummaries>(
     {
@@ -26,6 +27,7 @@ export function rewardAccountSummaries (
       params
     },
     {},
-    context
+    context,
+    options
   )
 }

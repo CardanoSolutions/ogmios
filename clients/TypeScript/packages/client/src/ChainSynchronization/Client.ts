@@ -1,6 +1,6 @@
 import fastq from 'fastq'
 import { CustomError } from 'ts-custom-error'
-import { InteractionContext, ensureSocketIsOpen } from '../Connection'
+import { InteractionContext, MethodOptions, ensureSocketIsOpen } from '../Connection'
 import { safeJSON } from '../util'
 import { findIntersection, Intersection } from './findIntersection'
 import {
@@ -20,7 +20,8 @@ export interface ChainSynchronizationClient {
   shutdown: () => Promise<void>
   resume: (
     points?: (Point | Origin)[],
-    inFlight?: number
+    inFlight?: number,
+    options?: MethodOptions
   ) => Promise<Intersection>
 }
 
@@ -55,10 +56,11 @@ export async function createChainSynchronizationClient (
         socket.once('close', resolve)
         socket.close()
       }),
-      resume: async (points, inFlight) => {
+      resume: async (points, inFlight, options) => {
         const intersection = await findIntersection(
           context,
-          points || [await createPointFromCurrentTip(context)]
+          points || [await createPointFromCurrentTip(context, options)],
+          options
         )
         for (let n = 0; n < (inFlight || 100); n += 1) {
           nextBlock(socket)
@@ -78,8 +80,8 @@ export class TipIsOriginError extends CustomError {
 }
 
 /** @internal */
-export async function createPointFromCurrentTip (context?: InteractionContext): Promise<Point> {
-  const { tip } = await findIntersection(context, ['origin'])
+export async function createPointFromCurrentTip (context?: InteractionContext, options?: MethodOptions): Promise<Point> {
+  const { tip } = await findIntersection(context, ['origin'], options)
   if (tip === 'origin') {
     throw new TipIsOriginError()
   }

@@ -1,4 +1,4 @@
-import { InteractionContext, Method } from '../../Connection'
+import { InteractionContext, Method, MethodOptions } from '../../Connection'
 import { Ogmios, Epoch } from '@cardano-ogmios/schema'
 
 type Request = Ogmios['QueryLedgerStateEpoch']
@@ -9,12 +9,13 @@ type Response = Ogmios['QueryLedgerStateEpochResponse']
  *
  * @category LedgerStateQuery
  */
-export function epoch (context: InteractionContext): Promise<Epoch> {
+export function epoch (context: InteractionContext, options?: MethodOptions): Promise<Epoch> {
   return Method<Request, Response, Epoch>(
     {
       method: 'queryLedgerState/epoch'
     },
     {},
-    context
+    context,
+    options
   )
 }

@@ -1,4 +1,4 @@
-import { InteractionContext, Method } from '../../Connection'
+import { InteractionContext, Method, MethodOptions } from '../../Connection'
 import {
   Ogmios,
   GovernanceProposalReference,
@@ -15,7 +15,8 @@ type Response = Ogmios['QueryLedgerStateGovernanceProposalsResponse']
  */
 export function governanceProposals (
   context: InteractionContext,
-  proposals?: GovernanceProposalReference[]
+  proposals?: GovernanceProposalReference[],
+  options?: MethodOptions
 ): Promise<GovernanceProposalState[]> {
   return Method<Request, Response, GovernanceProposalState[]>(
     {
@@ -23,6 +24,7 @@ export function governanceProposals (
       ...Array.isArray(proposals) ? { params: { proposals } } : {}
     },
     {},
-    context
+    context,
+    options
   )
 }

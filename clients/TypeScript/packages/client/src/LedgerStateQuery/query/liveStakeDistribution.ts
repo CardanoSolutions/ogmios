@@ -1,4 +1,4 @@
-import { InteractionContext, Method } from '../../Connection'
+import { InteractionContext, Method, MethodOptions } from '../../Connection'
 import { Ogmios, LiveStakeDistribution } from '@cardano-ogmios/schema'
 
 type Request = Ogmios['QueryLedgerStateLiveStakeDistribution']
@@ -9,12 +9,13 @@ type Response = Ogmios['QueryLedgerStateLiveStakeDistributionResponse']
  *
  * @category LedgerStateQuery
  */
-export function liveStakeDistribution (context: InteractionContext): Promise<LiveStakeDistribution> {
+export function liveStakeDistribution (context: InteractionContext, options?: MethodOptions): Promise<LiveStakeDistribution> {
   return Method<Request, Response, LiveStakeDistribution>(
     {
       method: 'queryLedgerState/liveStakeDistribution'
     },
     {},
-    context
+    context,
+    options
   )
 }

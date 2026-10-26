@@ -1,4 +1,4 @@
-import { InteractionContext, Method } from '../../Connection'
+import { InteractionContext, Method, MethodOptions } from '../../Connection'
 import { Ogmios, ProtocolParameters } from '@cardano-ogmios/schema'
 
 type Request = Ogmios['QueryLedgerStateProtocolParameters']
@@ -9,12 +9,13 @@ type Response = Ogmios['QueryLedgerStateProtocolParametersResponse']
  *
  * @category LedgerStateQuery
  */
-export function protocolParameters (context: InteractionContext): Promise<ProtocolParameters> {
+export function protocolParameters (context: InteractionContext, options?: MethodOptions): Promise<ProtocolParameters> {
   return Method<Request, Response, ProtocolParameters>(
     {
       method: 'queryLedgerState/protocolParameters'
     },
     {},
-    context
+    context,
+    options
   )
 }

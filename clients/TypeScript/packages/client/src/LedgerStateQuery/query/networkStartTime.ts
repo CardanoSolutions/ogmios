@@ -1,4 +1,4 @@
-import { InteractionContext, Method } from '../../Connection'
+import { InteractionContext, Method, MethodOptions } from '../../Connection'
 import { Ogmios, UtcTime } from '@cardano-ogmios/schema'
 
 type Request = Ogmios['QueryNetworkStartTime']
@@ -9,7 +9,7 @@ type Response = Ogmios['QueryNetworkStartTimeResponse']
  *
  * @category LedgerStateQuery
  */
-export function networkStartTime (context: InteractionContext): Promise<Date> {
+export function networkStartTime (context: InteractionContext, options?: MethodOptions): Promise<Date> {
   const method = 'queryNetwork/startTime'
 
   return Method<Request, Response, Date>(
@@ -23,6 +23,7 @@ export function networkStartTime (context: InteractionContext): Promise<Date> {
         }
       }
     },
-    context
+    context,
+    options
   )
 }

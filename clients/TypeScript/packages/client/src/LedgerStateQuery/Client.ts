@@ -1,4 +1,4 @@
-import { InteractionContext, Method, ensureSocketIsOpen } from '../Connection'
+import { InteractionContext, Method, MethodOptions, ensureSocketIsOpen } from '../Connection'
 import {
   constitution,
   epoch,
@@ -79,13 +79,16 @@ export interface LedgerStateQueryClient {
 }
 
 /**
- * Initialize a {@link LedgerStateQueryClient} from an {@link InteractionContext}
+ * Initialize a {@link LedgerStateQueryClient} from an {@link InteractionContext}. `methodOptions`,
+ * when set, applies to every call made through the returned client, including
+ * `acquireLedgerState` and `releaseLedgerState`.
  *
  * @category Constructor
  */
 export async function createLedgerStateQueryClient (
   context: InteractionContext,
-  options?: { point?: Point | Origin }
+  options?: { point?: Point | Origin },
+  methodOptions?: MethodOptions
 ): Promise<LedgerStateQueryClient> {
   const { socket } = context
 
@@ -106,7 +109,8 @@ export async function createLedgerStateQueryClient (
             }
           }
         },
-        context
+        context,
+        methodOptions
       )
     },
     async releaseLedgerState () : Promise<void> {
@@ -123,78 +127,79 @@ export async function createLedgerStateQueryClient (
             }
           }
         },
-        context
+        context,
+        methodOptions
       )
     },
 
     constitution () {
-      return constitution(context)
+      return constitution(context, methodOptions)
     },
     epoch () {
-      return epoch(context)
+      return epoch(context, methodOptions)
     },
     eraStart () {
-      return eraStart(context)
+      return eraStart(context, methodOptions)
     },
     eraSummaries () {
-      return eraSummaries(context)
+      return eraSummaries(context, methodOptions)
     },
     genesisConfiguration (era: EraWithGenesis) {
       switch (era) {
         case 'byron':
-          return genesisConfiguration(context, era)
+          return genesisConfiguration(context, era, methodOptions)
         case 'shelley':
-          return genesisConfiguration(context, era)
+          return genesisConfiguration(context, era, methodOptions)
         case 'alonzo':
-          return genesisConfiguration(context, era)
+          return genesisConfiguration(context, era, methodOptions)
         case 'conway':
-          return genesisConfiguration(context, era)
+          return genesisConfiguration(context, era, methodOptions)
         case 'dijkstra':
-          return genesisConfiguration(context, era)
+          return genesisConfiguration(context, era, methodOptions)
         default: {
           // NOTE: This raises "Type 'string' is not assignable to type 'never'."
           // whenever a branch of 'EraWithGenesis' isn't covered in the above
           // switch case. This forces TypeScript to do an exhaustive check.
           const _era: never = era
-          return genesisConfiguration(context, _era)
+          return genesisConfiguration(context, _era, methodOptions)
         }
       }
     },
     governanceProposals (filter) {
-      return governanceProposals(context, filter)
+      return governanceProposals(context, filter, methodOptions)
     },
     ledgerTip () {
-      return ledgerTip(context)
+      return ledgerTip(context, methodOptions)
     },
     liveStakeDistribution () {
-      return liveStakeDistribution(context)
+      return liveStakeDistribution(context, methodOptions)
     },
     networkBlockHeight () {
-      return networkBlockHeight(context)
+      return networkBlockHeight(context, methodOptions)
     },
     networkStartTime () {
-      return networkStartTime(context)
+      return networkStartTime(context, methodOptions)
     },
     networkTip () {
-      return networkTip(context)
+      return networkTip(context, methodOptions)
     },
     projectedRewards (filter) {
-      return projectedRewards(context, filter)
+      return projectedRewards(context, filter, methodOptions)
     },
     protocolParameters () {
-      return protocolParameters(context)
+      return protocolParameters(context, methodOptions)
     },
     rewardAccountSummaries (filter) {
-      return rewardAccountSummaries(context, filter)
+      return rewardAccountSummaries(context, filter, methodOptions)
     },
     stakePools (filter, includeStake) {
-      return stakePools(context, filter, includeStake)
+      return stakePools(context, filter, includeStake, methodOptions)
     },
     stakePoolsPerformances () {
-      return stakePoolsPerformances(context)
+      return stakePoolsPerformances(context, methodOptions)
     },
     utxo (filter) {
-      return utxo(context, filter)
+      return utxo(context, filter, methodOptions)
     },
 
     shutdown () {

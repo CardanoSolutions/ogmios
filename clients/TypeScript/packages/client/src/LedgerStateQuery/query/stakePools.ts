@@ -1,4 +1,4 @@
-import { InteractionContext, Method } from '../../Connection'
+import { InteractionContext, Method, MethodOptions } from '../../Connection'
 import { Ogmios, StakePoolId, StakePoolView } from '@cardano-ogmios/schema'
 
 type Request = Ogmios['QueryLedgerStateStakePools']
@@ -12,7 +12,8 @@ type Response = Ogmios['QueryLedgerStateStakePoolsResponse']
 export function stakePools (
   context: InteractionContext,
   stakePools?: { id: StakePoolId }[],
-  includeStake?: boolean
+  includeStake?: boolean,
+  options?: MethodOptions
 ): Promise<{ [k: StakePoolId]: StakePoolView }> {
   return Method<Request, Response, { [k: StakePoolId]: StakePoolView }>(
     {
@@ -23,6 +24,7 @@ export function stakePools (
       }
     },
     {},
-    context
+    context,
+    options
   )
 }
