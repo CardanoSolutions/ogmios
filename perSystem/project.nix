@@ -27,7 +27,7 @@
           ];
       };
       name = "ogmios";
-      compiler-nix-name = lib.mkDefault "ghc984";
+      compiler-nix-name = lib.mkDefault "ghc9124";
 
       inputMap = {
         "https://input-output-hk.github.io/cardano-haskell-packages" = inputs.CHaP;
