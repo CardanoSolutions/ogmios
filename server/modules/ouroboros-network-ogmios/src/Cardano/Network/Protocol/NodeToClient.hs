@@ -302,7 +302,7 @@ nodeToClientV_Latest :: NodeToClientVersion
 nodeToClientV_Latest = maxBound
 
 nodeToClientV_Min :: NodeToClientVersion
-nodeToClientV_Min = NodeToClientV_17
+nodeToClientV_Min = NodeToClientV_23
 
 -- | Construct a network client
 mkClient

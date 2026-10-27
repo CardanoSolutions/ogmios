@@ -149,6 +149,16 @@ encodeBlock opts (ShelleyBlock (Ledger.Block blkHeader txs) headerHash) =
   where
     TPraos.BHeader hBody _ = blkHeader
 
+encodeBlsKey ::
+    Ledger.BlsKey ->
+    Json
+encodeBlsKey x =
+    "verificationKey"
+        .= encodeByteStringBase16 (CC.rawEncodeFixedSized (Ledger.blsPubKey x))
+        <> "proofOfPossession"
+        .= encodeByteStringBase16 (CC.rawEncodeFixedSized (Ledger.blsPossessionProof x))
+        & encodeObject
+
 encodeCertVRF ::
     (CC.VRFAlgorithm alg) =>
     CC.CertVRF alg ->
@@ -589,7 +599,7 @@ encodeOutputVRF =
     encodeByteStringBase16 . CC.getOutputVRFBytes
 
 encodePoolCert ::
-    Sh.PoolCert ->
+    Sh.PoolCert era ->
     Series
 encodePoolCert = \case
     Sh.RegPool params ->
@@ -630,11 +640,15 @@ encodePoolMetadata x =
         & encodeObject
 
 encodePoolParams ::
-    Ledger.StakePoolParams ->
+    Ledger.StakePoolParams era ->
     Series
 encodePoolParams x =
     "vrfVerificationKeyHash"
         .= encodeHash (Ledger.unVRFVerKeyHash $ Ledger.sppVrf x)
+        <> "blsKey"
+        .=? OmitWhenNothing
+            encodeBlsKey
+            (Ledger.sppBlsKey x)
         <> "pledge"
         .= encodeCoin (Ledger.sppPledge x)
         <> "cost"

@@ -9,9 +9,6 @@ import Ogmios.Data.Json.Prelude
 import Cardano.Ledger.Allegra.Scripts
     ( Timelock
     )
-import Cardano.Ledger.Alonzo.Plutus.TxInfo
-    ( TxOutSource (..)
-    )
 import Cardano.Ledger.Api
     ( AsIx (..)
     )
@@ -20,6 +17,9 @@ import Cardano.Ledger.Binary
     )
 import Cardano.Ledger.Compactible
     ( fromCompact
+    )
+import Cardano.Ledger.Plutus.TxInfo
+    ( TxOutSource (..)
     )
 import Ouroboros.Consensus.Shelley.Ledger.Block
     ( ShelleyBlock (..)
@@ -41,7 +41,6 @@ import qualified Cardano.Ledger.Shelley.PParams as Sh
 
 import qualified Cardano.Ledger.Mary.Value as Ma
 
-import qualified Cardano.Ledger.Alonzo.PParams as Al
 import qualified Cardano.Ledger.Alonzo.Scripts as Al
 import qualified Cardano.Ledger.Alonzo.BlockBody as Al
 
@@ -103,6 +102,12 @@ encodeContextError err = encodeText $ case err of
         "Uncomputable slot arithmetic; transaction's validity bounds go beyond the foreseeable end of the current era: " <> e
     Ba.AlonzoContextError (Al.TranslationLogicMissingInput i) ->
         "Unknown transaction input (missing from UTxO set): " <> Shelley.stringifyTxIn i
+    Ba.AlonzoContextError (Al.CertificateNotSupported{}) ->
+        "A certificate in the transaction isn't supported in neither plutus:v1 nor plutus:v2. Use plutus:v3 or higher."
+    Ba.AlonzoContextError (Al.PlutusPurposeNotSupported{}) ->
+        "A script purpose in the transaction isn't supported in neither plutus:v1 nor plutus:v2. Use plutus:v3 or higher."
+    Ba.AlonzoContextError (Al.ImpossibleContextError e) ->
+        "Unexpected failure while building the script context: " <> e
 
 encodeHeader
     :: Praos.Header StandardCrypto

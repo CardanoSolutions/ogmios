@@ -53,7 +53,6 @@ import qualified Cardano.Ledger.HKD as Ledger
 
 import qualified Cardano.Ledger.Shelley.PParams as Sh
 
-import qualified Cardano.Ledger.Alonzo.PParams as Al
 import qualified Cardano.Ledger.Alonzo.BlockBody as Al
 
 import qualified Cardano.Ledger.Babbage.Core as Ba
@@ -75,6 +74,8 @@ import qualified Cardano.Ledger.Conway.TxInfo as Cn
 import Cardano.Ledger.Plutus
     ( TxOutSource (..)
     )
+import qualified Data.Aeson as Json
+
 import qualified Ogmios.Data.Json.Allegra as Allegra
 import qualified Ogmios.Data.Json.Alonzo as Alonzo
 import qualified Ogmios.Data.Json.Babbage as Babbage
@@ -200,14 +201,11 @@ encodeNextEpochChange = fmap encodeObject . \case
 
 encodeContextError
     :: ( PlutusPurpose AsIx era ~ Cn.ConwayPlutusPurpose AsIx era
+       , ToJSON (Cn.ConwayContextError era)
        )
     => Cn.ConwayContextError era
     -> Json
 encodeContextError err = encodeText $ case err of
-    Cn.CertificateNotSupported{} ->
-        "A certificate in the transaction isn't supported in neither plutus:v1 nor plutus:v2. Use plutus:v3 or higher."
-    Cn.PlutusPurposeNotSupported{}  ->
-        "A script purpose in the transaction isn't supported in neither plutus:v1 nor plutus:v2. Use plutus:v3 or higher."
     Cn.CurrentTreasuryFieldNotSupported{} ->
         "Unsupported field in transaction: 'treasury'. Use plutus:v3 or higher, or remove this field."
     Cn.VotingProceduresFieldNotSupported{} ->
@@ -242,6 +240,28 @@ encodeContextError err = encodeText $ case err of
         "Uncomputable slot arithmetic; transaction's validity bounds go beyond the foreseeable end of the current era: " <> e
     Cn.BabbageContextError (Ba.AlonzoContextError (Al.TranslationLogicMissingInput i)) ->
         "Unknown transaction input (missing from UTxO set): " <> Shelley.stringifyTxIn i
+    Cn.BabbageContextError (Ba.AlonzoContextError (Al.CertificateNotSupported{})) ->
+        "A certificate in the transaction isn't supported in neither plutus:v1 nor plutus:v2. Use plutus:v3 or higher."
+    Cn.BabbageContextError (Ba.AlonzoContextError (Al.PlutusPurposeNotSupported{})) ->
+        "A script purpose in the transaction isn't supported in neither plutus:v1 nor plutus:v2. Use plutus:v3 or higher."
+    Cn.BabbageContextError (Ba.AlonzoContextError (Al.ImpossibleContextError e)) ->
+        "Unexpected failure while building the script context: " <> e
+    _ ->
+        stringifyUnsupportedContextError err
+
+-- | cardano-ledger-conway 1.24 doesn't export these constructors, so dispatch on the JSON 'kind'.
+stringifyUnsupportedContextError
+    :: ToJSON (Cn.ConwayContextError era)
+    => Cn.ConwayContextError era
+    -> Text
+stringifyUnsupportedContextError err =
+    case at "kind" (Json.toJSON err) of
+        Just (Json.String "CertificateNotSupported") ->
+            "A certificate in the transaction isn't supported in neither plutus:v1 nor plutus:v2. Use plutus:v3 or higher."
+        Just (Json.String "PlutusPurposeNotSupported") ->
+            "A script purpose in the transaction isn't supported in neither plutus:v1 nor plutus:v2. Use plutus:v3 or higher."
+        _ ->
+            "A certificate or a script purpose in the transaction isn't supported in neither plutus:v1 nor plutus:v2. Use plutus:v3 or higher."
 
 encodeConstitution
     :: Cn.Constitution era

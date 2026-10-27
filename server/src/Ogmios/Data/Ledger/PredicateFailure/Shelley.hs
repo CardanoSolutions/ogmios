@@ -173,7 +173,7 @@ encodeDelegFailure
     :: Sh.ShelleyDelegPredFailure era
     -> MultiEraPredicateFailure
 encodeDelegFailure = \case
-    Sh.StakeKeyAlreadyRegisteredDELEG credential ->
+    Sh.DelegAccountAlreadyRegistered (Sh.AccountAlreadyRegistered credential) ->
         StakeCredentialAlreadyRegistered credential
     Sh.StakeKeyNotRegisteredDELEG credential ->
         StakeCredentialNotRegistered credential

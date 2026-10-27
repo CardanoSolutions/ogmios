@@ -51,6 +51,7 @@ import Cardano.Ledger.Slot
     )
 import Cardano.Ledger.State
     ( ActiveStake (..)
+    , GoSnapShot (..)
     , SnapShot (..)
     , SnapShots (..)
     , StakeWithDelegation (..)
@@ -170,7 +171,7 @@ rewardsProvenance slotsPerEpoch b@(BlocksMade b') es@(EpochState acnt _ ss _) ma
     -- against. `ssActiveStake` pairs each staking credential with both its
     -- stake and its delegation pool, so there's no separate delegations map.
     SnapShot{ssActiveStake, ssTotalActiveStake, ssStakePoolsSnapShot} =
-        ssStakeGo ss
+        gsSnapShot (ssStakeGo ss)
 
     Coin reserves =
         casReserves acnt

@@ -15,6 +15,9 @@ import Data.Maybe.Strict
 import Cardano.Ledger.Address
     ( unWithdrawals
     )
+import Cardano.Ledger.Alonzo.Scripts
+    ( OrdExUnits (..)
+    )
 import Ogmios.Data.Ledger.PredicateFailure
     ( DiscriminatedEntities (..)
     , MultiEraPredicateFailure (..)
@@ -37,6 +40,7 @@ import Cardano.Ledger.BaseTypes
     , mismatchSupplied
     )
 import qualified Cardano.Ledger.Conway.Rules as Cn
+import qualified Cardano.Ledger.Shelley.Rules as Sh
 import qualified Data.List.NonEmpty as NE
 import qualified Data.Map as Map
 import qualified Data.Map.NonEmpty as NEMap
@@ -171,8 +175,6 @@ encodeCertsFailure
     :: Cn.ConwayCertsPredFailure ConwayEra
     -> MultiEraPredicateFailure
 encodeCertsFailure = \case
-    Cn.WithdrawalsNotInRewardsCERTS ws ->
-        IncompleteWithdrawals { withdrawals = unWithdrawals ws }
     Cn.CertFailure e ->
         encodeCertFailure e
 
@@ -196,7 +198,7 @@ encodeDelegFailure = \case
     -- expected one.
     Cn.IncorrectDepositDELEG providedDeposit -> -- !Coin
         DepositMismatch { providedDeposit, expectedDeposit = SNothing }
-    Cn.StakeKeyRegisteredDELEG knownCredential ->
+    Cn.DelegAccountAlreadyRegistered (Sh.AccountAlreadyRegistered knownCredential) ->
         StakeCredentialAlreadyRegistered { knownCredential }
     Cn.StakeKeyNotRegisteredDELEG unknownCredential  ->
         StakeCredentialNotRegistered { unknownCredential }
@@ -295,7 +297,7 @@ encodeUtxoFailure = \case
             { maximumCollateralInputs = fromIntegral maximumCollateralInputs
             , countedCollateralInputs = fromIntegral countedCollateralInputs
             }
-    Cn.ExUnitsTooBigUTxO (Mismatch providedExUnits maximumExUnits) ->
+    Cn.ExUnitsTooBigUTxO (Mismatch (OrdExUnits providedExUnits) (OrdExUnits maximumExUnits)) ->
         ExecutionUnitsTooLarge { maximumExUnits, providedExUnits }
     Cn.IncorrectTotalCollateralField computedTotalCollateral declaredTotalCollateral ->
         TotalCollateralMismatch { computedTotalCollateral, declaredTotalCollateral }

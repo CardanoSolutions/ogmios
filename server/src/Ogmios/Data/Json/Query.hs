@@ -470,7 +470,7 @@ instance FromJSON (Query Proxy (CardanoBlock StandardCrypto)) where
                     "LedgerState/rewardsProvenance" ->
                         parseQueryLedgerRewardsProvenance id queryParams
                     "LedgerState/stakePools" ->
-                        parseQueryLedgerStakePools id id queryParams
+                        parseQueryLedgerStakePools (const id) (const id) queryParams
                     "LedgerState/stakePoolsPerformances" ->
                         parseQueryLedgerStakePoolsPerformances id queryParams
                     "LedgerState/tip" ->
@@ -906,7 +906,7 @@ encodeSafeZone = \case
         encodeNull
 
 encodeStakePools ::
-    Map (Ledger.KeyHash StakePool) (Maybe Ledger.StakePoolParams, StrictMaybe Coin) ->
+    Map (Ledger.KeyHash StakePool) (Maybe (Ledger.StakePoolParams era), StrictMaybe Coin) ->
     Json
 encodeStakePools =
     encodeObject
@@ -2270,11 +2270,11 @@ parseQueryLedgerRewardsProvenance genResult =
 parseQueryLedgerStakePools ::
     forall crypto f.
     () =>
-    GenResult crypto f (Map (Ledger.KeyHash StakePool) Ledger.StakePoolParams) ->
-    GenResult crypto f (Map (Ledger.KeyHash StakePool) (Maybe Ledger.StakePoolParams, StrictMaybe Coin)) ->
+    (forall era. (Typeable era) => Proxy era -> GenResult crypto f (Map (Ledger.KeyHash StakePool) (Ledger.StakePoolParams era))) ->
+    (forall era. (Typeable era) => Proxy era -> GenResult crypto f (Map (Ledger.KeyHash StakePool) (Maybe (Ledger.StakePoolParams era), StrictMaybe Coin))) ->
     Json.Value ->
     Json.Parser (QueryInEra f (CardanoBlock crypto))
-parseQueryLedgerStakePools genResultNoStake genResult =
+parseQueryLedgerStakePools genResultNoStakeInEra genResultInEra =
     Json.withObject "SomeQuery" $ \obj -> do
         includeStake <- obj .:? "includeStake" .!= False
         obj .:? "stakePools" >>= \case
@@ -2283,12 +2283,15 @@ parseQueryLedgerStakePools genResultNoStake genResult =
                 ids <- traverset decodePoolId params
                 pure (getFilteredStakePools includeStake ids)
   where
+    encodeStakePoolsWithoutStake ::
+        Map (Ledger.KeyHash StakePool) (Ledger.StakePoolParams era) ->
+        Json
     encodeStakePoolsWithoutStake = encodeStakePools . Map.map (\params -> (Just params, SNothing))
 
     mergeDistrAndParams ::
         Map (Ledger.KeyHash StakePool) Coin ->
-        Map (Ledger.KeyHash StakePool) Ledger.StakePoolParams ->
-        Map (Ledger.KeyHash StakePool) (Maybe Ledger.StakePoolParams, StrictMaybe Coin)
+        Map (Ledger.KeyHash StakePool) (Ledger.StakePoolParams era) ->
+        Map (Ledger.KeyHash StakePool) (Maybe (Ledger.StakePoolParams era), StrictMaybe Coin)
     mergeDistrAndParams =
         Map.merge
             (Map.mapMissing $ \_ distr -> (Nothing, SJust distr))
@@ -2314,7 +2317,7 @@ parseQueryLedgerStakePools genResultNoStake genResult =
                         (\_ -> LSQ.BlockQuery (QueryIfCurrentConway (GetStakePoolParams ids)))
                         mergeDistrAndParams
                         (eraMismatchOrResult encodeStakePools)
-                        genResult
+                        (genResultInEra (Proxy @ConwayEra))
             SomeShelleyEra ShelleyBasedEraDijkstra ->
                 Just
                     $ SomeCompoundQuery
@@ -2322,31 +2325,44 @@ parseQueryLedgerStakePools genResultNoStake genResult =
                         (\_ -> LSQ.BlockQuery (QueryIfCurrentDijkstra (GetStakePoolParams ids)))
                         mergeDistrAndParams
                         (eraMismatchOrResult encodeStakePools)
-                        genResult
+                        (genResultInEra (Proxy @DijkstraEra))
         | otherwise =
-            ( \queryDef ->
-                Just
-                    $ SomeStandardQuery
-                        queryDef
+            Just . \case
+                SomeShelleyEra ShelleyBasedEraShelley ->
+                    SomeStandardQuery
+                        (LSQ.BlockQuery $ QueryIfCurrentShelley (GetStakePoolParams ids))
                         (eraMismatchOrResult encodeStakePoolsWithoutStake)
-                        genResultNoStake
-            )
-                . ( \case
-                        SomeShelleyEra ShelleyBasedEraShelley ->
-                            LSQ.BlockQuery $ QueryIfCurrentShelley (GetStakePoolParams ids)
-                        SomeShelleyEra ShelleyBasedEraAllegra ->
-                            LSQ.BlockQuery $ QueryIfCurrentAllegra (GetStakePoolParams ids)
-                        SomeShelleyEra ShelleyBasedEraMary ->
-                            LSQ.BlockQuery $ QueryIfCurrentMary (GetStakePoolParams ids)
-                        SomeShelleyEra ShelleyBasedEraAlonzo ->
-                            LSQ.BlockQuery $ QueryIfCurrentAlonzo (GetStakePoolParams ids)
-                        SomeShelleyEra ShelleyBasedEraBabbage ->
-                            LSQ.BlockQuery $ QueryIfCurrentBabbage (GetStakePoolParams ids)
-                        SomeShelleyEra ShelleyBasedEraConway ->
-                            LSQ.BlockQuery $ QueryIfCurrentConway (GetStakePoolParams ids)
-                        SomeShelleyEra ShelleyBasedEraDijkstra ->
-                            LSQ.BlockQuery $ QueryIfCurrentDijkstra (GetStakePoolParams ids)
-                  )
+                        (genResultNoStakeInEra (Proxy @ShelleyEra))
+                SomeShelleyEra ShelleyBasedEraAllegra ->
+                    SomeStandardQuery
+                        (LSQ.BlockQuery $ QueryIfCurrentAllegra (GetStakePoolParams ids))
+                        (eraMismatchOrResult encodeStakePoolsWithoutStake)
+                        (genResultNoStakeInEra (Proxy @AllegraEra))
+                SomeShelleyEra ShelleyBasedEraMary ->
+                    SomeStandardQuery
+                        (LSQ.BlockQuery $ QueryIfCurrentMary (GetStakePoolParams ids))
+                        (eraMismatchOrResult encodeStakePoolsWithoutStake)
+                        (genResultNoStakeInEra (Proxy @MaryEra))
+                SomeShelleyEra ShelleyBasedEraAlonzo ->
+                    SomeStandardQuery
+                        (LSQ.BlockQuery $ QueryIfCurrentAlonzo (GetStakePoolParams ids))
+                        (eraMismatchOrResult encodeStakePoolsWithoutStake)
+                        (genResultNoStakeInEra (Proxy @AlonzoEra))
+                SomeShelleyEra ShelleyBasedEraBabbage ->
+                    SomeStandardQuery
+                        (LSQ.BlockQuery $ QueryIfCurrentBabbage (GetStakePoolParams ids))
+                        (eraMismatchOrResult encodeStakePoolsWithoutStake)
+                        (genResultNoStakeInEra (Proxy @BabbageEra))
+                SomeShelleyEra ShelleyBasedEraConway ->
+                    SomeStandardQuery
+                        (LSQ.BlockQuery $ QueryIfCurrentConway (GetStakePoolParams ids))
+                        (eraMismatchOrResult encodeStakePoolsWithoutStake)
+                        (genResultNoStakeInEra (Proxy @ConwayEra))
+                SomeShelleyEra ShelleyBasedEraDijkstra ->
+                    SomeStandardQuery
+                        (LSQ.BlockQuery $ QueryIfCurrentDijkstra (GetStakePoolParams ids))
+                        (eraMismatchOrResult encodeStakePoolsWithoutStake)
+                        (genResultNoStakeInEra (Proxy @DijkstraEra))
 
     getAllStakePools includeStake
         | includeStake = \case
@@ -2372,7 +2388,7 @@ parseQueryLedgerStakePools genResultNoStake genResult =
                         (\allPools _ -> LSQ.BlockQuery (QueryIfCurrentConway (GetStakePoolParams allPools)))
                         (const mergeDistrAndParams)
                         (eraMismatchOrResult encodeStakePools)
-                        genResult
+                        (genResultInEra (Proxy @ConwayEra))
             SomeShelleyEra ShelleyBasedEraDijkstra ->
                 Just
                     $ SomeCompound2Query
@@ -2381,7 +2397,7 @@ parseQueryLedgerStakePools genResultNoStake genResult =
                         (\allPools _ -> LSQ.BlockQuery (QueryIfCurrentDijkstra (GetStakePoolParams allPools)))
                         (const mergeDistrAndParams)
                         (eraMismatchOrResult encodeStakePools)
-                        genResult
+                        (genResultInEra (Proxy @DijkstraEra))
         | otherwise =
             Just . \case
                 SomeShelleyEra ShelleyBasedEraShelley ->
@@ -2390,49 +2406,49 @@ parseQueryLedgerStakePools genResultNoStake genResult =
                         (LSQ.BlockQuery . QueryIfCurrentShelley . GetStakePoolParams)
                         (const identity)
                         (eraMismatchOrResult encodeStakePoolsWithoutStake)
-                        genResultNoStake
+                        (genResultNoStakeInEra (Proxy @ShelleyEra))
                 SomeShelleyEra ShelleyBasedEraAllegra ->
                     SomeCompoundQuery
                         (LSQ.BlockQuery (QueryIfCurrentAllegra GetStakePools))
                         (LSQ.BlockQuery . QueryIfCurrentAllegra . GetStakePoolParams)
                         (const identity)
                         (eraMismatchOrResult encodeStakePoolsWithoutStake)
-                        genResultNoStake
+                        (genResultNoStakeInEra (Proxy @AllegraEra))
                 SomeShelleyEra ShelleyBasedEraMary ->
                     SomeCompoundQuery
                         (LSQ.BlockQuery (QueryIfCurrentMary GetStakePools))
                         (LSQ.BlockQuery . QueryIfCurrentMary . GetStakePoolParams)
                         (const identity)
                         (eraMismatchOrResult encodeStakePoolsWithoutStake)
-                        genResultNoStake
+                        (genResultNoStakeInEra (Proxy @MaryEra))
                 SomeShelleyEra ShelleyBasedEraAlonzo ->
                     SomeCompoundQuery
                         (LSQ.BlockQuery (QueryIfCurrentAlonzo GetStakePools))
                         (LSQ.BlockQuery . QueryIfCurrentAlonzo . GetStakePoolParams)
                         (const identity)
                         (eraMismatchOrResult encodeStakePoolsWithoutStake)
-                        genResultNoStake
+                        (genResultNoStakeInEra (Proxy @AlonzoEra))
                 SomeShelleyEra ShelleyBasedEraBabbage ->
                     SomeCompoundQuery
                         (LSQ.BlockQuery (QueryIfCurrentBabbage GetStakePools))
                         (LSQ.BlockQuery . QueryIfCurrentBabbage . GetStakePoolParams)
                         (const identity)
                         (eraMismatchOrResult encodeStakePoolsWithoutStake)
-                        genResultNoStake
+                        (genResultNoStakeInEra (Proxy @BabbageEra))
                 SomeShelleyEra ShelleyBasedEraConway ->
                     SomeCompoundQuery
                         (LSQ.BlockQuery (QueryIfCurrentConway GetStakePools))
                         (LSQ.BlockQuery . QueryIfCurrentConway . GetStakePoolParams)
                         (const identity)
                         (eraMismatchOrResult encodeStakePoolsWithoutStake)
-                        genResultNoStake
+                        (genResultNoStakeInEra (Proxy @ConwayEra))
                 SomeShelleyEra ShelleyBasedEraDijkstra ->
                     SomeCompoundQuery
                         (LSQ.BlockQuery (QueryIfCurrentDijkstra GetStakePools))
                         (LSQ.BlockQuery . QueryIfCurrentDijkstra . GetStakePoolParams)
                         (const identity)
                         (eraMismatchOrResult encodeStakePoolsWithoutStake)
-                        genResultNoStake
+                        (genResultNoStakeInEra (Proxy @DijkstraEra))
 
 parseQueryNetworkBlockHeight ::
     forall crypto f.

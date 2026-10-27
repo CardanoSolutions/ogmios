@@ -125,6 +125,10 @@ export type MetadatumDetailedSchema =
  */
 export type VerificationKey = string;
 /**
+ * An Ed25519-BIP32 Byron genesis delegate verification key with chain-code.
+ */
+export type ExtendedVerificationKey = string;
+/**
  * An EdDSA signature.
  */
 export type Signature = string;
@@ -141,10 +145,6 @@ export type AddressAttributes = string;
  */
 export type RedeemerData = string;
 export type BootstrapProtocolId = number;
-/**
- * An Ed25519-BIP32 Byron genesis delegate verification key with chain-code.
- */
-export type ExtendedVerificationKey = string;
 export type GenesisHash = "genesis";
 export type VrfProof = string;
 export type VrfOutput = string;
@@ -234,7 +234,7 @@ export type ScriptPurpose =
  * A Blake2b 28-byte hash digest, encoded in base16.
  */
 export type PolicyId = string;
-export type Language = "plutus:v1" | "plutus:v2" | "plutus:v3";
+export type Language = "plutus:v1" | "plutus:v2" | "plutus:v3" | "plutus:v4";
 export type Utxo = {
   transaction: {
     id: TransactionId;
@@ -681,7 +681,7 @@ export interface ClauseAfter {
   slot: Slot;
 }
 export interface Plutus {
-  language: "plutus:v1" | "plutus:v2" | "plutus:v3";
+  language: "plutus:v1" | "plutus:v2" | "plutus:v3" | "plutus:v4";
   cbor: string;
 }
 /**
@@ -741,6 +741,7 @@ export interface StakePoolRegistration {
 export interface StakePool {
   id: StakePoolId;
   vrfVerificationKeyHash: DigestBlake2B256;
+  blsKey?: BlsKey;
   owners: DigestBlake2B224[];
   cost: ValueAdaOnly;
   margin: Ratio;
@@ -748,6 +749,13 @@ export interface StakePool {
   rewardAccount: RewardAccount;
   metadata?: Anchor;
   relays: Relay[];
+}
+/**
+ * A BLS12-381 (minimal-signature-size variant) verification key, along with a proof of possession of its signing key.
+ */
+export interface BlsKey {
+  verificationKey: string;
+  proofOfPossession: string;
 }
 export interface Anchor {
   hash: DigestAny;
@@ -1115,7 +1123,7 @@ export interface MetadatumMap {
   v: MetadatumDetailedSchema;
 }
 /**
- * A signatory (EdDSA) for the transaction. The fields 'chainCode' and 'addressAttributes' are only present on bootstrap signatures (when spending from a Byron/Bootstrap address).
+ * A signatory (EdDSA) for the transaction. The fields 'chainCode' and 'addressAttributes' are only present on bootstrap signatures (when spending from a Byron/Bootstrap address). On Byron, the 'key' is an Ed25519-BIP32 XPub (key + chain-code) so the chain-code is carried inline; on Shelley and later it is a plain Ed25519 key with the chain-code in the separate 'chainCode' field.
  */
 export interface Signatory {
   key: VerificationKey | ExtendedVerificationKey;
@@ -2949,6 +2957,7 @@ export interface QueryLedgerStateStakePoolsResponse {
 export interface StakePoolView {
   id: StakePoolId;
   vrfVerificationKeyHash?: DigestBlake2B256;
+  blsKey?: BlsKey;
   owners?: DigestBlake2B224[];
   cost?: ValueAdaOnly;
   margin?: Ratio;

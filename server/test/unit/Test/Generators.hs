@@ -199,7 +199,6 @@ import qualified Cardano.Ledger.TxIn as Ledger
 
 -- FIXME
 -- Needed with ouroboros-cardano-consensus==0.18.0.0. Otherwise, use the following:
-import qualified Ouroboros.Consensus.Shelley.Ledger.Query.Types as Consensus
 
 genBlock :: Gen Block
 genBlock = oneof
@@ -922,19 +921,21 @@ genAccountStateResult _ = frequency
     genAccountState = ChainAccountState <$> arbitrary <*> arbitrary
 
 genPoolParametersResult
-    :: forall crypto. (crypto ~ StandardCrypto)
-    => Proxy (QueryResult crypto (Map (Ledger.KeyHash StakePool) (Maybe StakePoolParams, StrictMaybe Coin)))
-    -> Gen (QueryResult crypto (Map (Ledger.KeyHash StakePool) (Maybe StakePoolParams, StrictMaybe Coin)))
-genPoolParametersResult _ = frequency
+    :: forall crypto era. (crypto ~ StandardCrypto)
+    => Proxy era
+    -> Proxy (QueryResult crypto (Map (Ledger.KeyHash StakePool) (Maybe (StakePoolParams era), StrictMaybe Coin)))
+    -> Gen (QueryResult crypto (Map (Ledger.KeyHash StakePool) (Maybe (StakePoolParams era), StrictMaybe Coin)))
+genPoolParametersResult _ _ = frequency
     [ (1, Left <$> genMismatchEraInfo)
     , (10, Right <$> arbitrary)
     ]
 
 genPoolParametersResultNoStake
-    :: forall crypto. (crypto ~ StandardCrypto)
-    => Proxy (QueryResult crypto (Map (Ledger.KeyHash StakePool) StakePoolParams))
-    -> Gen (QueryResult crypto (Map (Ledger.KeyHash StakePool) StakePoolParams))
-genPoolParametersResultNoStake _ = frequency
+    :: forall crypto era. (crypto ~ StandardCrypto)
+    => Proxy era
+    -> Proxy (QueryResult crypto (Map (Ledger.KeyHash StakePool) (StakePoolParams era)))
+    -> Gen (QueryResult crypto (Map (Ledger.KeyHash StakePool) (StakePoolParams era)))
+genPoolParametersResultNoStake _ _ = frequency
     [ (1, Left <$> genMismatchEraInfo)
     , (10, Right <$> arbitrary)
     ]

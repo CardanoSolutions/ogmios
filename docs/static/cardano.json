@@ -207,6 +207,31 @@
     , "maximum": 18446744073709552999
     }
 
+  , "BlsKey":
+    { "title": "BlsKey"
+    , "description": "A BLS12-381 (minimal-signature-size variant) verification key, along with a proof of possession of its signing key."
+    , "type": "object"
+    , "additionalProperties": false
+    , "required":
+      [ "verificationKey"
+      , "proofOfPossession"
+      ]
+    , "properties":
+      { "verificationKey":
+        { "type": "string"
+        , "contentEncoding": "base16"
+        , "minLength": 192
+        , "maxLength": 192
+        }
+      , "proofOfPossession":
+        { "type": "string"
+        , "contentEncoding": "base16"
+        , "minLength": 96
+        , "maxLength": 96
+        }
+      }
+    }
+
   , "BootstrapProtocolUpdate":
     { "title": "BootstrapProtocolUpdate"
     , "type": "object"
@@ -1984,6 +2009,9 @@
       , "vrfVerificationKeyHash":
         { "$ref": "cardano.json#/definitions/Digest<Blake2b, 256>"
         }
+      , "blsKey":
+        { "$ref": "cardano.json#/definitions/BlsKey"
+        }
       , "owners":
         { "type": "array"
         , "items":
@@ -2038,6 +2066,9 @@
         }
       , "vrfVerificationKeyHash":
         { "$ref": "cardano.json#/definitions/Digest<Blake2b, 256>"
+        }
+      , "blsKey":
+        { "$ref": "cardano.json#/definitions/BlsKey"
         }
       , "owners":
         { "type": "array"

@@ -9,6 +9,9 @@ import Ogmios.Prelude
 import Cardano.Ledger.Alonzo.Plutus.Evaluate
     ( CollectError (..)
     )
+import Cardano.Ledger.Alonzo.Scripts
+    ( OrdExUnits (..)
+    )
 import Cardano.Ledger.Address
     ( unWithdrawals
     )
@@ -158,7 +161,7 @@ encodeUtxoFailure era encodeUtxosFailure' = \case
             { maximumCollateralInputs = fromIntegral maximumCollateralInputs
             , countedCollateralInputs = fromIntegral countedCollateralInputs
             }
-    Al.ExUnitsTooBigUTxO (Mismatch providedExUnits maximumExUnits) ->
+    Al.ExUnitsTooBigUTxO (Mismatch (OrdExUnits providedExUnits) (OrdExUnits maximumExUnits)) ->
         ExecutionUnitsTooLarge { maximumExUnits, providedExUnits }
     Al.UtxosFailure e ->
         encodeUtxosFailure' e

@@ -87,7 +87,6 @@ library:
     - iproute
     - json-rpc
     - lens-aeson
-    - memory
     - mempack
     - mtl
     - optparse-applicative
@@ -103,6 +102,7 @@ library:
     - prettyprinter
     - profunctors
     - prometheus
+    - ram
     - relude
     - safe
     - safe-exceptions

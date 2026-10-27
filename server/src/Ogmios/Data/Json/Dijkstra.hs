@@ -25,9 +25,6 @@ import Ogmios.Data.Json.Prelude
 import Cardano.Ledger.Alonzo.Plutus.Context (
     ContextError,
  )
-import Cardano.Ledger.Alonzo.Plutus.TxInfo (
-    TxOutSource (..),
- )
 import Cardano.Ledger.Api (
     AsItem (..),
     AsIx (..),
@@ -35,6 +32,9 @@ import Cardano.Ledger.Api (
  )
 import Cardano.Ledger.MemoBytes (
     getMemoRawType,
+ )
+import Cardano.Ledger.Plutus.TxInfo (
+    TxOutSource (..),
  )
 
 import Cardano.Ledger.BaseTypes (
@@ -54,7 +54,6 @@ import Cardano.Ledger.HKD (
 
 import qualified Cardano.Ledger.HKD as Ledger
 
-import qualified Cardano.Ledger.Alonzo.PParams as Al
 import qualified Cardano.Ledger.Alonzo.Plutus.TxInfo as Al
 import qualified Cardano.Ledger.Alonzo.Scripts as Al
 import qualified Cardano.Ledger.Babbage.Core as Ba
@@ -653,6 +652,7 @@ encodeGovAction = \case
 encodeContextError ::
     ( PlutusPurpose AsIx era ~ Di.DijkstraPlutusPurpose AsIx era
     , ContextError era ~ Di.DijkstraContextError era
+    , ToJSON (Cn.ConwayContextError era)
     ) =>
     Di.DijkstraContextError era ->
     Json
@@ -662,16 +662,13 @@ encodeContextError =
 stringifyContextError ::
     ( PlutusPurpose AsIx era ~ Di.DijkstraPlutusPurpose AsIx era
     , ContextError era ~ Di.DijkstraContextError era
+    , ToJSON (Cn.ConwayContextError era)
     ) =>
     Di.DijkstraContextError era ->
     Text
 stringifyContextError err = case err of
     Di.PointerPresentInOutput{} ->
         "Found outputs to a (legacy) pointer address. Pointer addresses are no longer supported as of Dijkstra."
-    Di.ConwayContextError (Cn.CertificateNotSupported{}) ->
-        "A certificate in the transaction isn't supported in neither plutus:v1 nor plutus:v2. Use plutus:v3 or higher."
-    Di.ConwayContextError (Cn.PlutusPurposeNotSupported{}) ->
-        "A script purpose in the transaction isn't supported in neither plutus:v1 nor plutus:v2. Use plutus:v3 or higher."
     Di.ConwayContextError (Cn.CurrentTreasuryFieldNotSupported{}) ->
         "Unsupported field in transaction: 'treasury'. Use plutus:v3 or higher, or remove this field."
     Di.ConwayContextError (Cn.VotingProceduresFieldNotSupported{}) ->
@@ -693,20 +690,20 @@ stringifyContextError err = case err of
     Di.ConwayContextError (Cn.BabbageContextError (Ba.ReferenceInputsNotSupported{})) ->
         "Reference inputs not supported in plutus:v1. Use plutus:v2 or higher."
     Di.ConwayContextError (Cn.BabbageContextError (Ba.RedeemerPointerPointsToNothing purpose)) ->
-        let (title, ptr) =
-                case purpose of
-                    Di.DijkstraSpending (AsIx ix) -> ("spending input", ix)
-                    Di.DijkstraMinting (AsIx ix) -> ("minting policy", ix)
-                    Di.DijkstraCertifying (AsIx ix) -> ("publishing certificate", ix)
-                    Di.DijkstraWithdrawing (AsIx ix) -> ("withdrawing from account", ix)
-                    Di.DijkstraVoting (AsIx ix) -> ("voting as voter", ix)
-                    Di.DijkstraProposing (AsIx ix) -> ("proposing governance proposal", ix)
-                    Di.DijkstraGuarding (AsIx ix) -> ("guarding script", ix)
+        let (title, ptr) = describePurpose purpose
          in "Couldn't find corresponding redeemer for " <> title <> " #" <> show ptr <> ". Verify your transaction's construction."
     Di.ConwayContextError (Cn.BabbageContextError (Ba.AlonzoContextError (Al.TimeTranslationPastHorizon e))) ->
         "Uncomputable slot arithmetic; transaction's validity bounds go beyond the foreseeable end of the current era: " <> e
     Di.ConwayContextError (Cn.BabbageContextError (Ba.AlonzoContextError (Al.TranslationLogicMissingInput i))) ->
         "Unknown transaction input (missing from UTxO set): " <> Shelley.stringifyTxIn i
+    Di.ConwayContextError (Cn.BabbageContextError (Ba.AlonzoContextError (Al.CertificateNotSupported{}))) ->
+        "A certificate in the transaction isn't supported in neither plutus:v1 nor plutus:v2. Use plutus:v3 or higher."
+    Di.ConwayContextError (Cn.BabbageContextError (Ba.AlonzoContextError (Al.PlutusPurposeNotSupported{}))) ->
+        "A script purpose in the transaction isn't supported in neither plutus:v1 nor plutus:v2. Use plutus:v3 or higher."
+    Di.ConwayContextError (Cn.BabbageContextError (Ba.AlonzoContextError (Al.ImpossibleContextError e))) ->
+        "Unexpected failure while building the script context: " <> e
+    Di.ConwayContextError e ->
+        Conway.stringifyUnsupportedContextError e
     Di.SubTxContextError txId e ->
         "Failed to build the script context of a sub-transaction (id: " <> Shelley.stringifyTxId txId <> "): " <> stringifyContextError e
     Di.UnsupportedScriptInSubTx lang txId ->
@@ -719,3 +716,16 @@ stringifyContextError err = case err of
         "Script hashes in guards aren't supported in plutus:v1, plutus:v2 nor plutus:v3. Use plutus:v4 or higher."
     Di.RequiredTopLevelGuardsNotSupported{} ->
         "Required top-level guards aren't supported in plutus:v1, plutus:v2 nor plutus:v3. Use plutus:v4 or higher, or remove them."
+    Di.ScriptHashNotFoundForPurpose purpose ->
+        let (title, ptr) = describePurpose purpose
+         in "Couldn't find the script executed for " <> title <> " #" <> show ptr <> ". Verify your transaction's construction."
+  where
+    describePurpose :: Di.DijkstraPlutusPurpose AsIx era -> (Text, Word32)
+    describePurpose = \case
+        Di.DijkstraSpending (AsIx ix) -> ("spending input", ix)
+        Di.DijkstraMinting (AsIx ix) -> ("minting policy", ix)
+        Di.DijkstraCertifying (AsIx ix) -> ("publishing certificate", ix)
+        Di.DijkstraWithdrawing (AsIx ix) -> ("withdrawing from account", ix)
+        Di.DijkstraVoting (AsIx ix) -> ("voting as voter", ix)
+        Di.DijkstraProposing (AsIx ix) -> ("proposing governance proposal", ix)
+        Di.DijkstraGuarding (AsIx ix) -> ("guarding script", ix)

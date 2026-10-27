@@ -1,1 +1,1 @@
-{"jsonrpc":"2.0","method":"queryLedgerState/liveStakeDistribution","result":{"pool15qr8j7kzt540ku2urmt488q60e6phqukn00lh93qhux95ma6rgl":{"stake":"-48/19","totalStake":{"ada":{"lovelace":12}},"vrf":"5c9cc65c04d5c09b148f9b451587e882d855952649e33d3af9745468ea380a19"}},"id":null}
+{"jsonrpc":"2.0","method":"queryLedgerState/liveStakeDistribution","result":{"pool15qr8j7kzt540ku2urmt488q60e6phqukn00lh93qhux95ma6rgl":{"stake":"-65/6","totalStake":{"ada":{"lovelace":16027558}},"vrf":"1c9c5a72f455a71d093d2f90f07a7c289d53bf588b39f8d807e020de5fe1d1e0"}},"id":null}

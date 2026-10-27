@@ -135,6 +135,12 @@ encodeContextError err = encodeText $ case err of
         "Unknown transaction input (missing from UTxO set): " <> Shelley.stringifyTxIn i
     Al.TimeTranslationPastHorizon e ->
         "Uncomputable slot arithmetic; transaction's validity bounds go beyond the foreseeable end of the current era: " <> e
+    Al.CertificateNotSupported{} ->
+        "A certificate in the transaction isn't supported in neither plutus:v1 nor plutus:v2. Use plutus:v3 or higher."
+    Al.PlutusPurposeNotSupported{} ->
+        "A script purpose in the transaction isn't supported in neither plutus:v1 nor plutus:v2. Use plutus:v3 or higher."
+    Al.ImpossibleContextError e ->
+        "Unexpected failure while building the script context: " <> e
 
 encodeCostModel ::
     Al.CostModel ->
